@@ -6,6 +6,8 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditionalDataField
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -16,8 +18,9 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 12)
+  private val GROUP = EventLogGroup("inline.completion", 18)
 
+  const val INVOKED_EVENT_ID = "invoked"
   internal object InvokedEvents {
     val REQUEST_ID = EventFields.Long("request_id")
     val EVENT = EventFields.Class("event")
@@ -31,10 +34,32 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       SHOW,
       NO_SUGGESTIONS
     }
+
+    val ADDITIONAL: ObjectEventField = createAdditionalDataField(GROUP.id, INVOKED_EVENT_ID)
+    val CONTEXT_FEATURES = ObjectEventField(
+      "context_features",
+      InlineContextFeatures.LINE_NUMBER,
+      InlineContextFeatures.COLUMN_NUMBER,
+      InlineContextFeatures.SYMBOLS_IN_LINE_BEFORE_CARET,
+      InlineContextFeatures.SYMBOLS_IN_LINE_AFTER_CARET,
+      InlineContextFeatures.IS_WHITE_SPACE_BEFORE_CARET,
+      InlineContextFeatures.IS_WHITE_SPACE_AFTER_CARET,
+      InlineContextFeatures.NON_SPACE_SYMBOL_BEFORE_CARET,
+      InlineContextFeatures.NON_SPACE_SYMBOL_AFTER_CARET,
+      InlineContextFeatures.PREVIOUS_EMPTY_LINES_COUNT,
+      InlineContextFeatures.PREVIOUS_NON_EMPTY_LINE_LENGTH,
+      InlineContextFeatures.FOLLOWING_EMPTY_LINES_COUNT,
+      InlineContextFeatures.FOLLOWING_NON_EMPTY_LINE_LENGTH,
+      InlineContextFeatures.FIRST_PARENT,
+      InlineContextFeatures.SECOND_PARENT,
+      InlineContextFeatures.TIME_SINCE_LAST_TYPING,
+      *TypingSpeedTracker.getEventFields(),
+    )
+    val CONTEXT_FEATURES_COMPUTATION_TIME = EventFields.Long("context_features_computation_time")
   }
 
   internal val INVOKED_EVENT: VarargEventId = GROUP.registerVarargEvent(
-    "invoked",
+    INVOKED_EVENT_ID,
     InvokedEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
@@ -42,6 +67,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.PROVIDER,
     InvokedEvents.TIME_TO_COMPUTE,
     InvokedEvents.OUTCOME,
+    InvokedEvents.ADDITIONAL,
+    InvokedEvents.CONTEXT_FEATURES,
+    InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME,
   )
 
   object ShownEvents {
@@ -57,7 +85,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     enum class FinishType {
       SELECTED,
+      TYPED,
       ESCAPE_PRESSED,
+      BACKSPACE_PRESSED,
       KEY_PRESSED,
       INVALIDATED,
       MOUSE_PRESSED,
@@ -83,7 +113,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.FINISH_TYPE,
-    InlineContextFeatures.CONTEXT_FEATURES
   )
 
   override fun getGroup() = GROUP

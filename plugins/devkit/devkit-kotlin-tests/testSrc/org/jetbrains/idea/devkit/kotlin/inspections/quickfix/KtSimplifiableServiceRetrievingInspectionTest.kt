@@ -49,4 +49,75 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
   fun testTooGenericGetInstanceReturnType() {
     doTest()
   }
+
+  fun testPropertyWithGetterRetrievingService() {
+    doTest()
+  }
+
+  fun testNullableGetInstanceMethod() {
+    doTest()
+  }
+
+  fun testReturnTypeHasTypeParam() {
+    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
+  }
+
+  fun testGetInstanceServicesKtMethodsNoWarnings() {
+    doTestWithServicesKt()
+  }
+
+  fun testServicesKtMethodsCallsNoWarnings() {
+    doTestWithServicesKt()
+  }
+
+  fun testServiceKtMethods() {
+    doTestWithServiceKt()
+  }
+
+  fun testSafeCall() {
+    doTestWithServicesKt()
+  }
+
+  fun testJvmName() {
+    myFixture.addFileToProject(
+      "JvmPlatformAnnotations.kt",
+      //language=kotlin
+      """
+        package kotlin.jvm
+
+        actual annotation class JvmName(actual val name: String)
+      """
+    )
+    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
+  }
+
+  private fun doTestWithServicesKt() {
+    myFixture.configureByText(
+      "services.kt",
+      //language=kotlin
+      """
+      @file:Suppress("UnusedReceiverParameter")
+
+      package com.intellij.openapi.components
+
+      inline fun <reified T : Any> ComponentManager.service(): T {}
+      inline fun <reified T : Any> ComponentManager.serviceIfCreated(): T? {}
+      inline fun <reified T : Any> ComponentManager.serviceOrNull(): T? {}
+    """)
+    doTest()
+  }
+
+  private fun doTestWithServiceKt() {
+    myFixture.addFileToProject(
+      "service.kt",
+      //language=kotlin
+      """
+      package com.intellij.openapi.components
+
+      inline fun <reified T : Any> service(): T {}
+      inline fun <reified T : Any> serviceIfCreated(): T? {}
+      inline fun <reified T : Any> serviceOrNull(): T? {}
+    """)
+    doTest()
+  }
 }

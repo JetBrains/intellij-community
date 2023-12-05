@@ -97,6 +97,30 @@ class KotlinJUnit5ConverterInspectionTest9 : JUnit5ConverterInspectionTestBase()
     """.trimIndent(), "Migrate to JUnit 5")
   }
 
+  fun `test remove public modifier`() {
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+      import org.junit.Test
+
+      public class Presen<caret>ter {
+          @Test
+          public fun testJUnit4() {}
+      
+          @org.junit.jupiter.api.Test
+          public fun testJUnit5() {}
+      }
+    """.trimIndent(), """
+      import org.junit.jupiter.api.Test
+
+      class Presenter {
+          @Test
+          fun testJUnit4() {}
+      
+          @org.junit.jupiter.api.Test
+          fun testJUnit5() {}
+      }
+    """.trimIndent(), "Migrate to JUnit 5")
+  }
+
   fun `test expected on test annotation`() {
     myFixture.testQuickFixUnavailable(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*

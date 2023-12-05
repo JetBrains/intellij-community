@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.cancel
@@ -35,7 +35,6 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
       val details = detailsData.loadedDetails ?: return@addDetailsLoadedListener
 
       if (lastKnownBaseBranch != null && lastKnownBaseBranch != details.baseRefName) {
-        baseBranchProtectionRulesRequestValue.drop()
         reloadMergeabilityState()
       }
       lastKnownBaseBranch = details.baseRefName
@@ -50,18 +49,9 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
     }
   }
 
-  private val baseBranchProtectionRulesRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    detailsData.loadDetails().thenCompose {
-      stateService.loadBranchProtectionRules(indicator, pullRequestId, it.baseRefName)
-    }
-  }
   private val mergeabilityStateRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    val baseBranchProtectionRulesRequest = baseBranchProtectionRulesRequestValue.value
     detailsData.loadDetails().thenCompose { details ->
-
-      baseBranchProtectionRulesRequest.thenCompose {
-        stateService.loadMergeabilityState(indicator, pullRequestId, details.headRefOid, details.url, it)
-      }
+      stateService.loadMergeabilityState(indicator, pullRequestId, details.headRefOid, details.url, details.baseRefUpdateRule)
     }
   }
 
@@ -89,8 +79,6 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
   }
 
   override fun reloadMergeabilityState() {
-    if (baseBranchProtectionRulesRequestValue.lastLoadedValue == null)
-      baseBranchProtectionRulesRequestValue.drop()
     mergeabilityStateRequestValue.drop()
   }
 
@@ -122,6 +110,5 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
 
   override fun dispose() {
     mergeabilityStateRequestValue.drop()
-    baseBranchProtectionRulesRequestValue.drop()
   }
 }

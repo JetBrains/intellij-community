@@ -274,6 +274,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       if (executorId.equals(executor.getId())) {
         return executor;
       }
+      else if (executor instanceof ExecutorGroup<?> && executorId.startsWith(executor.getId())) {
+        for (Executor child : ((ExecutorGroup<?>)executor).childExecutors()) {
+          if (executorId.equals(child.getId())) {
+            return child;
+          }
+        }
+      }
     }
     return null;
   }
@@ -290,15 +297,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public enum ExecutorActionStatus {
-    NORMAL,
-    LOADING,
-    RUNNING
-  }
-
-  public static final Key<ExecutorActionStatus> EXECUTOR_ACTION_STATUS = Key.create("EXECUTOR_ACTION_STATUS");
-
-  public static class ExecutorAction extends AnAction implements DumbAware, RunWidgetExecutionActionMarker,
+  public static class ExecutorAction extends AnAction implements DumbAware,
                                                                  ActionRemotePermissionRequirements.RunAccess {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
 
@@ -318,6 +317,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+      presentation.putClientProperty(ExecutorActionStatus.KEY, null); // by default
       Project project = e.getProject();
       if (project == null || !project.isInitialized() || project.isDisposed()) {
         presentation.setEnabled(false);
@@ -326,7 +326,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(e);
       boolean enabled = false;
-      boolean isLoading = false;
+      ExecutorActionStatus actionStatus = null;
       boolean runConfigAsksToHideDisabledExecutorButtons = false;
       String text;
       if (selectedSettings != null) {
@@ -335,34 +335,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           return;
         }
 
-        // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
-        if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
-          RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
-
-          isLoading = startHistory.firstOrNull(selectedSettings, it ->
-            (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
-          ) != null;
-          if (isLoading) {
-            presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.LOADING);
-            SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
-            if (spinningIcon == null) {
-              spinningIcon = new SpinningProgressIcon();
-              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.ICON_COLOR);
-              presentation.putClientProperty(spinningIconKey, spinningIcon);
-            }
-            presentation.setDisabledIcon(spinningIcon);
-          } else {
-            if (!getRunningDescriptors(project, selectedSettings).isEmpty()) {
-              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.RUNNING);
-            }
-            else {
-              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.NORMAL);
-            }
-            presentation.putClientProperty(spinningIconKey, null);
-            presentation.setDisabledIcon(null);
-          }
-        }
-
+        actionStatus = setupActionStatus(e, project, selectedSettings, presentation);
         presentation.setIcon(getInformativeIcon(project, selectedSettings, e));
         RunConfiguration configuration = selectedSettings.getConfiguration();
         if (!isSuppressed(project)) {
@@ -391,6 +364,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       else {
         if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
           RunCurrentFileActionStatus status = getRunCurrentFileActionStatus(e, false);
+          for (RunnerAndConfigurationSettings config : status.myRunConfigs) {
+            actionStatus = setupActionStatus(e, project, config, presentation);
+            if (actionStatus != ExecutorActionStatus.NORMAL) {
+              break;
+            }
+          }
           enabled = status.myEnabled;
           text = status.myTooltip;
           presentation.setIcon(status.myIcon);
@@ -400,7 +379,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
 
-      if (!isLoading && (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons())) {
+      if (actionStatus != ExecutorActionStatus.LOADING && (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons())) {
         presentation.setEnabledAndVisible(enabled);
       }
       else {
@@ -410,7 +389,39 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       if (presentation.isVisible()) {
         presentation.setVisible(myExecutor.isApplicable(project));
       }
+      presentation.putClientProperty(ExecutorActionStatus.KEY, actionStatus);
       presentation.setText(text);
+    }
+
+    private ExecutorActionStatus setupActionStatus(@NotNull AnActionEvent e,
+                                                   Project project,
+                                                   RunnerAndConfigurationSettings selectedSettings,
+                                                   Presentation presentation) {
+      // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
+      ExecutorActionStatus status = ExecutorActionStatus.NORMAL;
+      if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
+        RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
+
+        boolean isLoading = startHistory.firstOrNull(selectedSettings, it -> (it.getExecutorId().equals(myExecutor.getId()) &&
+                                                                              it.getState() == RunState.SCHEDULED)) != null;
+        if (isLoading) {
+          status = ExecutorActionStatus.LOADING;
+          SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
+          if (spinningIcon == null) {
+            spinningIcon = new SpinningProgressIcon();
+            spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.ICON_COLOR);
+            presentation.putClientProperty(spinningIconKey, spinningIcon);
+          }
+          presentation.setDisabledIcon(spinningIcon);
+        } else {
+          if (!getRunningDescriptors(project, selectedSettings).isEmpty()) {
+            status = ExecutorActionStatus.RUNNING;
+          }
+          presentation.putClientProperty(spinningIconKey, null);
+          presentation.setDisabledIcon(null);
+        }
+      }
+      return status;
     }
 
     protected boolean hideDisabledExecutorButtons() {
@@ -419,9 +430,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e, boolean resetCache) {
       Project project = Objects.requireNonNull(e.getProject());
-      if (DumbService.isDumb(project)) {
-        return RunCurrentFileActionStatus.createDisabled(myExecutor.getStartActionText(), myExecutor.getIcon());
-      }
 
       VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
       if (files.length == 1) {

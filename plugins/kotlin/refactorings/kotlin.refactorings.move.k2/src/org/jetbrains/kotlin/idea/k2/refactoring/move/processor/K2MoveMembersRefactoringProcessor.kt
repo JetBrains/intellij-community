@@ -14,13 +14,11 @@ import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 
-class K2MoveMembersRefactoringProcessor(
-    val descriptor: K2MoveDescriptor.Members
-) : BaseRefactoringProcessor(descriptor.target.pkg.project) {
+class K2MoveMembersRefactoringProcessor(val descriptor: K2MoveDescriptor.Members) : BaseRefactoringProcessor(descriptor.project) {
     override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
-        val targetContainerFqName = descriptor.target.pkg.qualifiedName.let { if (it == "") IdeDeprecatedMessagesBundle.message(
+        val targetContainerFqName = descriptor.target.pkgName.asString().let { if (it == "") IdeDeprecatedMessagesBundle.message(
           "default.package.presentable.name")
         else it }
         return MoveMultipleElementsViewDescriptor(descriptor.source.elements.toTypedArray(), targetContainerFqName)

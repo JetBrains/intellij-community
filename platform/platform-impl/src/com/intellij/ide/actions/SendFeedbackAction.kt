@@ -11,11 +11,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls.Companion.getInstance
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.util.io.URLUtil
@@ -55,9 +56,9 @@ class SendFeedbackAction : AnAction(), DumbAware {
   companion object {
     @JvmStatic
     fun submit(project: Project?) {
-      if (project == null) return
+      val projectOrDefaultProject = project ?: ProjectManager.getInstance().defaultProject
       service<ReportFeedbackService>().coroutineScope.launch {
-        withBackgroundProgress(project, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
+        withBackgroundProgress(projectOrDefaultProject, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
           openFeedbackPageInBrowser(project, getDescription(project))
         }
       }
@@ -143,7 +144,6 @@ class SendFeedbackAction : AnAction(), DumbAware {
       }
       return sb.toString()
     }
-
     private val EP_NAME = ExtensionPointName<FeedbackDescriptionProvider>("com.intellij.feedbackDescriptionProvider")
   }
 }

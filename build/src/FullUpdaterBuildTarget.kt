@@ -11,10 +11,10 @@ object FullUpdaterBuildTarget {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
-    val tasks = BuildTasks.create(context)
-    tasks.compileModules(listOf(UPDATER_MODULE_NAME))
     runBlocking(Dispatchers.Default) {
+      val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
+      val tasks = BuildTasks.create(context)
+      tasks.compileModules(listOf(UPDATER_MODULE_NAME))
       tasks.buildFullUpdaterJar()
     }
   }

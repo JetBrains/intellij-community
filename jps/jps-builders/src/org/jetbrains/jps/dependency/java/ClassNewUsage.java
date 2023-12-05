@@ -2,11 +2,22 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+
+import java.io.IOException;
 
 public final class ClassNewUsage extends ClassUsage {
 
   public ClassNewUsage(@NotNull String className) {
     super(className);
+  }
+
+  public ClassNewUsage(@NotNull JvmNodeReferenceID clsId) {
+    super(clsId);
+  }
+
+  public ClassNewUsage(GraphDataInput in) throws IOException {
+    super(in);
   }
 
   @Override

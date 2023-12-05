@@ -534,22 +534,22 @@ class GitStageLineStatusTracker(
         return
       }
 
-      val disposable = Disposer.newDisposable()
+      val popupDisposable = Disposer.newDisposable(tracker.disposable)
 
       val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
       val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
-      installWordDiff(editor, stagedTextField, vcsTextField, range, disposable)
+      installWordDiff(editor, stagedTextField, vcsTextField, range, popupDisposable)
 
       val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
 
       val actions = createToolbarActions(editor, range, mousePosition)
-      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
+      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
 
-      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, disposable)
+      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, popupDisposable)
 
       val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
       toolbar.setTargetComponent(popupPanel)
-      showPopupAt(editor, popupPanel, mousePosition, disposable)
+      showPopupAt(editor, popupPanel, mousePosition, popupDisposable)
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {

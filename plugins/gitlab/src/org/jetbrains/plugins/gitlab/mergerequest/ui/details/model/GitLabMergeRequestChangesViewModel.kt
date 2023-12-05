@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.CollectionFactory
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
@@ -74,14 +74,15 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 
   override val mappedDiscussionsCounts: SharedFlow<Map<Change, Int>> =
     combine(createUnresolvedDiscussionsPositionsFlow(mergeRequest),
+            createUnresolvedDraftsPositionsFlow(mergeRequest),
             mergeRequest.changes.map { it.getParsedChanges() }.catch { },
-            delegate.selectedCommit) { positions, parsedChanges, commit ->
+            delegate.selectedCommit) { discPos, draftsPos, parsedChanges, commit ->
       val changes = parsedChanges.getChanges(commit)
       val result: MutableMap<Change, Int> = CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
       changes.associateWithTo(result) { change ->
         val patch = parsedChanges.patchesByChange[change] ?: return@associateWithTo 0
         //TODO: cache?
-        positions.count { it.mapToLocation(patch) != null }
+        discPos.count { it.mapToLocation(patch) != null } + draftsPos.count { it.mapToLocation(patch) != null }
       }
     }.modelFlow(cs, thisLogger())
 
@@ -108,32 +109,44 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 private fun createUnresolvedDiscussionsPositionsFlow(mergeRequest: GitLabMergeRequest) = channelFlow {
   withContext(CoroutineName("GitLab Merge Request discussions positions collector")) {
     val discussionsCache = ConcurrentHashMap<GitLabId, GitLabNotePosition>()
-    val draftNotesCache = ConcurrentHashMap<GitLabId, GitLabNotePosition>()
     mergeRequest.discussions.collectLatest { discussionsResult ->
       coroutineScope {
         discussionsCache.clear()
-        discussionsResult.getOrNull()?.forEach { disc ->
+        val discussions = discussionsResult.getOrNull().orEmpty()
+        if (discussions.isEmpty()) {
+          send(emptyList())
+        }
+        for (disc in discussions) {
           launchNow {
             val positionFlow = disc.firstNote.filterNotNull().flatMapLatest { it.position }
             combine(disc.resolved, positionFlow) { resolved, position ->
               if (resolved) null else position
             }.collectLatest {
               if (it != null) discussionsCache[disc.id] = it else discussionsCache.remove(disc.id)
-              send(discussionsCache.values.toList() + draftNotesCache.values.toList())
+              send(discussionsCache.values.toList())
             }
           }
         }
       }
     }
+  }
+}
 
+private fun createUnresolvedDraftsPositionsFlow(mergeRequest: GitLabMergeRequest) = channelFlow {
+  withContext(CoroutineName("GitLab Merge Request draft notes positions collector")) {
+    val draftNotesCache = ConcurrentHashMap<GitLabId, GitLabNotePosition>()
     mergeRequest.draftNotes.collectLatest { notesResult ->
       coroutineScope {
         draftNotesCache.clear()
-        notesResult.getOrNull()?.forEach { note ->
+        val notes = notesResult.getOrNull().orEmpty()
+        if (notes.isEmpty()) {
+          send(emptyList())
+        }
+        for (note in notes) {
           launchNow {
             note.position.collectLatest {
               if (it != null) draftNotesCache[note.id] = it else draftNotesCache.remove(note.id)
-              send(discussionsCache.values.toList() + draftNotesCache.values.toList())
+              send(draftNotesCache.values.toList())
             }
           }
         }

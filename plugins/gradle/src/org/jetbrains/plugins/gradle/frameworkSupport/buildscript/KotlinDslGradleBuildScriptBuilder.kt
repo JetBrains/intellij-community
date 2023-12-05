@@ -27,6 +27,14 @@ class KotlinDslGradleBuildScriptBuilder(
     }
   }
 
+  override fun withKotlinTest() = apply {
+    withMavenCentral()
+    addTestImplementationDependency(call("kotlin", "test"))
+    configureTestTask {
+      call("useJUnitPlatform")
+    }
+  }
+
   override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
     withPostfix {
       callIfNotEmpty("tasks.test", configure)

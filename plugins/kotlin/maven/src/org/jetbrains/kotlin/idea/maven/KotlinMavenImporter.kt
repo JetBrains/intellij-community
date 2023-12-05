@@ -272,8 +272,8 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
                 arguments.sourceMap = configuration?.getChild("sourceMap")?.text?.trim()?.toBoolean() ?: false
                 arguments.sourceMapPrefix = configuration?.getChild("sourceMapPrefix")?.text?.trim() ?: ""
                 arguments.sourceMapEmbedSources = configuration?.getChild("sourceMapEmbedSources")?.text?.trim() ?: "inlining"
-                arguments.outputFile = configuration?.getChild("outputFile")?.text
-                arguments.metaInfo = configuration?.getChild("metaInfo")?.text?.trim()?.toBoolean() ?: false
+                arguments.outputDir = configuration?.getChild("outputFile")?.text?.let { File(it).parent }
+                arguments.moduleName = configuration?.getChild("outputFile")?.text?.let { File(it).nameWithoutExtension }
                 arguments.moduleKind = configuration?.getChild("moduleKind")?.text
                 arguments.main = configuration?.getChild("main")?.text
             }

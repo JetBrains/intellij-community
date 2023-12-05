@@ -112,7 +112,7 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
                         return ((JavaCodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
                     }
                     catch (FileComparisonFailure e) {
-                        throw new FileComparisonFailure(e.getMessage(), e.getExpected(), e.getActual(),
+                        throw new FileComparisonFailure(e.getMessage(), e.getExpectedStringPresentation(), e.getActualStringPresentation(),
                                                         new File(e.getFilePath()).getAbsolutePath());
                     }
                 });

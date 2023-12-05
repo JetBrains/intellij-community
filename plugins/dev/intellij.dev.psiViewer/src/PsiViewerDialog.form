@@ -172,7 +172,7 @@
                   <text value="Show &amp;PSI structure for:"/>
                 </properties>
               </component>
-              <component id="383b1" class="javax.swing.JComboBox" binding="myFileTypeComboBox">
+              <component id="383b1" class="com.intellij.openapi.ui.ComboBox" binding="myFileTypeComboBox">
                 <constraints border-constraint="Center"/>
                 <properties>
                   <maximumRowCount value="30"/>

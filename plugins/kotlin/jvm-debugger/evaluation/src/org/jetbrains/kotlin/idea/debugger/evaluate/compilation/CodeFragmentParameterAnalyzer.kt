@@ -118,8 +118,6 @@ class CodeFragmentParameterAnalyzer(
                     if (parameter != null) {
                         checkBounds(descriptor, expression, parameter)
                     }
-                    // If the receiver expression is not a coroutine context call, it is already captured for this reference
-                    return
                 }
 
                 if (isCodeFragmentDeclaration(resolvedCall.resultingDescriptor)) {

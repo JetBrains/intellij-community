@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -81,7 +81,7 @@ internal class PortableCompilationCacheUploader(
 
   private fun uploadToS3() {
     if (remoteCache.shouldBeSyncedToS3) {
-      spanBuilder("aws s3 sync").useWithScope {
+      spanBuilder("aws s3 sync").useWithScopeBlocking {
         awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
       }
     }
@@ -191,7 +191,7 @@ private class Uploader(serverUrl: String, val authHeader: String) {
 
   fun upload(path: String, file: Path) {
     val url = pathToUrl(path)
-    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).useWithScope {
+    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).useWithScopeBlocking {
       check(Files.exists(file)) {
         "The file $file does not exist"
       }

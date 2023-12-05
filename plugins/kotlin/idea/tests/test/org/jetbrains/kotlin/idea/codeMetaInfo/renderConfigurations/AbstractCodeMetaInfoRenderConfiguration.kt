@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
 
-open class LineMarkerConfiguration(var renderDescription: Boolean = true) : AbstractCodeMetaInfoRenderConfiguration() {
+open class LineMarkerConfiguration(
+    private val renderDescription: Boolean = true,
+    private val renderTargetIcons: Boolean = false,
+) : AbstractCodeMetaInfoRenderConfiguration() {
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
         if (codeMetaInfo !is LineMarkerCodeMetaInfo) return ""
         return getTag() + getPlatformsString(codeMetaInfo) + getParamsString(codeMetaInfo)
@@ -36,10 +39,11 @@ open class LineMarkerConfiguration(var renderDescription: Boolean = true) : Abst
                 buildString {
                     append("(text=")
                     append(presentation.presentableText)
-                    append("; ")
-                    append(presentation.containerText?.let { "container=$it; " } ?: "")
-                    append("icon=")
-                    append(presentation.icon.toString())
+                    presentation.containerText?.let{ append("; container=").append(it) }
+                    if (renderTargetIcons) {
+                        append("; icon=")
+                        append(presentation.icon.toString())
+                    }
                     append(")")
                 }
             }

@@ -100,7 +100,7 @@ private class RasterizedImageDataLoader(override val path: String,
       return null
     }
 
-    if (patched.first.startsWith("file:/")) {
+    if (patched.first.startsWith(FILE_SCHEME_PREFIX)) {
       return ImageDataByFilePathLoader(patched.first)
     }
     else {

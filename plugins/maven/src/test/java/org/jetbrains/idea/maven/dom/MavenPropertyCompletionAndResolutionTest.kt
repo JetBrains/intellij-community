@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.lang.properties.IProperty
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
@@ -20,12 +19,9 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem
 import org.junit.Test
-import java.util.*
-import java.util.concurrent.TimeUnit
 
 class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() = runBlocking {
     super.setUp()
 

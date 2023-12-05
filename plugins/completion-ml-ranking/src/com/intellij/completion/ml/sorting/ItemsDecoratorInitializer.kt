@@ -27,7 +27,8 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
-import java.awt.Rectangle
+import com.intellij.util.ui.JBRectangle
+import com.intellij.util.ui.UpdateScaleHelper
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 
@@ -43,11 +44,20 @@ class ItemsDecoratorInitializer : LookupTracker() {
     private val HAS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.HAS_RELEVANT_KEY")
     private val IS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.IS_RELEVANT_KEY")
 
-    private val EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(
-      CompletionMlRankingIcons.RelevantProposal))
-    private val RELEVANT_ICON = prepareIcon(CompletionMlRankingIcons.RelevantProposal)
-    private val DOWN_ICON = prepareIcon(CompletionMlRankingIcons.ProposalDown)
-    private val UP_ICON = prepareIcon(CompletionMlRankingIcons.ProposalUp)
+    private lateinit var EMPTY_ICON: Icon
+    private lateinit var RELEVANT_ICON: Icon
+    private lateinit var DOWN_ICON: Icon
+    private lateinit var UP_ICON: Icon
+    private var updateScaleHelper = UpdateScaleHelper(forceInitialRun = true)
+
+    private fun updateCachedIconsIfNeeded() {
+      updateScaleHelper.saveScaleAndRunIfChanged {
+        EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.RelevantProposal))
+        RELEVANT_ICON = prepareIcon(CompletionMlRankingIcons.RelevantProposal)
+        DOWN_ICON = prepareIcon(CompletionMlRankingIcons.ProposalDown)
+        UP_ICON = prepareIcon(CompletionMlRankingIcons.ProposalUp)
+      }
+    }
 
     fun markAsReordered(lookup: LookupImpl, value: Boolean) {
       val changed = lookup.getUserData(POSITION_CHANGED_KEY)
@@ -83,18 +93,22 @@ class ItemsDecoratorInitializer : LookupTracker() {
       }
     }
 
-    private fun prepareIcon(icon: Icon) = IconUtil.cropIcon(icon, Rectangle(4,0, 12,16))
+    private fun prepareIcon(icon: Icon) = IconUtil.cropIcon(icon, JBRectangle(4,0, 12,16))
   }
 
   override fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage) {
     if (shouldShowDiff(storage) || shouldShowRelevant(storage)) {
       lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
+        val shouldShowRelevant: Boolean
+          get() = lookup.getUserData(HAS_RELEVANT_KEY) ?: false
+        val shouldShowDiff: Boolean
+          get() = lookup.getUserData(POSITION_CHANGED_KEY) ?: false
+
         override fun customizePresentation(item: LookupElement,
                                            presentation: LookupElementPresentation): LookupElementPresentation {
-          val shouldShowRelevant = lookup.getUserData(HAS_RELEVANT_KEY) ?: false
-          val shouldShowDiff = lookup.getUserData(POSITION_CHANGED_KEY) ?: false
           if (!shouldShowRelevant && !shouldShowDiff) return presentation
 
+          updateCachedIconsIfNeeded()
           val isRelevant = item.getUserData(IS_RELEVANT_KEY) ?: false
           val diff = item.getUserData(POSITION_DIFF_KEY)?.get() ?: 0
           val newPresentation = LookupElementPresentation()
@@ -108,6 +122,13 @@ class ItemsDecoratorInitializer : LookupTracker() {
           newPresentation.icon = LeftDecoratedIcon(decorationIcon, newPresentation.icon)
           return newPresentation
         }
+
+        override fun customizeEmptyIcon(emptyIcon: Icon): Icon =
+          if (!shouldShowRelevant && !shouldShowDiff) emptyIcon
+          else {
+            updateCachedIconsIfNeeded()
+            LeftDecoratedIcon(EMPTY_ICON, emptyIcon)
+          }
       })
     }
   }

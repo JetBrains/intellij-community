@@ -2,7 +2,6 @@
 package com.intellij.platform.ml.embeddings.search.services
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -11,25 +10,31 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
-import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
+import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Thread-safe service for semantic files search.
  * Holds a state with embeddings for each available project file and persists it on disk after calculation.
- * Generates the embeddings for files not present in the loaded state at the IDE startup event if semantic files search is enabled.
+ * Generate the embeddings for files not present in the loaded state at the IDE startup event if semantic files search is enabled.
  */
 @Service(Service.Level.PROJECT)
-class FileEmbeddingsStorage(project: Project, private val cs: CoroutineScope)
-  : DiskSynchronizedEmbeddingsStorage<IndexableFile>(project, cs), Disposable {
+class FileEmbeddingsStorage(project: Project, coroutineScope: CoroutineScope)
+  : DiskSynchronizedEmbeddingsStorage<IndexableFile>(project, coroutineScope), Disposable {
   // At unique path based on project location in a file system
   override val index = DiskSynchronizedEmbeddingSearchIndex(
     project.getProjectCachePath(
@@ -51,27 +56,31 @@ class FileEmbeddingsStorage(project: Project, private val cs: CoroutineScope)
 
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInFilesTab
 
-  override suspend fun getIndexableEntities(): List<IndexableFile> {
-    // It's important that we do not block write actions here:
-    // If the write action is invoked, the read action is restarted
-    return readAction {
-      buildList {
-        ProjectFileIndex.getInstance(project).iterateContent {
-          if (it.isFile and it.isInLocalFileSystem) add(IndexableFile(it))
-          true
+  override suspend fun getIndexableEntities(files: Iterable<VirtualFile>?): ScanResult<IndexableFile> {
+    val filesCount = AtomicInteger(0)
+    val filesScanFinish = Channel<Unit>()
+    val flow = channelFlow {
+      fun processFile(file: VirtualFile) {
+        if (file.isFile && file.isInLocalFileSystem) {
+          filesCount.incrementAndGet()
+          launch {
+            filesScanFinish.receiveCatching()
+            send(flowOf(IndexableFile(file)))
+          }
         }
       }
-    }
-  }
 
-  fun renameFile(oldFileName: String, newFile: IndexableFile) {
-    if (!checkSearchEnabled()) return
-    cs.launch {
-      indexSetupJob.get()?.join()
-      EmbeddingIndexingTask.RenameDiskSynchronized(
-        oldFileName.intern(), newFile.id.intern(), newFile.indexableRepresentation.intern()
-      ).run(index)
+      files?.forEach { processFile(it) } ?: run {
+        SEMANTIC_SEARCH_TRACER.spanBuilder(spanIndexName + "Scanning").useWithScope {
+          ProjectFileIndex.getInstance(project).iterateContent {
+            processFile(it)
+            true
+          }
+        }
+      }
+      filesScanFinish.close()
     }
+    return ScanResult(flow, filesCount, filesScanFinish)
   }
 
   companion object {

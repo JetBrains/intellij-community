@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
+import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.normalizeOtlpEndPoint
@@ -16,54 +16,69 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-var traceManagerInitializer: () -> Tracer = {
-  @Suppress("OPT_IN_USAGE")
+@Suppress("SSBasedInspection")
+var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
+  val batchSpanProcessor = BatchSpanProcessor(coroutineScope = CoroutineScope(Job()), spanExporters = JaegerJsonSpanExporterManager.spanExporterProvider())
   val tracerProvider = SdkTracerProvider.builder()
-    .addSpanProcessor(BatchSpanProcessor(coroutineScope = GlobalScope, spanExporters = TracerProviderManager.spanExporterProvider()))
+    .addSpanProcessor(batchSpanProcessor)
     .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
     .build()
   val openTelemetry = OpenTelemetrySdk.builder()
     .setTracerProvider(tracerProvider)
     .build()
   val tracer = openTelemetry.getTracer("build-script")
-  TracerProviderManager.tracerProvider = tracerProvider
   BuildDependenciesDownloader.TRACER = tracer
-  tracer
+  tracer to batchSpanProcessor
 }
 
 object TraceManager {
-  private val tracer: Tracer = traceManagerInitializer()
+  private val tracer: Tracer
+  private val batchSpanProcessor: BatchSpanProcessor
 
-  @JvmStatic
+  init {
+    val config = traceManagerInitializer()
+    tracer = config.first
+    batchSpanProcessor = config.second
+  }
+
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
 
-  fun finish(): Path? {
-    return TracerProviderManager.finish()
+  suspend fun flush() {
+    batchSpanProcessor.flush()
+  }
+
+  suspend fun shutdown() {
+    batchSpanProcessor.forceShutdown()
+  }
+
+  suspend fun exportPendingSpans() {
+    batchSpanProcessor.doFlush(exportOnly = true)
   }
 }
 
-object TracerProviderManager {
+object JaegerJsonSpanExporterManager {
   private val shutdownHookAdded = AtomicBoolean()
   private val jaegerJsonSpanExporter = AtomicReference<JaegerJsonSpanExporter?>()
 
-  var tracerProvider: SdkTracerProvider? = null
-
-  var spanExporterProvider: () -> List<AsyncSpanExporter> = {
+  internal val spanExporterProvider: () -> List<AsyncSpanExporter> = {
     val list = mutableListOf(ConsoleSpanExporter(), object : AsyncSpanExporter {
       override suspend fun export(spans: Collection<SpanData>) {
         jaegerJsonSpanExporter.get()?.export(spans)
       }
 
-      override fun shutdown() {
+      override suspend fun flush() {
+        jaegerJsonSpanExporter.get()?.flush()
+      }
+
+      override suspend fun shutdown() {
         jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
       }
     })
@@ -73,42 +88,14 @@ object TracerProviderManager {
     list
   }
 
-  fun setOutput(file: Path) {
-    Files.createDirectories(file.parent)
-    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file, serviceName = "build"))?.shutdown()
+  suspend fun setOutput(file: Path) {
+    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file = file, serviceName = "build"))?.shutdown()
     if (shutdownHookAdded.compareAndSet(false, true)) {
       Runtime.getRuntime().addShutdownHook(Thread({
-                                                    tracerProvider?.let {
-                                                      tracerProvider = null
-
-                                                      it.forceFlush()?.join(10, TimeUnit.SECONDS)
-                                                      jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
-                                                      it.shutdown().join(10, TimeUnit.SECONDS)
+                                                    runBlocking {
+                                                      TraceManager.shutdown()
                                                     }
                                                   }, "close tracer"))
-    }
-  }
-
-  fun finish(): Path? {
-    try {
-      tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
-      return jaegerJsonSpanExporter.getAndSet(null)?.let {
-        val file = it.file
-        it.shutdown()
-        file
-      }
-    }
-    catch (e: IOException) {
-      e.printStackTrace(System.err)
-      return null
-    }
-  }
-
-  fun flush() {
-    try {
-      tracerProvider?.forceFlush()?.join(5, TimeUnit.SECONDS)
-    }
-    catch (ignored: Throwable) {
     }
   }
 }

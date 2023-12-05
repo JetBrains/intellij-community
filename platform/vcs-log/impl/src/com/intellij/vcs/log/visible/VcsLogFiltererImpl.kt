@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
@@ -41,10 +41,10 @@ import java.util.stream.Collectors
 class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvider>,
                          internal val storage: VcsLogStorage,
                          private val topCommitsDetailsCache: TopCommitsCache,
-                         private val commitDetailsGetter: DataGetter<out VcsFullCommitDetails>,
+                         private val commitDetailsGetter: VcsLogCommitDataCache<out VcsFullCommitDetails>,
                          internal val index: VcsLogIndex) : VcsLogFilterer {
 
-  constructor(logData: VcsLogData) : this(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
+  constructor(logData: VcsLogData) : this(logData.logProviders, logData.storage, logData.topCommitsCache, logData.fullCommitDetailsCache,
                                           logData.index)
 
   override fun filter(dataPack: DataPack,
@@ -55,7 +55,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val hashFilter = allFilters.get(VcsLogFilterCollection.HASH_FILTER)
     val filters = allFilters.without(VcsLogFilterCollection.HASH_FILTER)
 
-    TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogFilter.getName()).useWithScope { span ->
+    TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogFilter.getName()).useWithScopeBlocking { span ->
       if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
         try {
           val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
@@ -95,8 +95,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
         commitCandidates = when (val commitsForRangeFilter = filterByRange(storage, logProviders, dataPack, rangeFilters)) {
           is RangeFilterResult.Commits -> IntCollectionUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
-          is RangeFilterResult.Error -> null
-          is RangeFilterResult.InvalidRange -> null
+          RangeFilterResult.Error, RangeFilterResult.InvalidRange -> null
         }
         forceFilterByVcs = commitCandidates == null
 
@@ -435,7 +434,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getDetailsFromCache(commitIndex: Int): VcsCommitMetadata? {
-    return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCommitDataIfAvailable(commitIndex)
+    return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCachedData(commitIndex)
   }
 
   private fun Collection<VcsRef>.toReferencedCommitIndexes(): Set<Int> {
@@ -454,8 +453,10 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                              sortType: PermanentGraph.SortType,
                              commitCount: CommitCountStage,
                              filterKind: FilterKind) {
-    setAttribute(VcsTelemetrySpanAttribute.VCS_LIST.key,
-                 logProviders.values.toSet().map { it.supportedVcs }.vcsToStringPresentation())
+    if (filterKind == FilterKind.Vcs || filterKind == FilterKind.Mixed) {
+      setAttribute(VcsTelemetrySpanAttribute.VCS_LIST.key,
+                   logProviders.values.toSet().map { it.supportedVcs }.vcsToStringPresentation())
+    }
     setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERS_LIST.key, filters.keysToSet.filtersToStringPresentation())
     setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE.key, sortType.getName())
     setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT.key,

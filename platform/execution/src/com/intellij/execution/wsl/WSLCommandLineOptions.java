@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -15,7 +15,7 @@ import java.util.List;
 
 public final class WSLCommandLineOptions {
 
-  private boolean myLaunchWithWslExe = !Registry.is("wsl.use.remote.agent.for.launch.processes");
+  private boolean myLaunchWithWslExe = !Registry.is("wsl.use.remote.agent.for.launch.processes", false);
   private boolean myExecuteCommandInShell = true;
   private boolean myExecuteCommandInInteractiveShell = false;
   private boolean myExecuteCommandInLoginShell = true;
@@ -168,6 +168,8 @@ public final class WSLCommandLineOptions {
    * The initialize command is a linux command that runs before the main command.
    * If the initialize command fails (exit code != 0), the main command won't run.
    * For example, it can be used to setup environment before running the app.
+   * Note, that this function <strong>prepends</strong> commands, so calling it with 1 and 2 will
+   * produce <pre>2 && 1</pre>
    * 
    * @param initCommand a linux shell command (may contain shell builtin commands)
    */

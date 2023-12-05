@@ -97,8 +97,7 @@ object EventsSchemeBuilder {
         if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
           val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
             counterUsageCollectorEP.implementationClass, descriptor)
-          counterCollectors.add(FeatureUsageCollectorInfo(collector,
-                                                          PluginSchemeDescriptor(collectorPlugin, descriptor.version)))
+          counterCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
         }
       }
     }
@@ -108,15 +107,13 @@ object EventsSchemeBuilder {
     UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector,
-                                                      PluginSchemeDescriptor(collectorPlugin, descriptor.version)))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector,
-                                                      PluginSchemeDescriptor(collectorPlugin, descriptor.version)))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
@@ -143,7 +140,7 @@ object EventsSchemeBuilder {
         .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
         .toSet()
       result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name,
-                                         group.recorder, PluginSchemeDescriptor(plugin.id, plugin.version))
+                                         group.recorder, PluginSchemeDescriptor(plugin.id))
     }
     return result.values
   }

@@ -197,12 +197,16 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   }
 
   protected void paintHover(Graphics g, boolean click) {
+    paintHover(g, click ? JBUI.CurrentTheme.ActionButton.pressedBackground() : JBUI.CurrentTheme.ActionButton.hoverBorder());
+  }
+
+  protected void paintHover(Graphics g, Color color) {
     Graphics2D g2 = (Graphics2D)g.create();
 
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-      g2.setColor(click ? JBUI.CurrentTheme.ActionButton.pressedBackground() : JBUI.CurrentTheme.ActionButton.hoverBorder());
+      g2.setColor(color);
 
       Rectangle rect = new Rectangle(getSize());
       JBInsets.removeFrom(rect, getInsets());

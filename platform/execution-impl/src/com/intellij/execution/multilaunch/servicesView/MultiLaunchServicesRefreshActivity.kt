@@ -3,22 +3,25 @@ package com.intellij.execution.multilaunch.servicesView
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
 import com.intellij.execution.multilaunch.execution.ExecutionModel
 import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.CoroutineScope
 
 class MultiLaunchServicesRefreshActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val executionModel = ExecutionModel.getInstance(project)
-    val configurations = RunManager.getInstance(project).allConfigurationsList.filterIsInstance<MultiLaunchConfiguration>()
+    val runnerAndConfigurationsSettings = RunManager.getInstance(project).allSettings.filter { it.configuration is MultiLaunchConfiguration }
     ExecutionEngine.getInstance(project).initialize()
-    executionModel.configurations.putAll(configurations.associateWith { MultiLaunchExecutionModel(it) })
+    executionModel.configurations.putAll(runnerAndConfigurationsSettings.associate {
+      val configuration = it.configuration as MultiLaunchConfiguration
+      configuration to MultiLaunchExecutionModel(it, configuration)
+    })
     project.messageBus.connect(MyService.getInstance(project).scope).subscribe(RunManagerListener.TOPIC,MultiLaunchConfigurationsListener(project))
   }
 
@@ -34,7 +37,7 @@ class MultiLaunchServicesRefreshActivity : ProjectActivity {
     private val executionModel by lazy { ExecutionModel.getInstance(project) }
     override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings) {
       val configuration = settings.configuration as? MultiLaunchConfiguration ?: return
-      executionModel.configurations.putIfAbsent(configuration, MultiLaunchExecutionModel(configuration))
+      executionModel.configurations.putIfAbsent(configuration, MultiLaunchExecutionModel(settings, configuration))
       serviceViewUpdatePublisher.refresh()
     }
 

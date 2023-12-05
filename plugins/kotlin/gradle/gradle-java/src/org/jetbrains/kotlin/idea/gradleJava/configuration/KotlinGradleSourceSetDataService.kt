@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.TargetPlatformKind
@@ -140,8 +139,12 @@ class KotlinGradleProjectDataService : AbstractProjectDataService<ModuleData, Vo
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
     ) {
+        if (projectData?.owner != GradleConstants.SYSTEM_ID) return
+
         for (moduleNode in toImport) {
-            // If source sets are present, configure facets in the their modules
+            // This code is used for when resolveModulePerSourceSet is set to false in the Gradle settings.
+            // In this case, a single module is created per Gradle module rather than one per source set,
+            // which means the KotlinGradleSourceSetDataService will not be applicable.
             if (ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY).isNotEmpty()) continue
 
             val moduleData = moduleNode.data
@@ -337,10 +340,12 @@ private fun IKotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<Modul
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return
     val kotlinGradleSourceSetDataNodes = ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "main" }?.let {
-        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputDir
+            ?: (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
     }
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "test" }?.let {
-        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputDir
+            ?: (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
     }
 }
 

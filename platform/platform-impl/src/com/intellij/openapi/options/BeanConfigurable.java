@@ -8,11 +8,9 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -20,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -28,11 +25,9 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * See {@link ConfigurableBuilder} for {@link UiDslUnnamedConfigurable} alternative.
- */
-public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors {
-  private final T myInstance;
+public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
+
+  private final @NotNull T myInstance;
   private @NlsContexts.BorderTitle String myTitle;
 
   private final List<BeanField> myFields = new ArrayList<>();
@@ -47,8 +42,8 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private abstract static class BeanPropertyAccessor {
-    abstract Object getBeanValue(Object instance);
-    abstract void setBeanValue(Object instance, @NotNull Object value);
+    abstract Object getBeanValue(@NotNull Object instance);
+    abstract void setBeanValue(@NotNull Object instance, @NotNull Object value);
   }
 
   private static final class BeanFieldAccessor extends BeanPropertyAccessor {
@@ -118,12 +113,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @Override
-    Object getBeanValue(Object instance) {
+    Object getBeanValue(@NotNull Object instance) {
       return myGetter.get();
     }
 
     @Override
-    void setBeanValue(Object instance, @NotNull Object value) {
+    void setBeanValue(@NotNull Object instance, @NotNull Object value) {
       //noinspection unchecked
       mySetter.set((T) value);
     }
@@ -137,12 +132,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @Override
-    Object getBeanValue(Object instance) {
+    Object getBeanValue(@NotNull Object instance) {
       return myProperty.get();
     }
 
     @Override
-    void setBeanValue(Object instance, @NotNull Object value) {
+    void setBeanValue(@NotNull Object instance, @NotNull Object value) {
       //noinspection unchecked
       myProperty.set((T)value);
     }
@@ -165,17 +160,17 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
 
     abstract @NotNull T createComponent();
 
-    boolean isModified(Object instance) {
+    boolean isModified(@NotNull Object instance) {
       final Object componentValue = getComponentValue();
       final Object beanValue = myAccessor.getBeanValue(instance);
       return !Comparing.equal(componentValue, beanValue);
     }
 
-    void apply(Object instance) {
+    void apply(@NotNull Object instance) {
       myAccessor.setBeanValue(instance, getComponentValue());
     }
 
-    void reset(Object instance) {
+    void reset(@NotNull Object instance) {
       setComponentValue(myAccessor.getBeanValue(instance));
     }
 
@@ -233,7 +228,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myTitle = title;
   }
 
-  protected @Nullable T getInstance() {
+  protected @NotNull T getInstance() {
     return myInstance;
   }
 
@@ -307,15 +302,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
 
   @Override
   public JComponent createComponent() {
-    final JPanel panel = new JPanel(new GridLayout(myFields.size(), 1, 0, JBUI.scale(5)));
-    for (BeanField field: myFields) {
-      panel.add(field.getComponent());
-    }
-    BorderLayoutPanel result = JBUI.Panels.simplePanel().addToTop(panel);
-    if (myTitle != null) {
-      result.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
-    }
-    return result;
+    return ConfigurableBuilderHelper.createBeanPanel(this, getComponents());
+  }
+
+  @Override
+  public void createContent(@NotNull Panel rootPanel) {
+    ConfigurableBuilderHelper.integrateBeanPanel(rootPanel, this, getComponents());
   }
 
   @Override
@@ -338,5 +330,9 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     for (BeanField field : myFields) {
       field.reset(myInstance);
     }
+  }
+
+  private List<JComponent> getComponents() {
+    return ContainerUtil.map(myFields, field -> field.getComponent());
   }
 }

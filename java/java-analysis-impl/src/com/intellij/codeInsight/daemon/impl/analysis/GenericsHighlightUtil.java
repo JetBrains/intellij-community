@@ -968,15 +968,6 @@ public final class GenericsHighlightUtil {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeParameter2).descriptionAndTooltip(message);
         }
       }
-      if (!level.isAtLeast(LanguageLevel.JDK_1_7)) {
-        for (PsiJavaCodeReferenceElement referenceElement : typeParameter1.getExtendsList().getReferenceElements()) {
-          PsiElement resolve = referenceElement.resolve();
-          if (resolve instanceof PsiTypeParameter && ArrayUtilRt.find(parameters, resolve) > i) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceElement).descriptionAndTooltip(
-              JavaErrorBundle.message("illegal.forward.reference"));
-          }
-        }
-      }
     }
     return null;
   }
@@ -1246,8 +1237,7 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList,
-                                            LanguageLevel languageLevel) {
+  static HighlightInfo.Builder checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList, LanguageLevel languageLevel) {
     JavaResolveResult resolveResult = null;
     PsiElement parent = refParamList.getParent();
     PsiElement qualifier = null;

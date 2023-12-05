@@ -125,10 +125,14 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+  private static CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
     initializeTestEnvironment();
+  }
+
+  protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
+    defaultSettings = settings;
   }
 
   /**
@@ -906,6 +910,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static @NotNull String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
+  }
+
+  public final @NotNull String getQualifiedTestMethodName() {
+    return String.format("%s.%s", this.getClass().getName(), getName());
   }
 
   protected @NotNull String getTestDirectoryName() {

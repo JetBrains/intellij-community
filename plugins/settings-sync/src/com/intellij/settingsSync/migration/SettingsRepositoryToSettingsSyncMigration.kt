@@ -14,9 +14,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.*
-import com.intellij.settingsSync.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.INSTALL_SETTINGS_REPOSITORY
-import com.intellij.settingsSync.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.USE_NEW_SETTINGS_SYNC
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.INSTALL_SETTINGS_REPOSITORY
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.USE_NEW_SETTINGS_SYNC
 import com.intellij.settingsSync.plugins.PluginManagerProxy
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path

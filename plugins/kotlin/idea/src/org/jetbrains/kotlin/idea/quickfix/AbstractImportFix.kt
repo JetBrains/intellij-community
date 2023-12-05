@@ -206,6 +206,9 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
         return createSingleImportAction(element.project, editor, element, suggestions)
     }
 
+    override fun createImportAction(editor: Editor, file: KtFile): QuestionAction? =
+        element?.let { createAction(editor, it, suggestions) }
+
     override fun createAutoImportAction(
         editor: Editor,
         file: KtFile,

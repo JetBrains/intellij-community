@@ -11,6 +11,8 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
@@ -216,8 +218,9 @@ class MavenCommandLineSetup(private val project: Project,
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val file = settings.myRunnerParameters?.let { VfsUtil.findFileByIoFile(it.workingDirFile, false) } ?: throw CantRunException(
       message("maven.target.message.unable.to.use.working.directory", name))
-    val module = ProjectFileIndex.getInstance(project).getModuleForFile(file) ?: throw CantRunException(
-      message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))
+    val module = ReadAction.compute<Module?, Throwable> { ProjectFileIndex.getInstance(project).getModuleForFile(file) }
+                 ?: throw CantRunException(
+                   message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))
     val mavenProject: MavenProject = mavenProjectsManager.findProject(module) ?: throw CantRunException(
       message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))
 

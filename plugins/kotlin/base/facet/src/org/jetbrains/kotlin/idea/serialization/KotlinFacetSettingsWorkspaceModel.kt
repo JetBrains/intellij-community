@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.serialization
 
-import org.jetbrains.kotlin.build.serializeToPlainText
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.copyOf
@@ -15,6 +14,7 @@ import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.toTargetPlatform
 
 class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder) : IKotlinFacetSettings {
     private var myUseProjectSettings = entity.useProjectSettings
@@ -25,15 +25,10 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             myUseProjectSettings = value
         }
 
-    private var _version = 5
-    override var version: Int
-        get() = _version
-        set(value) {
-            _version = value
-        }
+    override var version: Int = KotlinFacetSettings.CURRENT_VERSION
 
     override fun updateMergedArguments() {
-        //_mergedCompilerArguments = computeMergedArguments()
+        // Do nothing
     }
 
     private fun computeMergedArguments(): CommonCompilerArguments? {
@@ -105,7 +100,9 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
     override var externalSystemRunTasks: List<ExternalSystemRunTask>
         get() = _externalSystemRunTasks
         set(value) {
-            //TODO: entity
+            // This class is not stored in workspace model entity because it is needed only for MPP
+            // As far as there is no plans to migrate Gradle import on new workspace model in the nearest future, it will be absent in entity
+            // But serialization definitely needs to be implemented in process of migrating Gradle import
             _externalSystemRunTasks = value
         }
 
@@ -183,7 +180,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             entity.sourceSetNames = value.toMutableList()
         }
 
-    private var _targetPlatform : TargetPlatform? = entity.targetPlatform.deserializeTargetPlatformByComponentPlatforms()
+    private var _targetPlatform : TargetPlatform? = JvmPlatforms.defaultJvmPlatform.singleOrNull()?.toTargetPlatform()
     override var targetPlatform: TargetPlatform?
         get() {
             val args = compilerArguments
@@ -205,11 +202,6 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             entity.testOutputPath = value ?: ""
             _testOutputPath = value
         }
-
-    private fun CommonCompilerArguments.updateMergedCompilerArguments(block: CommonCompilerArguments.() -> Unit) {
-        this.block()
-        entity.mergedCompilerArguments = serializeToPlainText(this)
-    }
 
     private fun CommonCompilerArguments.updateCompilerArguments(block: CommonCompilerArguments.() -> Unit) {
         this.block()

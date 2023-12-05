@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -10,25 +13,31 @@ import java.util.logging.Logger
  * Provides a current JBR SDK
  */
 object JdkDownloader {
-  @JvmStatic
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, infoLog: (String) -> Unit): Path {
+  fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, infoLog: (String) -> Unit): Path {
+    return runBlocking(Dispatchers.IO) {
+      getJdkHome(communityRoot, infoLog)
+    }
+  }
+
+  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, infoLog: (String) -> Unit): Path {
     val os = OS.current
     val arch = Arch.current
-    return getJdkHome(communityRoot, os, arch, infoLog)
+    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, infoLog = infoLog)
   }
 
   @JvmStatic
   fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return getJdkHome(communityRoot) { msg: String? ->
-      Logger.getLogger(JdkDownloader::class.java.name).info(msg)
+    return blockingGetJdkHome(communityRoot) {
+      Logger.getLogger(JdkDownloader::class.java.name).info(it)
     }
   }
 
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, infoLog: (String) -> Unit): Path {
-    val jdkUrl = getUrl(communityRoot, os, arch)
-    val jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl)
-    val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(
-      communityRoot, jdkArchive, BuildDependenciesExtractOptions.STRIP_ROOT)
+  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, infoLog: (String) -> Unit): Path {
+    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch)
+    val jdkArchive = downloadFileToCacheLocation(url = jdkUrl.toString(), communityRoot = communityRoot)
+    val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot = communityRoot,
+                                                                              archiveFile = jdkArchive,
+                                                                              BuildDependenciesExtractOptions.STRIP_ROOT)
     infoLog("jps-bootstrap JDK is at $jdkExtracted")
 
     val jdkHome: Path = if (os == OS.MACOSX) {
@@ -65,9 +74,9 @@ object JdkDownloader {
       Arch.ARM64 -> "aarch64"
     }
 
-    val dependenciesProperties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
-    val jdkBuild = dependenciesProperties.property("jdkBuild")
-    val jdkBuildSplit = jdkBuild.split("b".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    val dependencyProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+    val jdkBuild = dependencyProperties.property("jdkBuild")
+    val jdkBuildSplit = jdkBuild.split("b".toRegex()).dropLastWhile { it.isEmpty() }
     check(jdkBuildSplit.size == 2) { "Malformed jdkBuild property: $jdkBuild" }
     val version = jdkBuildSplit[0]
     val build = "b" + jdkBuildSplit[1]

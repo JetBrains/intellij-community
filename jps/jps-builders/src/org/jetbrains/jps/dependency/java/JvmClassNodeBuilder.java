@@ -8,6 +8,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeBuilder;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.*;
@@ -119,28 +120,28 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         // only primitive, String, Class, Enum, another Annotation or array of any of these are allowed
         switch (name) {
           case "java/lang/Integer":
-            descriptor.append("I;");
+            descriptor.append("I");
             break;
           case "java/lang/Short":
-            descriptor.append("S;");
+            descriptor.append("S");
             break;
           case "java/lang/Long":
-            descriptor.append("J;");
+            descriptor.append("J");
             break;
           case "java/lang/Byte":
-            descriptor.append("B;");
+            descriptor.append("B");
             break;
           case "java/lang/Char":
-            descriptor.append("C;");
+            descriptor.append("C");
             break;
           case "java/lang/Boolean":
-            descriptor.append("Z;");
+            descriptor.append("Z");
             break;
           case "java/lang/Float":
-            descriptor.append("F;");
+            descriptor.append("F");
             break;
           case "java/lang/Double":
-            descriptor.append("D;");
+            descriptor.append("D");
             break;
           default:
             descriptor.append("L").append(name).append(";");
@@ -357,9 +358,11 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   @Override
   public void addUsage(Usage usage) {
-    myUsages.add(usage);
+    ReferenceID owner = usage.getElementOwner();
+    if (!(owner instanceof JvmNodeReferenceID) || !JvmClass.OBJECT_CLASS_NAME.equals(((JvmNodeReferenceID)owner).getNodeName())) {
+      myUsages.add(usage);
+    }
   }
-
 
   // todo: ignore private nodes on the client side
   @Override
@@ -374,8 +377,30 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     if (myIsGenerated) {
       flags = flags.deriveIsGenerated();
     }
+    
     if (myIsModule) {
+      for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
+        addUsage(usage);
+      }
       return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myUsages);
+    }
+
+    for (Usage usage : Iterators.flat(new TypeRepr.ClassType(mySuperClass).getUsages(), Iterators.flat(Iterators.map(myInterfaces, s -> new TypeRepr.ClassType(s).getUsages())))) {
+      addUsage(usage);
+    }
+    for (Usage usage : Iterators.flat(Iterators.map(myFields, f -> f.getType().getUsages()))) {
+      addUsage(usage);
+    }
+    for (JvmMethod jvmMethod : myMethods) {
+      for (Usage usage : jvmMethod.getType().getUsages()) {
+        addUsage(usage);
+      }
+      for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getArgTypes(), t -> t.getUsages()))) {
+        addUsage(usage);
+      }
+      for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getExceptions(), t -> t.getUsages()))) {
+        addUsage(usage);
+      }
     }
     return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages);
   }
@@ -390,15 +415,6 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     myInterfaces = Iterators.asIterable(interfaces);
 
     myClassNameHolder.set(name);
-
-    if (mySuperClass != null && !Utils.OBJECT_CLASS_NAME.equals(mySuperClass)) {
-      addUsage(new ClassUsage(mySuperClass));
-    }
-
-    for (String ifaceName : myInterfaces) {
-      addUsage(new ClassUsage(ifaceName));
-    }
-
     processSignature(sig);
   }
 
@@ -479,7 +495,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-          myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, exceptions, defaultValue.get()));
+          myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));
         }
       }
 

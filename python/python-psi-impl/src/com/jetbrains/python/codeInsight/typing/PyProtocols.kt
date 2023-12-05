@@ -7,6 +7,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyPossibleClassMember
+import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.resolveImplicitlyInvokedMethods
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -42,6 +43,9 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
           if (cls != null && !isProtocol(cls, context)) {
             return@visitMembers true
           }
+        }
+        if (e is PyTypeParameter) {
+          return@visitMembers true
         }
 
         val name = e.name ?: return@visitMembers true

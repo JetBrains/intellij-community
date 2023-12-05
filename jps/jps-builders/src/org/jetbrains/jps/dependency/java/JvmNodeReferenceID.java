@@ -2,13 +2,26 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.ReferenceID;
+
+import java.io.IOException;
 
 public final class JvmNodeReferenceID implements ReferenceID {
   private final String myName;
 
   public JvmNodeReferenceID(@NotNull String name) {
     myName = name;
+  }
+
+  public JvmNodeReferenceID(GraphDataInput in) throws IOException {
+    myName = in.readUTF();
+  }
+
+  @Override
+  public void write(GraphDataOutput out) throws IOException {
+    out.writeUTF(myName);
   }
 
   /**

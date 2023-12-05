@@ -17,6 +17,7 @@ interface KotlinCompilationReflection {
     val konanTargetName: String?
     val compileKotlinTaskName: String?
     val associateCompilations: Iterable<KotlinCompilationReflection>
+    val archiveTaskName: String?
 }
 
 private class KotlinCompilationReflectionImpl(private val instance: Any) : KotlinCompilationReflection {
@@ -57,6 +58,11 @@ private class KotlinCompilationReflectionImpl(private val instance: Any) : Kotli
         instance.callReflectiveGetter<List<*>>("getAssociateWith", logger).orEmpty()
             .filterNotNull()
             .map { compilation -> KotlinCompilationReflection(compilation) }
+    }
+
+    override val archiveTaskName: String? by lazy {
+        if (instance.javaClass.getMethodOrNull("getArchiveTaskName") == null) null
+        else instance.callReflectiveGetter("getArchiveTaskName", logger)
     }
 
     companion object {

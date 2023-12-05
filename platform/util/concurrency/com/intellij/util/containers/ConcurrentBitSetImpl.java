@@ -20,7 +20,7 @@ import java.util.function.IntUnaryOperator;
  */
 class ConcurrentBitSetImpl implements ConcurrentBitSet {
   ConcurrentBitSetImpl() {
-    this(32);
+    this(32 * BITS_PER_WORD);
   }
   ConcurrentBitSetImpl(int estimatedSize) {
     this(new int[Math.max(32, estimatedSize/BITS_PER_WORD)]);

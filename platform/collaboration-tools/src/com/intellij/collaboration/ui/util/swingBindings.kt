@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.async.launchNow
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
@@ -114,6 +115,14 @@ fun JComponent.bindVisibilityIn(scope: CoroutineScope, visibilityFlow: Flow<Bool
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     visibilityFlow.collect {
       isVisible = it
+    }
+  }
+}
+
+fun JComponent.bindEnabledIn(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    enabledFlow.collect {
+      isEnabled = it
     }
   }
 }
@@ -330,7 +339,7 @@ fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: Mutabl
 
 private typealias Block = CoroutineScope.() -> Unit
 
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
   : Activatable {
 
   private var scope: CoroutineScope? = null
@@ -349,8 +358,9 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun showNotify() {
-    scope = CoroutineScope(context()).apply {
+    scope = GlobalScope.namedChildScope("ActivatableCoroutineScopeProvider", context(), true).apply {
       for (block in blocks) {
         launch { block() }
       }

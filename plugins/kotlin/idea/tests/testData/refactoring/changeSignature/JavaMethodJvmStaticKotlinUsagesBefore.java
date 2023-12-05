@@ -4,4 +4,3 @@ public class JavaTest {
         Test.fooStatic("First", 2);
     }
 }
-// IGNORE_K2

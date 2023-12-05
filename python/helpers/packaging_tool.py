@@ -41,7 +41,7 @@ def error_no_pip():
 
 
 def do_list():
-    if sys.version_info < (3, 12):
+    if sys.version_info < (3, 10):
         try:
             import pkg_resources
         except ImportError:
@@ -61,6 +61,8 @@ def do_list():
             except Exception:
                 requirements = []
             requires = ':'.join([str(x) for x in requirements])
+            if pkg.name is None or pkg.version is None or pkg._path is None:
+                continue
             sys.stdout.write('\t'.join([pkg.name, pkg.version, str(pkg._path.parent), requires])+chr(10))
     sys.stdout.flush()
 

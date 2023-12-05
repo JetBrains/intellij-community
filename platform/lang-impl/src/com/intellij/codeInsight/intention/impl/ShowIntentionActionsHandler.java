@@ -64,6 +64,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck.DeliberateAdditionalCheckInIntentions;
+
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(ShowIntentionActionsHandler.class);
 
@@ -371,7 +373,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (Registry.is("ide.check.stub.text.consistency") ||
         ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       if (hostFile.isValid()) {
-        StubTextInconsistencyException.checkStubTextConsistency(hostFile);
+        StubTextInconsistencyException.checkStubTextConsistency(hostFile, DeliberateAdditionalCheckInIntentions);
       }
     }
   }

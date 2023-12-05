@@ -147,11 +147,11 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
     return CoverageTreeNode(info).also { add(it) }
   }
 
-  private fun isModified(className: String): Boolean {
-    val psiClass = runReadAction { getPsiClass(className)?.takeIf { it.isValid } } ?: return false
-    val virtualFile = runReadAction { psiClass.containingFile.virtualFile }
+  private fun isModified(className: String): Boolean = runReadAction {
+    val psiClass = getPsiClass(className)?.takeIf { it.isValid } ?: return@runReadAction false
+    val virtualFile = psiClass.containingFile.virtualFile
     val status = fileStatusManager.getStatus(virtualFile)
-    return CoverageViewExtension.isModified(status)
+    return@runReadAction CoverageViewExtension.isModified(status)
   }
 
   private fun getPsiClass(className: String): PsiNamedElement? = cache.getOrPut(className) {

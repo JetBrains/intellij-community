@@ -18,8 +18,7 @@ import java.util.*
 class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
   private var repoPath: String? = null
 
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     repoPath = File(myDir, "repo").path

@@ -14,6 +14,32 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SE_TABS
 import com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.CLOSE_POPUP_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.COLLECTED_RESULTS_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.EXPERIMENT_GROUP
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.FORCE_EXPERIMENT_GROUP
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.GROUP
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.IS_INTERNAL
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.IS_MIXED_LIST
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.IS_PROJECT_DISPOSED_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.LOG_FEATURES_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.ORDER_BY_ML_GROUP
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.PROJECT_OPENED_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.REBUILD_REASON_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SEARCH_INDEX_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SEARCH_RESTARTED
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SEARCH_START_TIME_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SEARCH_STATE_FEATURES_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SELECTED_ELEMENTS_CONSISTENT
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SELECTED_ELEMENTS_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SELECTED_INDEXES_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SESSION_FINISHED
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SESSION_ID_LOG_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.SE_TAB_ID_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.TIME_TO_FIRST_RESULT_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.TOTAL_NUMBER_OF_ITEMS_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.TYPED_BACKSPACES_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Fields.TYPED_SYMBOL_KEYS
 import com.intellij.searchEverywhereMl.ranking.features.*
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlItemIdProvider
 import org.jetbrains.annotations.ApiStatus
@@ -220,17 +246,15 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  private fun getSessionLevelEvents(
-    project: Project?,
-    shouldLogFeatures: Boolean,
-    context: SearchEverywhereMLContextInfo
-  ): List<EventPair<*>> {
-    val sessionEvents = listOf(
-      PROJECT_OPENED_KEY.with(project != null),
-      LOG_FEATURES_DATA_KEY.with(shouldLogFeatures),
-    )
-    val contextEvents = if (shouldLogFeatures) context.features else emptyList()
-    return sessionEvents + contextEvents
+  private fun getSessionLevelEvents(project: Project?,
+                                    shouldLogFeatures: Boolean,
+                                    context: SearchEverywhereMLContextInfo) = buildList {
+    add(PROJECT_OPENED_KEY.with(project != null))
+    add(LOG_FEATURES_DATA_KEY.with(shouldLogFeatures))
+
+    if (shouldLogFeatures) {
+      addAll(context.features)
+    }
   }
 
   private fun isLoggingEnabled() =
@@ -241,21 +265,27 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                         elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                                         selectedItems: List<Any>): List<EventPair<*>> {
+    if (selectedElements.isEmpty()) return emptyList()
+
     return buildList {
-      if (selectedElements.isNotEmpty()) {
-        add(SELECTED_INDEXES_DATA_KEY.with(selectedElements.map { it }))
-        add(SELECTED_ELEMENTS_DATA_KEY.with(selectedElements.map {
-          if (it < elements.size) {
-            val element = elements[it].element
-            val elementId = elementIdProvider.getId(element)
-            if (elementId != null) {
-              return@map elementId
-            }
-          }
-          return@map -1
-        }))
-        add(SELECTED_ELEMENTS_CONSISTENT.with(isSelectionConsistent(selectedElements, selectedItems, elements)))
-      }
+      add(SELECTED_INDEXES_DATA_KEY.with(selectedElements.toList()))
+      add(SELECTED_ELEMENTS_DATA_KEY.with(mapSelectedIndexToElementId(selectedElements, elements, elementIdProvider)))
+      add(SELECTED_ELEMENTS_CONSISTENT.with(isSelectionConsistent(selectedElements, selectedItems, elements)))
+    }
+  }
+
+  /**
+   * Maps every selected element, based on index, to its ID
+   * If the number of selected elements does not match the number of elements, each element will have ID -1.
+   */
+  private fun mapSelectedIndexToElementId(selectedIndices: IntArray,
+                                          elements: List<SearchEverywhereFoundElementInfoWithMl>,
+                                          idProvider: SearchEverywhereMlItemIdProvider): List<Int> {
+    return selectedIndices.map { index ->
+      if (index >= elements.lastIndex) return@map -1
+
+      val element = elements[index].element
+      return@map idProvider.getId(element) ?: -1
     }
   }
 
@@ -274,35 +304,38 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 82, MLSE_RECORDER_ID)
     private const val REPORTED_ITEMS_LIMIT = 50
+  }
 
-    private val IS_INTERNAL = EventFields.Boolean("isInternal")
-    private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
-    private val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
-    private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
-    private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
+  object Fields {
+    val GROUP = EventLogGroup("mlse.log", 83, MLSE_RECORDER_ID)
+
+    val IS_INTERNAL = EventFields.Boolean("isInternal")
+    val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
+    val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
+    val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
+    val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
 
     // context fields
-    private val PROJECT_OPENED_KEY = EventFields.Boolean("projectOpened")
-    private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
-    private val SE_TAB_ID_KEY = EventFields.String("seTabId", SE_TABS)
-    private val CLOSE_POPUP_KEY = EventFields.Boolean("closePopup")
-    private val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
-    internal val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
-    private val SESSION_ID_LOG_DATA_KEY = EventFields.Int("sessionId")
-    private val SEARCH_INDEX_DATA_KEY = EventFields.Int("searchIndex")
-    private val LOG_FEATURES_DATA_KEY = EventFields.Boolean("logFeatures")
-    private val TYPED_SYMBOL_KEYS = EventFields.Int("typedSymbolKeys")
-    private val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = EventFields.Int("totalItems")
-    private val TYPED_BACKSPACES_DATA_KEY = EventFields.Int("typedBackspaces")
-    private val SELECTED_INDEXES_DATA_KEY = EventFields.IntList("selectedIndexes")
+    val PROJECT_OPENED_KEY = EventFields.Boolean("projectOpened")
+    val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
+    val SE_TAB_ID_KEY = EventFields.String("seTabId", SE_TABS)
+    val CLOSE_POPUP_KEY = EventFields.Boolean("closePopup")
+    val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
+    val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
+    val SESSION_ID_LOG_DATA_KEY = EventFields.Int("sessionId")
+    val SEARCH_INDEX_DATA_KEY = EventFields.Int("searchIndex")
+    val LOG_FEATURES_DATA_KEY = EventFields.Boolean("logFeatures")
+    val TYPED_SYMBOL_KEYS = EventFields.Int("typedSymbolKeys")
+    val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = EventFields.Int("totalItems")
+    val TYPED_BACKSPACES_DATA_KEY = EventFields.Int("typedBackspaces")
+    val SELECTED_INDEXES_DATA_KEY = EventFields.IntList("selectedIndexes")
 
     @VisibleForTesting
     val SELECTED_ELEMENTS_DATA_KEY = EventFields.IntList("selectedIds")
-    private val SELECTED_ELEMENTS_CONSISTENT = EventFields.Boolean("isConsistent")
+    val SELECTED_ELEMENTS_CONSISTENT = EventFields.Boolean("isConsistent")
 
-    private val IS_MIXED_LIST = EventFields.Boolean("isMixedList")
+    val IS_MIXED_LIST = EventFields.Boolean("isMixedList")
 
     // item fields
     internal val SEARCH_STATE_FEATURES_DATA_KEY =
@@ -325,7 +358,6 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
       "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_DATA_KEY, ML_WEIGHT_KEY, ABSENT_FEATURES_KEY
     )
-
 
     // events
     @VisibleForTesting

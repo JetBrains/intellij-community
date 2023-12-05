@@ -75,10 +75,10 @@ fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: S
     runBlockingModalWithRawProgressReporter(owner, icsMessage("task.sync.title")) {
       if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
         com.intellij.configurationStore.saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = false)
-        icsManager.sync(syncType = syncType, project = project) { copyLocalConfig() }
+        icsManager.sync(syncType = syncType) { copyLocalConfig() }
       }
       else {
-        icsManager.sync(syncType = syncType, project = project, localRepositoryInitializer = null)
+        icsManager.sync(syncType = syncType, localRepositoryInitializer = null)
       }
     }
   }

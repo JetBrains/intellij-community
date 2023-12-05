@@ -1,5 +1,5 @@
 # <14.7 commits removed
-# Diff with EE: approved not included
+# Diff with EE: approvalsRequired not included
 fragment mergeRequest on MergeRequest {
   id
   iid

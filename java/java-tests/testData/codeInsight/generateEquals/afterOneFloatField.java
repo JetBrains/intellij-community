@@ -13,6 +13,6 @@ class Test {
     }
 
     public int hashCode() {
-        return (d != 0.0f ? Float.floatToIntBits(d) : 0);
+        return Float.floatToIntBits(d);
     }
 }

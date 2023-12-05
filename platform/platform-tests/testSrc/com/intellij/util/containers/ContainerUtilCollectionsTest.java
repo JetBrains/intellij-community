@@ -8,6 +8,7 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.Java11Shim;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
@@ -408,6 +409,10 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
     ConcurrentLongObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentLongObjectMap();
+    check(map);
+  }
+
+  private static void check(ConcurrentLongObjectMap<Object> map) {
     for (long i = Long.MAX_VALUE-1000; i != Long.MIN_VALUE+1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -427,10 +432,37 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertTrue(map.isEmpty());
   }
 
+  @Test(timeout = TIMEOUT)
+  public void testOldConcurrentLongObjectHashMap() {
+    ConcurrentLongObjectMap<Object> map = Java11Shim.INSTANCE.createConcurrentLongObjectMap();
+    check(map);
+  }
+
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
     IntObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+    for (int i = 0; i < 1000; i++) {
+      Object prev = map.put(i, i);
+      assertNull(prev);
+      Object ret = map.get(i);
+      assertTrue(ret instanceof Integer);
+      assertEquals(i, ret);
+
+      if (i != 0) {
+        Object remove = map.remove(i - 1);
+        assertTrue(remove instanceof Integer);
+        assertEquals(i - 1, remove);
+      }
+      assertEquals(1, map.size());
+    }
+    map.clear();
+    assertEquals(0, map.size());
+  }
+
+  @Test
+  public void testOldConcurrentIntObjectHashMap() {
+    IntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -678,9 +710,13 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test
   public void testEntrySet() {
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectMap());
+    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectMap());
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap());
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectWeakValueMap());
     checkEntrySetIterator(ContainerUtil.createIntKeyWeakValueMap());
+
+    checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentLongObjectMap());
+    checkEntrySetIterator(Java11Shim.INSTANCE.createConcurrentLongObjectMap());
   }
 
   @Test
@@ -746,6 +782,41 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertEquals(otherKey, iterator.next().getKey());
     iterator.remove();
     UsefulTestCase.assertEmpty(ContainerUtil.collect(map.entrySet().iterator()));
+    assertTrue(map.isEmpty());
+  }
+  private void checkEntrySetIterator(ConcurrentLongObjectMap<Object> map) {
+    map.clear();
+    int K1 = 1;
+    map.put(K1, this);
+    int K2 = 2;
+    map.put(K2, map);
+
+    assertEquals(2, ContainerUtil.collect(map.entries().iterator()).size());
+    assertEquals(2, ContainerUtil.collect(map.entries().iterator()).size());
+
+    Iterator<ConcurrentLongObjectMap.LongEntry<Object>> iterator = map.entries().iterator();
+    assertTrue(iterator.hasNext());
+    ConcurrentLongObjectMap.LongEntry<Object> next = iterator.next();
+    long key = next.getKey();
+    assertTrue(key==K1 || key==K2);
+    iterator.remove();
+
+    assertEquals(1, ContainerUtil.collect(map.entries().iterator()).size());
+    Iterator<ConcurrentLongObjectMap.LongEntry<Object>> it2 = map.entries().iterator();
+    long otherKey = K1 + K2 - key;
+    assertEquals(otherKey, it2.next().getKey());
+    assertFalse(it2.hasNext());
+    try {
+      it2.next();
+      fail("must throw");
+    }
+    catch (NoSuchElementException ignored) {
+    }
+
+    assertTrue(iterator.hasNext());
+    assertEquals(otherKey, iterator.next().getKey());
+    iterator.remove();
+    UsefulTestCase.assertEmpty(ContainerUtil.collect(map.entries().iterator()));
     assertTrue(map.isEmpty());
   }
 }

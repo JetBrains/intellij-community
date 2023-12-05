@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit3Framework
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.lang.Language
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
+import com.intellij.lang.Language
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -43,7 +43,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
                 UNSURE -> CachedValuesManager.getCachedValue(declaration) {
                     CachedValueProvider.Result.create(
                         checkJUnit3TestClass(declaration),
-                        OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                        OuterModelsModificationTrackerManager.getTracker(declaration.project)
                     )
                 }
 

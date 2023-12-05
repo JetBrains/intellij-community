@@ -228,6 +228,8 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
       onboardingFeedbackData.reportTitle,
       description,
       DEFAULT_FEEDBACK_CONSENT_ID,
+      true,
+      emptyList(),
       onboardingFeedbackData.feedbackReportId,
       collectedData
     )

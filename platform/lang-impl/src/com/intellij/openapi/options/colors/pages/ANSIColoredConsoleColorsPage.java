@@ -142,7 +142,7 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("terminalCommandToRunUsingIDE", JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
 
-    if (ExperimentalUI.isNewUI() && Registry.is("ide.experimental.ui.new.terminal", false)) {
+    if (ExperimentalUI.isNewUI() && Registry.is("terminal.new.ui", false)) {
       AttributesDescriptor[] terminalAttrs = getBlockTerminalAttributes();
       ATTRS = ArrayUtil.mergeArrays(ATTRS, terminalAttrs);
       ColorDescriptor[] terminalColors = getBlockTerminalColors();

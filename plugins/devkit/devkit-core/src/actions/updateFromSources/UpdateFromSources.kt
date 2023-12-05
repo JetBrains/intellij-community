@@ -19,7 +19,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleManager
@@ -50,7 +50,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
-private val LOG = logger<UpdateIdeFromSourcesAction>()
+private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
 
 fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit, restartAutomatically: Boolean) {
   LOG.debug("Update from sources requested")

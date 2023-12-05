@@ -20,11 +20,11 @@ object <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">S
 
     @Disabled
     @Test
-    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">configFileWithEnvironmentVariables</lineMarker>() {}
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">configFileWithEnvironmentVariables</lineMarker>() {} // DISABLED_WITH_GRADLE_CONFIGURATION
 
     @Ignore
     @Test
-    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">kotlinTestIgnore</lineMarker>() {}
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">kotlinTestIgnore</lineMarker>() {} // DISABLED_WITH_GRADLE_CONFIGURATION
 
     @Disabled
     fun notAnIgoreTest() {}

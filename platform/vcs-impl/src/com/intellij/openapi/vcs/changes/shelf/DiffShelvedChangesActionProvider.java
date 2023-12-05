@@ -382,8 +382,10 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       try {
         PatchesPreloader preloader = PatchesPreloader.getPatchesPreloader(myProject, context);
         TextFilePatch patch = preloader.getPatch(myChange);
-        PatchDiffRequest request = new PatchDiffRequest(patch, getRequestTitle(),
-                                                        VcsBundle.message("patch.apply.conflict.patch"));
+
+        String leftTitle = DiffBundle.message("merge.version.title.base");
+        String rightTitle = VcsBundle.message("shelve.shelved.version");
+        PatchDiffRequest request = new PatchDiffRequest(patch, getRequestTitle(), leftTitle, rightTitle);
         DiffUtil.addNotification(createNotificationProvider(DiffBundle.message("cannot.find.file.error", getFilePath())), request);
         return request;
       }

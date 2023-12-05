@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class CodeStyleSettingsManager implements PersistentStateComponentWithModificationTracker<Element> {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
@@ -84,6 +85,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return testSettings;
   }
 
+  /**
+   * @see CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Runnable)
+   */
   public void runWithLocalSettings(@NotNull CodeStyleSettings localSettings,
                                    @NotNull Runnable runnable) {
     CodeStyleSettings tempSettingsBefore = myLocalSettings.get();
@@ -93,6 +97,66 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }
     finally {
       myLocalSettings.set(tempSettingsBefore);
+    }
+  }
+
+  /**
+   * @see CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Consumer)
+   */
+  public void runWithLocalSettings(@NotNull CodeStyleSettings baseSettings,
+                                   @NotNull Consumer<? super @NotNull CodeStyleSettings> localSettingsConsumer) {
+    CodeStyleSettings tempSettingsBefore = myLocalSettings.get();
+    try {
+      CodeStyleSettings tempSettings = new CodeStyleSettings(true, false);
+      tempSettings.copyFrom(baseSettings);
+      myLocalSettings.set(tempSettings);
+      localSettingsConsumer.accept(tempSettings);
+    }
+    finally {
+      myLocalSettings.set(tempSettingsBefore);
+    }
+  }
+
+  /**
+   * @see CodeStyle#doWithTemporarySettings(Project, CodeStyleSettings, Runnable)
+   */
+  @TestOnly
+  public void doWithTemporarySettings(@NotNull CodeStyleSettings tempSettings,
+                                      @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = getTemporarySettings();
+    try {
+      setTemporarySettings(tempSettings);
+      runnable.run();
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings();
+      }
+    }
+  }
+
+  /**
+   * @see CodeStyle#doWithTemporarySettings(Project, CodeStyleSettings, Consumer)
+   */
+  @TestOnly
+  public void doWithTemporarySettings(@NotNull CodeStyleSettings baseSettings,
+                                      @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
+    CodeStyleSettings tempSettingsBefore = getTemporarySettings();
+    try {
+      CodeStyleSettings tempSettings = createTemporarySettings();
+      tempSettings.copyFrom(baseSettings);
+      tempSettingsConsumer.accept(tempSettings);
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings();
+      }
     }
   }
 

@@ -12,6 +12,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
@@ -511,6 +512,34 @@ internal class ApplicationStoreTest {
     assertFalse("$os/old.xml was not removed", testAppConfig.resolve(fs.getPath(os, "old.xml")).exists())
     assertTrue("New old.xml without os prefix not found", testAppConfig.resolve("old.xml").exists())
   }
+
+  @Test
+  fun `reload components`() {
+    @State(name = "A", storages = [Storage(value = "a.xml")])
+    class Comp : FooComponent()
+
+    val component = Comp()
+    componentStore.initComponent(component, null, null)
+
+    writeConfig("a.xml", "")
+    componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
+    assertEquals("defaultValue", component.foo)
+    
+    writeConfig("a.xml", createComponentFileContent("initial"))
+    componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
+    assertEquals("initial", component.foo)
+
+    writeConfig("a.xml", createComponentFileContent("changed"))
+    componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
+    assertEquals("changed", component.foo)
+
+    testAppConfig.resolve("a.xml").delete()
+    componentStore.reloadComponents(changedFileSpecs = emptyList(), deletedFileSpecs = listOf("a.xml"))
+    assertEquals("defaultValue", component.foo)
+  }
+
+  private fun createComponentFileContent(fooValue: String, componentName: String = "A") =
+    """<application>${createComponentData(fooValue, componentName)}</application>"""
 
   @State(name = "A", storages = [Storage(value = "per-os.xml", roamingType = RoamingType.PER_OS)])
   private class PerOsComponent : FooComponent()

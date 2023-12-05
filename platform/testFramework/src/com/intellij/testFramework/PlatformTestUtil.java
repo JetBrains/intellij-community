@@ -636,8 +636,8 @@ public final class PlatformTestUtil {
    */
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable<?> test) {
-    return startPerformanceTestWithVariableInputSize(what, expectedMs, 1, () -> {
+  public static @NotNull PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String launchName, int expectedMs, @NotNull ThrowableRunnable<?> test) {
+    return startPerformanceTestWithVariableInputSize(launchName, expectedMs, 1, () -> {
       test.run();
       return 1;
     });
@@ -652,11 +652,11 @@ public final class PlatformTestUtil {
    * </p>
    */
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo startPerformanceTestWithVariableInputSize(@NonNls @NotNull String what,
+  public static @NotNull PerformanceTestInfo startPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
                                                                                        int expectedMs,
                                                                                        int expectedInputSize,
                                                                                        @NotNull ThrowableComputable<Integer, ?> test) {
-    return new PerformanceTestInfo(test, expectedMs, expectedInputSize, what);
+    return new PerformanceTestInfo(test, expectedMs, expectedInputSize, launchName);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {

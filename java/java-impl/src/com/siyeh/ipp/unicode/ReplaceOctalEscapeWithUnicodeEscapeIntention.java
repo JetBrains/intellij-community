@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFragment;
 import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -63,17 +64,27 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
       document.replaceString(start, end, replacement);
     }
     else if (element instanceof PsiLiteralExpression literalExpression) {
-      final String text = literalExpression.getText();
-      final int offset = context.offset() - literalExpression.getTextOffset();
-      final StringBuilder newLiteralText = new StringBuilder();
-      final int index1 = indexOfOctalEscape(text, offset);
-      final int index2 = indexOfOctalEscape(text, offset + 1);
-      final int escapeStart = index2 == offset ? index2 : index1;
-      newLiteralText.append(text, 0, escapeStart);
-      final int escapeEnd = appendUnicodeEscape(text, escapeStart, newLiteralText);
-      newLiteralText.append(text.substring(escapeEnd));
-      PsiReplacementUtil.replaceExpression(literalExpression, newLiteralText.toString());
+      final String newLiteralText = buildReplacementText(element, context);
+      PsiReplacementUtil.replaceExpression(literalExpression, newLiteralText);
     }
+    else if (element instanceof PsiFragment fragment) {
+      final String newFragmentText = buildReplacementText(element, context);
+      PsiReplacementUtil.replaceFragment(fragment, newFragmentText);
+    }
+  }
+
+  @NotNull
+  private static String buildReplacementText(@NotNull PsiElement element, @NotNull ActionContext context) {
+    final String text = element.getText();
+    final int offset = context.offset() - element.getTextOffset();
+    final StringBuilder newLiteralText = new StringBuilder();
+    final int index1 = indexOfOctalEscape(text, offset);
+    final int index2 = indexOfOctalEscape(text, offset + 1);
+    final int escapeStart = index2 == offset ? index2 : index1;
+    newLiteralText.append(text, 0, escapeStart);
+    final int escapeEnd = appendUnicodeEscape(text, escapeStart, newLiteralText);
+    newLiteralText.append(text.substring(escapeEnd));
+    return newLiteralText.toString();
   }
 
   private static int appendUnicodeEscape(String text, int escapeStart, @NonNls StringBuilder out) {
@@ -153,9 +164,9 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
           .getCharsSequence().subSequence(start, end).toString();
         return indexOfOctalEscape(text, 1) >= 0;
       }
-      else if (element instanceof PsiLiteralExpression literalExpression) {
-        final String text = literalExpression.getText();
-        final int offset = context.offset() - literalExpression.getTextOffset();
+      else if (element instanceof PsiLiteralExpression || element instanceof PsiFragment) {
+        final String text = element.getText();
+        final int offset = context.offset() - element.getTextOffset();
         final int index = indexOfOctalEscape(text, offset);
         return index >= 0 && offset >= index;
       }

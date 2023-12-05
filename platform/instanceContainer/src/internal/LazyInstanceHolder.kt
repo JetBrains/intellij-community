@@ -146,12 +146,24 @@ internal abstract class LazyInstanceHolder(
       context = callerCtx + CurrentlyInitializingInstance(this) + CoroutineName("${initializer.instanceClassName} init"),
       start = CoroutineStart.UNDISPATCHED,
     ) {
-      try {
-        ensureActive()
-        complete(finalState = initializer.createInstance(parentScope, instanceClass))
-      }
-      catch (t: Throwable) {
-        complete(finalState = CannotInitialize(instanceClass = instanceClass, t))
+      // TODO Initialization of services happens in a child coroutine of container scope (this coroutine)
+      //  => cancellation of container scope cancels currently initializing instances as well as
+      //  it prevents initialization of the new instances.
+      //  - Some services (for example, `com.intellij.vcs.log.impl.VcsProjectLog.dropLogManager`)
+      //    expect `project.messageBus` to work after cancellation of the service scope.
+      //  - Some listeners (namely `EditorFactoryListener.editorReleased`) request other services during `startDispose()`.
+      //  - We have a number of services, which request other services uninitialized during own disposal.
+      //  Requesting an uninitialized instance during disposal of another instance is incorrect,
+      //  but it's legacy, and we have to live with it for a while.
+      //  To maintain the old behavior we run initialization in NonCancellable context:
+      //  the instance will be initialized even if the container scope is already cancelled.
+      withContext(NonCancellable) {
+        try {
+          complete(finalState = initializer.createInstance(parentScope, instanceClass))
+        }
+        catch (t: Throwable) {
+          complete(finalState = CannotInitialize(instanceClass = instanceClass, t))
+        }
       }
     }
   }

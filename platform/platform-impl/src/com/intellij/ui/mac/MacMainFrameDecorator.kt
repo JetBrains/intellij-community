@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("FunctionName")
-
 package com.intellij.ui.mac
 
 import com.apple.eawt.Application
@@ -16,8 +14,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
-import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ToolbarService.Companion.getInstance
 import com.intellij.ui.mac.MacFullScreenControlsManager.configureForEmptyToolbarHeader
@@ -30,41 +28,25 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import java.awt.Frame
-import java.awt.Window
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.lang.reflect.Method
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-internal class MacMainFrameDecorator(frame: IdeFrameImpl,
-                                     glassPane: IdeGlassPane,
-                                     coroutineScope: CoroutineScope) : IdeFrameDecorator(frame) {
+internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPane, coroutineScope: CoroutineScope) : IdeFrameDecorator(frame) {
   companion object {
     private val LOG: Logger
       get() = logger<MacMainFrameDecorator>()
 
     const val FULL_SCREEN: String = "Idea.Is.In.FullScreen.Mode.Now"
-
-    private var toggleFullScreenMethod: Method? = null
-
-    init {
-      try {
-        Class.forName("com.apple.eawt.FullScreenUtilities")
-        toggleFullScreenMethod = Application::class.java.getMethod("requestToggleFullScreen", Window::class.java)
-      }
-      catch (e: Exception) {
-        LOG.warn(e)
-      }
-    }
   }
 
+  @Suppress("FunctionName")
   private interface MyCoreFoundation : CoreFoundation {
-    fun CFPreferencesCopyAppValue(key: CoreFoundation.CFStringRef?,
-                                  applicationID: CoreFoundation.CFStringRef?): CoreFoundation.CFStringRef?
+    fun CFPreferencesCopyAppValue(key: CoreFoundation.CFStringRef?, applicationID: CoreFoundation.CFStringRef?): CoreFoundation.CFStringRef?
 
     companion object {
       @JvmField
@@ -74,82 +56,75 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl,
 
   internal val dispatcher: EventDispatcher<FSListener> = EventDispatcher.create(FSListener::class.java)
 
-  private val tabsHandler: MacWinTabsHandler
+  private val tabsHandler: MacWinTabsHandler =
+    if (MacWinTabsHandler.isVersion2()) MacWinTabsHandlerV2(frame, coroutineScope) else MacWinTabsHandler(frame, coroutineScope)
 
   override var isInFullScreen: Boolean = false
     private set
 
   init {
-    tabsHandler = if (MacWinTabsHandler.isVersion2()) {
-      MacWinTabsHandlerV2(frame, coroutineScope)
-    }
-    else {
-      MacWinTabsHandler(frame, coroutineScope)
-    }
+    FullScreenUtilities.setWindowCanFullScreen(frame, true)
 
-    if (toggleFullScreenMethod != null) {
-      FullScreenUtilities.setWindowCanFullScreen(frame, true)
+    // Native full-screen listener can be set only once
+    FullScreenUtilities.addFullScreenListenerTo(frame, object : FullScreenListener {
+      override fun windowEnteringFullScreen(event: FullScreenEvent) {
+        dispatcher.getMulticaster().windowEnteringFullScreen(event)
+      }
 
-      // Native full-screen listener can be set only once
-      FullScreenUtilities.addFullScreenListenerTo(frame, object : FullScreenListener {
-        override fun windowEnteringFullScreen(event: FullScreenEvent) {
-          dispatcher.getMulticaster().windowEnteringFullScreen(event)
+      override fun windowEnteredFullScreen(event: FullScreenEvent) {
+        dispatcher.getMulticaster().windowEnteredFullScreen(event)
+      }
+
+      override fun windowExitingFullScreen(event: FullScreenEvent) {
+        dispatcher.getMulticaster().windowExitingFullScreen(event)
+      }
+
+      override fun windowExitedFullScreen(event: FullScreenEvent) {
+        dispatcher.getMulticaster().windowExitedFullScreen(event)
+      }
+    })
+    dispatcher.addListener(object : FSAdapter() {
+      override fun windowEnteringFullScreen(event: FullScreenEvent) {
+        configureForEmptyToolbarHeader(true)
+        frame.togglingFullScreenInProgress = true
+        val rootPane = frame.rootPane
+        if (rootPane != null && rootPane.border != null) {
+          rootPane.setBorder(null)
         }
+        tabsHandler.enteringFullScreen()
+      }
 
-        override fun windowEnteredFullScreen(event: FullScreenEvent) {
-          dispatcher.getMulticaster().windowEnteredFullScreen(event)
-        }
+      override fun windowEnteredFullScreen(event: FullScreenEvent) {
+        frame.togglingFullScreenInProgress = false
+        // We can get the notification when the frame has been disposed
+        val rootPane = frame.rootPane
+        rootPane?.putClientProperty(FULL_SCREEN, true)
+        enterFullScreen()
+        frame.validate()
+        notifyFrameComponents(true)
+      }
 
-        override fun windowExitingFullScreen(event: FullScreenEvent) {
-          dispatcher.getMulticaster().windowExitingFullScreen(event)
-        }
+      override fun windowExitingFullScreen(e: FullScreenEvent) {
+        frame.togglingFullScreenInProgress = true
+      }
 
-        override fun windowExitedFullScreen(event: FullScreenEvent) {
-          dispatcher.getMulticaster().windowExitedFullScreen(event)
-        }
-      })
-      dispatcher.addListener(object : FSAdapter() {
-        override fun windowEnteringFullScreen(event: FullScreenEvent) {
-          configureForEmptyToolbarHeader(true)
-          frame.togglingFullScreenInProgress = true
-          val rootPane = frame.rootPane
-          if (rootPane != null && rootPane.border != null) {
-            rootPane.setBorder(null)
+      override fun windowExitedFullScreen(event: FullScreenEvent) {
+        configureForEmptyToolbarHeader(false)
+        frame.togglingFullScreenInProgress = false
+        // We can get the notification when the frame has been disposed
+        val rootPane = frame.rootPane
+        if (!ExperimentalUI.isNewUI() || (rootPane as? IdeRootPane)?.isToolbarInHeader() == false) {
+          getInstance().setCustomTitleBar(frame, rootPane) { runnable ->
+            executeOnCancelInEdt(coroutineScope) { runnable.run() }
           }
-          tabsHandler.enteringFullScreen()
         }
+        exitFullScreen()
+        ActiveWindowsWatcher.addActiveWindow(frame)
+        frame.validate()
+        notifyFrameComponents(false)
+      }
+    })
 
-        override fun windowEnteredFullScreen(event: FullScreenEvent) {
-          frame.togglingFullScreenInProgress = false
-          // We can get the notification when the frame has been disposed
-          val rootPane = frame.rootPane
-          rootPane?.putClientProperty(FULL_SCREEN, true)
-          enterFullScreen()
-          frame.validate()
-          notifyFrameComponents(true)
-        }
-
-        override fun windowExitingFullScreen(e: FullScreenEvent) {
-          frame.togglingFullScreenInProgress = true
-        }
-
-        override fun windowExitedFullScreen(event: FullScreenEvent) {
-          configureForEmptyToolbarHeader(false)
-          frame.togglingFullScreenInProgress = false
-          // We can get the notification when the frame has been disposed
-          val rootPane = frame.rootPane
-          if (!ExperimentalUI.isNewUI() || !isToolbarInHeader()) {
-            getInstance().setCustomTitleBar(frame, rootPane) { runnable ->
-              executeOnCancelInEdt(coroutineScope) { runnable.run() }
-            }
-          }
-          exitFullScreen()
-          ActiveWindowsWatcher.addActiveWindow(frame)
-          frame.validate()
-          notifyFrameComponents(false)
-        }
-      })
-    }
     if (!ExperimentalUI.isNewUI()) {
       glassPane.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
@@ -219,7 +194,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl,
     tabsHandler.setProject()
   }
 
-  override suspend fun toggleFullScreen(state: Boolean): Boolean? {
+  override suspend fun toggleFullScreen(state: Boolean): Boolean {
     LOG.debug { "Full screen state $state requested for $frame" }
     // We delay the execution using 'invokeLater' to account for the case when a window might be made visible in the same EDT event.
     // macOS can auto-open that window in full-screen mode, but we won't find this out till the notification arrives.
@@ -232,12 +207,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl,
           LOG.debug("Full screen is already at state $state for $frame")
         }
         return@withContext state
-      }
-      else if (toggleFullScreenMethod == null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Full screen transitioning isn't supported for $frame")
-        }
-        return@withContext null
       }
       else {
         suspendCoroutine { continuation ->
@@ -275,15 +244,16 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl,
 
           dispatcher.addListener(listener)
           LOG.debug { "Toggling full screen for $frame" }
-          invokeAppMethod(toggleFullScreenMethod)
+          Application.getApplication().requestToggleFullScreen(frame)
           Foundation.executeOnMainThread(false, false, Runnable {
             SwingUtilities.invokeLater(
               Runnable {
                 // At this point, after a 'round-trip' to AppKit thread and back to EDT,
-                // we know that [NSWindow toggleFullScreen:] method has definitely started execution.
-                // If it hasn't dispatched pre-transitioning event (windowWillEnterFullScreen/windowWillExitFullScreen), we assume that
-                // the transitioning won't happen at all, and complete the promise. One known case when [NSWindow toggleFullScreen:] method
-                // does nothing is when it's invoked for an 'inactive' tab in a 'tabbed' window group.
+                // we know that `[NSWindow toggleFullScreen]` method has definitely started execution.
+                // If it hasn't dispatched pre-transitioning event (windowWillEnterFullScreen/windowWillExitFullScreen),
+                // we assume that the transitioning won't happen at all, and complete the promise.
+                // One known case when `[NSWindow toggleFullScreen]` method does nothing
+                // is when it's invoked for an 'inactive' tab in a 'tabbed' window group.
                 if (preEventReceived.get()) {
                   LOG.debug { "pre-transitioning event received for: $frame" }
                 }
@@ -298,15 +268,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl,
     }
   }
 
-  private fun invokeAppMethod(method: Method?) {
-    try {
-      method!!.invoke(Application.getApplication(), frame)
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-    }
-  }
-
   override fun appClosing() {
     tabsHandler.appClosing()
   }
@@ -315,5 +276,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl,
     get() = MergeAllWindowsAction.isTabbedWindow(frame)
 
   interface FSListener : FullScreenListener, EventListener
+
   open class FSAdapter : FullScreenAdapter(), FSListener
 }

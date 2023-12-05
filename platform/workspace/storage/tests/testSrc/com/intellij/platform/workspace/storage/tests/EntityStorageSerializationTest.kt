@@ -2,8 +2,8 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.SerializationResult
-import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -14,9 +14,10 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class EntityStorageSerializationTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -125,7 +126,31 @@ class EntityStorageSerializationTest {
       .joinToString(separator = "\n")
 
     assertEquals(expectedKryoRegistration, registration,
-                 "Have you changed kryo registration? Update the version number! (And this test)")
+                 """
+                   |Have you changed kryo registration? Update the version number! (And this test)
+                   |Existing result:
+                   |=========
+                   |
+                   |$registration
+                   |
+                   |=========
+                 """.trimMargin())
+  }
+
+  @Test
+  fun `immutable serializer version prefix`() {
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
+
+    val serializationVersionNumber = "[1-9][0-9]*".toRegex().find(serializer.serializerDataFormatVersion)?.value
+    val serializationVersionPrefix = serializationVersionNumber?.let {
+      serializer.serializerDataFormatVersion.substringBefore(serializationVersionNumber)
+    }
+
+    assertEquals(usedCacheVersionPrefixes.last(), serializationVersionPrefix,
+                 "Have you changed serialization version prefix? Add the new prefix to the usedCacheVersionPrefixes list!")
+
+    assertContentEquals(usedCacheVersionPrefixes, usedCacheVersionPrefixes.distinct(),
+                        "Version prefix of the cache ${serializationVersionPrefix} was used previously. Add the new version prefix!")
   }
 
   @Test
@@ -215,8 +240,15 @@ class EntityStorageSerializationTest {
   }
 }
 
+/**
+ * Stores previously used serialization version prefixes in the [EntityStorageSerializerImpl.serializerDataFormatVersion] to check immutability
+ */
+private val usedCacheVersionPrefixes: List<String> = listOf("v", "version")
+
 // Use '#' instead of '$' to separate the subclass of the class
 private val expectedKryoRegistration = """
+  com.google.common.collect.HashMultimap
+  com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
   com.intellij.platform.workspace.storage.impl.ConnectionId
   com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
   com.intellij.platform.workspace.storage.impl.ChildEntityId
@@ -252,13 +284,11 @@ private val expectedKryoRegistration = """
   java.util.IdentityHashMap
   com.intellij.util.SmartList
   java.util.LinkedHashMap
-  com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap
   com.intellij.util.containers.BidirectionalMultiMap
   com.google.common.collect.HashBiMap
   java.util.LinkedHashSet
   com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap
-  it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
@@ -282,6 +312,9 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#Data
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#References
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata#Id
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata#SerializableTypeMetadata
   com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
   com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
   com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
@@ -302,7 +335,6 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType#CustomType
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#EntityReference
   com.intellij.platform.workspace.storage.impl.ConnectionId#ConnectionType
-  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
   java.util.Collections#UnmodifiableCollection
   java.util.Collections#UnmodifiableSet
   java.util.Collections#UnmodifiableRandomAccessList

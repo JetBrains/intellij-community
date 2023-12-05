@@ -6,7 +6,6 @@ import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.model.search.*
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
@@ -38,7 +37,7 @@ internal class MarkdownHtmlAnchorPsiReferenceSearcher: PsiSymbolReferenceSearche
     }
 
     private fun findReferences(symbol: Symbol, occurrence: LeafOccurrence): Collection<PsiSymbolReference> {
-      val service = service<PsiSymbolReferenceService>()
+      val service = PsiSymbolReferenceService.getService()
       val (scope, psiElement, offset) = occurrence
       val elements = walkUp(psiElement, offset, scope).asSequence().filter { (element, _) -> element is PsiExternalReferenceHost }
       for ((element, offsetInElement) in elements) {

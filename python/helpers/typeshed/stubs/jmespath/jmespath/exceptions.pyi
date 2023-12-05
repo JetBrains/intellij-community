@@ -1,44 +1,45 @@
+from collections.abc import Sequence
 from typing import Any
 
 class JMESPathError(ValueError): ...
 
 class ParseError(JMESPathError):
-    lex_position: Any
-    token_value: Any
-    token_type: Any
-    msg: Any
-    expression: Any
-    def __init__(self, lex_position, token_value, token_type, msg=...) -> None: ...
+    lex_position: int
+    token_value: str
+    token_type: str
+    msg: str
+    expression: str | None
+    def __init__(
+        self, lex_position: int, token_value: str, token_type: str, msg: str = "Invalid jmespath expression"
+    ) -> None: ...
 
 class IncompleteExpressionError(ParseError):
-    expression: Any
-    lex_position: Any
-    token_type: Any
-    token_value: Any
-    def set_expression(self, expression) -> None: ...
+    # When ParseError is used directly, the token always have a non-null value and type
+    token_value: str | None  # type: ignore[assignment]
+    token_type: str | None  # type: ignore[assignment]
+    expression: str
+    def set_expression(self, expression: str) -> None: ...
 
 class LexerError(ParseError):
-    lexer_position: Any
-    lexer_value: Any
-    message: Any
-    expression: Any
-    def __init__(self, lexer_position, lexer_value, message, expression: Any | None = ...) -> None: ...
+    lexer_position: int
+    lexer_value: str
+    message: str
+    def __init__(self, lexer_position: int, lexer_value: str, message: str, expression: str | None = None) -> None: ...
 
 class ArityError(ParseError):
-    expected_arity: Any
-    actual_arity: Any
-    function_name: Any
-    expression: Any
+    expected_arity: int
+    actual_arity: int
+    function_name: str
     def __init__(self, expected, actual, name) -> None: ...
 
 class VariadictArityError(ArityError): ...
 
 class JMESPathTypeError(JMESPathError):
-    function_name: Any
+    function_name: str
     current_value: Any
-    actual_type: Any
-    expected_types: Any
-    def __init__(self, function_name, current_value, actual_type, expected_types) -> None: ...
+    actual_type: str
+    expected_types: Sequence[str]
+    def __init__(self, function_name: str, current_value: Any, actual_type: str, expected_types: Sequence[str]) -> None: ...
 
 class EmptyExpressionError(JMESPathError):
     def __init__(self) -> None: ...

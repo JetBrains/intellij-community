@@ -1,8 +1,8 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from openpyxl.descriptors.serialisable import Serialisable
 
-class Related(Serialisable):  # type: ignore[misc]
-    id: Any
-    def __init__(self, id: Any | None = ...) -> None: ...
-    def to_tree(self, tagname, idx: Any | None = ...): ...  # type: ignore[override]
+class Related(Serialisable):
+    id: Incomplete
+    def __init__(self, id: Incomplete | None = None) -> None: ...
+    def to_tree(self, tagname, idx: Incomplete | None = None): ...  # type: ignore[override]

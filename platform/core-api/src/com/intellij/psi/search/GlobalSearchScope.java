@@ -14,8 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.impl.IntersectionFileEnumeration;
-import com.intellij.psi.search.impl.UnionFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.ArrayUtil;
@@ -34,7 +32,7 @@ import java.util.function.Supplier;
  */
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
-  private final @Nullable Project myProject;
+  private final Project myProject;
 
   protected GlobalSearchScope(@Nullable Project project) {
     myProject = project;
@@ -46,7 +44,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @ApiStatus.NonExtendable
   @Override
-  public @Nullable Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
@@ -464,7 +462,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-      Collection<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
+      List<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
       for (GlobalSearchScope scope : myScopes) {
         VirtualFileEnumeration fileEnumeration = VirtualFileEnumeration.extract(scope);
         if (fileEnumeration == null) {
@@ -698,7 +696,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-      return myBaseScope instanceof VirtualFileEnumeration ? (VirtualFileEnumeration)myBaseScope : null;
+      return VirtualFileEnumeration.extract(myBaseScope);
     }
   }
 

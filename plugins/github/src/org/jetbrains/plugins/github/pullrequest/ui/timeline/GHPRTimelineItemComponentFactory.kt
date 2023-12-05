@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
@@ -28,7 +28,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.text.JBDateFormat
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
@@ -62,11 +62,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.awt.Component
 import java.awt.Container
-import javax.swing.JComponent
-import javax.swing.JEditorPane
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -127,7 +123,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             append(HtmlChunk.link(actor.url, actor.getPresentableName()))
             if (date != null) {
               append(HtmlChunk.nbsp())
-              append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
+              append(DateFormatUtil.formatPrettyDateTime(date))
             }
           }
           builder.append(chunk)

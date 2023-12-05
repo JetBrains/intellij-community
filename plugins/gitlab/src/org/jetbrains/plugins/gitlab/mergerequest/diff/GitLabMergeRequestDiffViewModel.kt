@@ -7,7 +7,7 @@ import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

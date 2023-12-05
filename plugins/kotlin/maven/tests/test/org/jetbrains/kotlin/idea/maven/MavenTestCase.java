@@ -81,7 +81,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
         myProject = myTestFixture.getProject();
 
-        MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
+        MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspacePersistedSettings());
 
         String home = getTestMavenHome();
         if (home != null) {

@@ -84,4 +84,4 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 }
 
 val PACKAGE_FIELD = EventFields.StringValidatedByEnum("package", "python_packages")
-val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexp("package_version", "version")
+val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("package_version", "version")

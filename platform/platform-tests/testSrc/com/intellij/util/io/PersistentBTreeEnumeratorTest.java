@@ -235,7 +235,7 @@ public class PersistentBTreeEnumeratorTest {
           assertEquals(0, myEnumerator.tryEnumerate(item));
         }
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).assertTiming();
     FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
 
     // ensure we don't cache anything

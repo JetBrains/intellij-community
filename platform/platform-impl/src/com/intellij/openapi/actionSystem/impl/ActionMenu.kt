@@ -11,6 +11,7 @@ import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.ui.JBPopupMenu
@@ -189,7 +190,7 @@ class ActionMenu constructor(private val context: DataContext?,
     isMnemonicEnabled = enableMnemonics
     isVisible = presentation.isVisible
     setEnabled(presentation.isEnabled)
-    setText(presentation.getText(isMnemonicEnabled))
+    setText(decorateTextIfNeeded(anAction, presentation.getText(isMnemonicEnabled)))
     mnemonic = presentation.getMnemonic()
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon()
@@ -328,6 +329,11 @@ class ActionMenu constructor(private val context: DataContext?,
     }
 
     private fun menuSelected() {
+      if (!isShowing) {
+        // Not needed for hidden menu and leads to disposable leak for detached menu items
+        return
+      }
+
       val startMs = System.currentTimeMillis()
       val helper = UsabilityHelper(this@ActionMenu)
       if (disposable == null) {

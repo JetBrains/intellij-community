@@ -37,6 +37,10 @@
                     interface="com.intellij.ide.actions.ConfigurablesPatcher"
                     dynamic="true"/>
 
+    <extensionPoint name="logsPreprocessor"
+                    interface="com.intellij.ide.logsUploader.LogsPreprocessor"
+                    dynamic="true"/>
+
     <extensionPoint name="fileType"
                     beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean"
                     dynamic="true">
@@ -218,6 +222,10 @@
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
 
+    <extensionPoint name="projectCustomDataSynchronizer" interface="com.intellij.openapi.project.ProjectCustomDataSynchronizer" dynamic="true"/>
+    <extensionPoint name="virtualFileCustomDataProvider" interface="com.intellij.openapi.vfs.VirtualFileCustomDataProvider" dynamic="true"/>
+    <extensionPoint name="virtualFileCustomDataConsumer" interface="com.intellij.openapi.vfs.VirtualFileCustomDataConsumer" dynamic="true"/>
+
     <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider" dynamic="true"/>
     <extensionPoint name="statusBarWidgetFactory" interface="com.intellij.openapi.wm.StatusBarWidgetFactory" dynamic="true"/>
 
@@ -274,8 +282,6 @@
     <extensionPoint name="fileTypeOverrider" interface="com.intellij.openapi.fileTypes.impl.FileTypeOverrider" dynamic="true"/>
 
     <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor" dynamic="true"/>
-
-    <extensionPoint name="baseDirectorySuggester" interface="com.intellij.openapi.project.BaseDirectorySuggester" dynamic="true"/>
 
     <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter" dynamic="true"/>
     <extensionPoint name="pathMacroExpandableProtocol" beanClass="com.intellij.application.options.PathMacroExpandableProtocolBean" dynamic="true"/>
@@ -401,7 +407,6 @@
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" dynamic="true" />
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider" dynamic="true"/>
     <extensionPoint name="themeRemapper" interface="com.intellij.ide.ui.laf.UiThemeRemapper" dynamic="true"/>
-    <extensionPoint name="dateTimeFormatter" beanClass="com.intellij.util.text.DateTimeFormatterBean" dynamic="true"/>
     <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider" dynamic="true"/>
     <extensionPoint name="iconMapper" beanClass="com.intellij.ide.ui.IconMapperBean" dynamic="true"/>
 
@@ -509,7 +514,7 @@
     <extensionPoint name="warmupConfigurator" interface="com.intellij.ide.warmup.WarmupConfigurator" dynamic="true" />
     <extensionPoint name="warmupLogger" interface="com.intellij.ide.warmup.WarmupLogger" dynamic="true" />
 
-    <extensionPoint name="activityInProgressWitness" interface="com.intellij.platform.backend.observation.ActivityInProgressWitness"
+    <extensionPoint name="activityTracker" interface="com.intellij.platform.backend.observation.ActivityTracker"
                     dynamic="true"/>
 
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

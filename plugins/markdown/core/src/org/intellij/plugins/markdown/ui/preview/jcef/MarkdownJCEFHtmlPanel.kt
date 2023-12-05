@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import com.intellij.util.application
 import com.intellij.util.net.NetUtils
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -21,6 +22,8 @@ import org.cef.network.CefRequest
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
+import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
+import org.intellij.plugins.markdown.ui.actions.changeFontSize
 import org.intellij.plugins.markdown.ui.preview.*
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
 import org.jetbrains.annotations.ApiStatus
@@ -121,6 +124,10 @@ class MarkdownJCEFHtmlPanel(
         data.toIntOrNull()?.let { offset -> scrollListeners.forEach { it.onScroll(offset) } }
         return false
       }
+    })
+    val connection = application.messageBus.connect(this)
+    connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
+      changeFontSize(settings.state.fontSize)
     })
 
     loadIndexContent()

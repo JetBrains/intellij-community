@@ -36,7 +36,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
   override fun main(args: List<String>) {
     MainEvaluationCommand()
       .subcommands(FullCommand(), GenerateActionsCommand(), CustomCommand(),
-                   MultipleEvaluations(), CompareEvaluationsInDirectory())
+                   MultipleEvaluations(), CompareEvaluationsInDirectory(), MergeEvaluations())
       .main(args.toList().subList(1, args.size))
   }
 
@@ -55,7 +55,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
 
     protected fun loadProject(projectPath: String): Project = try {
-      println("Open and load project $projectPath. Operation may take few minutes.")
+      println("Open and load project $projectPath. Operation may take a few minutes.")
       val project = OpenProjectMethodProvider.find()?.openProjectInHeadlessMode(projectPath) ?: openProjectHeadless(projectPath)
       println("Project loaded!")
       project
@@ -158,7 +158,10 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val workspacesToCompare = getWorkspaces()
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(feature.getStrategySerializer())
+      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
+        feature.getStrategySerializer(),
+        "COMPARING",
+      )
       val outputWorkspace = EvaluationWorkspace.create(config)
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({
@@ -169,30 +172,60 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
   }
 
-  class MultipleEvaluations : MultipleEvaluationsBase(name = "multiple-evaluations", help = "Generate report by multiple evaluations") {
+  class MultipleEvaluations : MultipleEvaluationsBase(name = "multiple-evaluations", help = "Generate comparing report by multiple evaluations") {
     private val workspacesArg by argument(name = "workspaces", help = "List of workspaces").multiple()
 
     override fun getWorkspaces(): List<String> = workspacesArg
   }
 
   class CompareEvaluationsInDirectory : MultipleEvaluationsBase(name = "compare-in",
-                                                                help = "Generate report for all evaluation workspaces in a directory") {
+                                                                help = "Generate comparing report for all evaluation workspaces in a directory") {
     private val root by argument(name = "directory", help = "Root directory for evaluation workspaces")
 
-    override fun getWorkspaces(): List<String> {
-      val outputDirectory = Paths.get(root)
-      if (!outputDirectory.exists() || !outputDirectory.isDirectory()) {
-        throw BadParameterValue("Directory \"$root\" not found.")
+    override fun getWorkspaces(): List<String> = readWorkspacesFromDirectory(root)
+  }
+
+  class MergeEvaluations : EvaluationCommand(name = "merge-from",
+                                             help = "Generate merged report for all evaluation workspaces in a directory") {
+    private val root by argument(name = "directory", help = "Root directory for evaluation workspaces")
+
+    override fun run() {
+      val workspacesToMerge = readWorkspacesFromDirectory(root)
+      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
+      val config = workspacesToMerge.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
+        feature.getStrategySerializer()
+      )
+      val outputWorkspace = EvaluationWorkspace.create(config)
+      for (workspacePath in workspacesToMerge) {
+        val workspace = EvaluationWorkspace.open(workspacePath)
+        val sessionFiles = workspace.sessionsStorage.getSessionFiles()
+        for (sessionFile in sessionFiles) {
+          outputWorkspace.sessionsStorage.saveSessions(workspace.sessionsStorage.getSessions(sessionFile.first))
+        }
       }
-
-      val nestedFiles = outputDirectory.toFile().listFiles() ?: emptyArray()
-
-      val result = nestedFiles.filter { it.isDirectory }.map { it.absolutePath }
-      if (result.isEmpty()) {
-        throw BadParameterValue("Directory \"$root\" should not be empty")
-      }
-
-      return result
+      outputWorkspace.saveMetadata()
+      val project = loadProject(config.projectPath)
+      val process = EvaluationProcess.build({
+                                              shouldGenerateReports = true
+                                            },
+                                            BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
+      process.startAsync(outputWorkspace)
     }
   }
+}
+
+private fun readWorkspacesFromDirectory(directory: String): List<String> {
+  val outputDirectory = Paths.get(directory)
+  if (!outputDirectory.exists() || !outputDirectory.isDirectory()) {
+    throw BadParameterValue("Directory \"$directory\" not found.")
+  }
+
+  val nestedFiles = outputDirectory.toFile().listFiles() ?: emptyArray()
+
+  val result = nestedFiles.filter { it.isDirectory }.map { it.absolutePath }
+  if (result.isEmpty()) {
+    throw BadParameterValue("Directory \"$directory\" should not be empty")
+  }
+
+  return result
 }

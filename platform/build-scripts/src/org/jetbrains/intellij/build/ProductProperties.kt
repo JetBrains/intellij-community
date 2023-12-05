@@ -8,12 +8,12 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import java.util.*
@@ -122,14 +122,14 @@ abstract class ProductProperties {
   /**
    * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
-  var customJvmMemoryOptions: PersistentMap<String, String> = persistentMapOf()
+  var customJvmMemoryOptions: Map<String, String> = persistentMapOf()
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
   open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+    "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -201,7 +201,13 @@ abstract class ProductProperties {
    * specified module is used to compute [JetBrainsClientModuleFilter]. 
    */
   @ApiStatus.Experimental
-  var embeddedJetBrainsClientMainModule: String? = null 
+  var embeddedJetBrainsClientMainModule: String? = null
+
+  /**
+   * Specifies a factory function for an instance which will be used to generate launchers for the embedded JetBrains Client. 
+   */
+  @ApiStatus.Experimental
+  var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
 
   /**
    * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
@@ -222,7 +228,7 @@ abstract class ProductProperties {
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
    * when .class file version verification is needed.
    */
-  var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
+  var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
   /**
    * Strings which are forbidden as a part of resulting class file path. E.g.:
@@ -332,7 +338,7 @@ abstract class ProductProperties {
    * @return the name of a subdirectory under `projectHome/out` where build artifacts will be placed,
    * must be unique among all products built from the same sources.
    */
-  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.productName.lowercase(Locale.ROOT)
+  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.fullProductName.lowercase(Locale.ROOT)
 
   /**
    * Paths to externally built plugins to be included in the IDE.
@@ -382,6 +388,20 @@ abstract class ProductProperties {
    * authoring tools and builds.
    */
   var buildDocAuthoringAssets: Boolean = false
+
+  /**
+   * Allows to override product name in ApplicationInfo.xml
+   * todo: remove me when platform is ready
+   */
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  open fun productNameOverride(project: JpsProject): ApplicationNamesInfoOverride? = null
+
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  data class ApplicationNamesInfoOverride(
+    val fullProductName: String,
+    val editionName: String?,
+    val motto: String?,
+  )
 
   /**
    * Allows customizing [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.

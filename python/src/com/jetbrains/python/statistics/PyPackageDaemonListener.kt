@@ -67,8 +67,9 @@ internal class TaskExecutor(private val cs: CoroutineScope) {
         } ?: emptyMap()
 
         psiFile.children.filterIsInstance<PyImportStatementBase>().mapNotNull { import ->
-          import.importElements.firstNotNullOfOrNull { it.importedQName?.firstComponent }?.let { firstModule ->
-            val packageName = PyPsiPackageUtil.moduleToPackageName(firstModule)
+          // all imports from the same statement should start with the same module
+          import.fullyQualifiedObjectNames.firstOrNull()?.let { firstModule ->
+            val packageName = PyPsiPackageUtil.moduleToPackageName(firstModule.split('.').first())
             PackageUsage(
               name = packageName,
               version = packages2Versions[packageName] ?: "0.0",

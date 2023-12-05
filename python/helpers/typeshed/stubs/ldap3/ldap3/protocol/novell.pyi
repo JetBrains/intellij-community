@@ -1,73 +1,67 @@
-from typing import Any
-from typing_extensions import TypeAlias
-
-# Enable when pyasn1 gets stubs:
-# from pyasn1.type.univ import Integer, OctetString, Sequence, SequenceOf
-_Integer: TypeAlias = Any
-_OctetString: TypeAlias = Any
-_Sequence: TypeAlias = Any
-_SequenceOf: TypeAlias = Any
+from pyasn1.type.namedtype import NamedTypes
+from pyasn1.type.tag import TagSet
+from pyasn1.type.univ import Integer, OctetString, Sequence, SequenceOf
 
 NMAS_LDAP_EXT_VERSION: int
 
-class Identity(_OctetString):
+class Identity(OctetString):
     encoding: str
 
-class LDAPDN(_OctetString):
-    tagSet: Any
+class LDAPDN(OctetString):
+    tagSet: TagSet
     encoding: str
 
-class Password(_OctetString):
-    tagSet: Any
+class Password(OctetString):
+    tagSet: TagSet
     encoding: str
 
-class LDAPOID(_OctetString):
-    tagSet: Any
+class LDAPOID(OctetString):
+    tagSet: TagSet
     encoding: str
 
-class GroupCookie(_Integer):
-    tagSet: Any
+class GroupCookie(Integer):
+    tagSet: TagSet
 
-class NmasVer(_Integer):
-    tagSet: Any
+class NmasVer(Integer):
+    tagSet: TagSet
 
-class Error(_Integer):
-    tagSet: Any
+class Error(Integer):
+    tagSet: TagSet
 
-class NmasGetUniversalPasswordRequestValue(_Sequence):
-    componentType: Any
+class NmasGetUniversalPasswordRequestValue(Sequence):
+    componentType: NamedTypes
 
-class NmasGetUniversalPasswordResponseValue(_Sequence):
-    componentType: Any
+class NmasGetUniversalPasswordResponseValue(Sequence):
+    componentType: NamedTypes
 
-class NmasSetUniversalPasswordRequestValue(_Sequence):
-    componentType: Any
+class NmasSetUniversalPasswordRequestValue(Sequence):
+    componentType: NamedTypes
 
-class NmasSetUniversalPasswordResponseValue(_Sequence):
-    componentType: Any
+class NmasSetUniversalPasswordResponseValue(Sequence):
+    componentType: NamedTypes
 
-class ReplicaList(_SequenceOf):
-    componentType: Any
+class ReplicaList(SequenceOf):
+    componentType: OctetString  # type: ignore[assignment]
 
-class ReplicaInfoRequestValue(_Sequence):
-    tagSet: Any
-    componentType: Any
+class ReplicaInfoRequestValue(Sequence):
+    tagSet: TagSet
+    componentType: NamedTypes
 
-class ReplicaInfoResponseValue(_Sequence):
-    tagSet: Any
-    componentType: Any
+class ReplicaInfoResponseValue(Sequence):
+    tagSet: TagSet
+    componentType: NamedTypes
 
-class CreateGroupTypeRequestValue(_Sequence):
-    componentType: Any
+class CreateGroupTypeRequestValue(Sequence):
+    componentType: NamedTypes
 
-class CreateGroupTypeResponseValue(_Sequence):
-    componentType: Any
+class CreateGroupTypeResponseValue(Sequence):
+    componentType: NamedTypes
 
-class EndGroupTypeRequestValue(_Sequence):
-    componentType: Any
+class EndGroupTypeRequestValue(Sequence):
+    componentType: NamedTypes
 
-class EndGroupTypeResponseValue(_Sequence):
-    componentType: Any
+class EndGroupTypeResponseValue(Sequence):
+    componentType: NamedTypes
 
-class GroupingControlValue(_Sequence):
-    componentType: Any
+class GroupingControlValue(Sequence):
+    componentType: NamedTypes

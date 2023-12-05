@@ -360,7 +360,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     checkHighlighting(myProjectPom);
   }
 
-  protected void checkHighlighting(VirtualFile f) {
+  protected void checkHighlighting(@NotNull VirtualFile f) {
     MavenLog.LOG.warn("checkHighlighting started");
 
     VirtualFileManager.getInstance().syncRefresh();
@@ -381,7 +381,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
       }
     }
 
-    configTest(myProjectPom);
+    configTest(f);
     MavenLog.LOG.warn("checkHighlighting: test configured");
 
     try {

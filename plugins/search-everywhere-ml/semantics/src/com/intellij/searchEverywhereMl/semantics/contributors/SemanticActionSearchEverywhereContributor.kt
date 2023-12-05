@@ -7,26 +7,27 @@ import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
-import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -45,9 +46,8 @@ import javax.swing.ListCellRenderer
 class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearchEverywhereContributor)
   : ActionSearchEverywhereContributor(defaultContributor), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentElementsFetcher<MatchedValue, MatchedValue>, PossibleSlowContributor {
-  override val itemsProvider = SemanticSearchSettings.getInstance().run {
-    if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model) else LocalSemanticActionsProvider(model)
-  }
+  override val itemsProvider
+    get() = throw UnsupportedOperationException()
 
   override val desiredResultsCount
     get() = DESIRED_RESULTS_COUNT
@@ -94,54 +94,57 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   @RequiresBackgroundThread
   override fun fetchElementsConcurrently(pattern: String,
                                          progressIndicator: ProgressIndicator,
-                                         consumer: Processor<in FoundItemDescriptor<MatchedValue>>): Unit = runBlockingCancellable {
-    syncSearchSettings()
-    val knownItems = mutableListOf<FoundItemDescriptor<MatchedValue>>()
+                                         consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
+    runBlockingCancellable {
+      runUpdateSessionForActionSearch(model.updateSession) { presentationProvider ->
+        val knownItems = mutableListOf<FoundItemDescriptor<MatchedValue>>()
+        val mutex = Mutex()
 
-    val mutex = Mutex()
-    val readyChannel = Channel<Unit>()
-    val standardContributorFinishedChannel = Channel<Unit>()
-
-    val searchStart = System.nanoTime()
-    launch {
-      var foundItemsCount = 0
-      val cachedDescriptors = mutableListOf<FoundItemDescriptor<MatchedValue>>()
-
-      val semanticMatches = itemsProvider.streamSearchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW]).toList()
-      standardContributorFinishedChannel.receiveCatching()
-      for (priority in ORDERED_PRIORITIES) {
-        val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
-        else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
-
-        while (iterator.hasNext()) {
-          ensureActive()
-          val descriptor = iterator.next()
-          if (priority == DescriptorPriority.HIGH && descriptor.findPriority() != priority) {
-            cachedDescriptors.add(descriptor)
-            continue
-          }
-
-          val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
-          mutex.withLock { prepareDescriptor() }?.let {
-            consumer.process(it)
-            foundItemsCount++
-          }
-          if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) break
+        val itemsProvider = SemanticSearchSettings.getInstance().run {
+          if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model, presentationProvider)
+          else LocalSemanticActionsProvider(model, presentationProvider)
         }
-        if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) break
-      }
-      readyChannel.close()
-    }
+        itemsProvider.includeDisabledActions = myDisabledActions
 
-    coroutineToIndicator {
-      defaultFetchElements(pattern, progressIndicator) {
-        val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
-        val descriptor = runBlockingCancellable { mutex.withLock { prepareDescriptor() } }
-        consumer.process(descriptor)
+        val standardSearchJob = launch {
+          doFetchItems(this, presentationProvider, pattern) {
+            val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
+            val descriptor = mutex.withLock { prepareDescriptor() }
+            consumer.process(descriptor)
+          }
+        }
+
+        val searchStart = System.nanoTime()
+        launch {
+          var foundItemsCount = 0
+          val cachedDescriptors = mutableListOf<FoundItemDescriptor<MatchedValue>>()
+
+          val semanticMatches = itemsProvider.streamSearchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW]).toList()
+          standardSearchJob.join()
+          for (priority in ORDERED_PRIORITIES) {
+            val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
+            else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
+
+            while (iterator.hasNext()) {
+              ensureActive()
+              val descriptor = iterator.next()
+              if (priority == DescriptorPriority.HIGH && descriptor.findPriority() != priority) {
+                cachedDescriptors.add(descriptor)
+                continue
+              }
+
+              val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
+              mutex.withLock { prepareDescriptor() }?.let {
+                blockingContext { consumer.process(it) }
+                foundItemsCount++
+              }
+              if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) break
+            }
+            if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) break
+          }
+        }
       }
     }
-    standardContributorFinishedChannel.close()
-    readyChannel.receiveCatching()
   }
 
   private fun mergeOrSkipAction(newItem: FoundItemDescriptor<MatchedValue>,
@@ -186,7 +189,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   }
 
   override fun syncSearchSettings() {
-    itemsProvider.includeDisabledActions = myDisabledActions
+    throw UnsupportedOperationException()
   }
 
   companion object {

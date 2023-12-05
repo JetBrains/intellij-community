@@ -300,10 +300,16 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   @NotNull
   protected abstract PlexusContainer getContainer();
 
+  public MavenExecutionRequest createRequest(File file,
+                                             List<String> activeProfiles,
+                                             List<String> inactiveProfiles) {
+    return createRequest(file, activeProfiles, inactiveProfiles, new Properties());
+  }
+
   public abstract MavenExecutionRequest createRequest(File file,
                                                       List<String> activeProfiles,
-                                                      List<String> inactiveProfiles)
-    throws RemoteException;
+                                                      List<String> inactiveProfiles,
+                                                      @NotNull Properties customProperties);
 
   protected static void warn(String message, Throwable e) {
     MavenServerGlobals.getLogger().warn(new RuntimeException(message, e));

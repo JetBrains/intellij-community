@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.serviceContainer.ContainerUtilKt;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
@@ -105,15 +107,24 @@ public final class FSRecordsImpl implements Closeable {
 
   private static final String CONTENT_STORAGE_IMPL = System.getProperty("vfs.content-storage.impl", "over-lock-free-page-cache");
   public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(CONTENT_STORAGE_IMPL);
+  public static final boolean USE_CONTENT_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_STORAGE_IMPL);
 
   private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-mmapped-file");
   public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
+
+  public static final int COMPRESS_CONTENT_IF_LARGER_THAN = SystemProperties.getIntProperty("vfs.content-storage.compress-if-larger", 64);
 
   /**
    * Reuse fileIds deleted in a previous session.
    * It is a quite natural thing to do, but that reuse regularly presents itself in edge-case bugs, so we consider getting rid of it
    */
   public static final boolean REUSE_DELETED_FILE_IDS = getBooleanProperty("vfs.reuse-deleted-file-ids", false);
+
+  /**
+   * Wrap {@link AlreadyDisposedException} in {@link ProcessCanceledException} if under progress indicator or Job.
+   * See containerUtil.isUnderIndicatorOrJob()
+   */
+  private static final boolean WRAP_ADE_IN_PCE = getBooleanProperty("vfs.wrap-ade-in-pce", true);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -201,7 +212,7 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
-  private final FineGrainedIdLock updateLock = new FineGrainedIdLock();
+  private final FileRecordLock updateLock = new FileRecordLock();
 
   private volatile boolean closed = false;
 
@@ -231,7 +242,7 @@ public final class FSRecordsImpl implements Closeable {
     final int mainVFSFormatVersion = 61;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
-           nextMask(true,  //former USE_CONTENT_HASHES, feel free to re-use
+           nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED && USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE,//pageSize was changed on old<->new transition
            nextMask(true,  //former 'inline attributes', feel free to re-use
@@ -390,6 +401,7 @@ public final class FSRecordsImpl implements Closeable {
   @Override
   public synchronized void close() {
     if (!closed) {
+      LOG.info("VFS closing");
       Exception stackTraceEx = new Exception("FSRecordsImpl close stacktrace");
 
       if (flushingTask != null) {
@@ -454,12 +466,17 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  private @NotNull AlreadyDisposedException alreadyClosedException() {
-    AlreadyDisposedException alreadyClosed = new AlreadyDisposedException("VFS is already closed (disposed)");
+  private @NotNull RuntimeException alreadyClosedException() {
+    AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already closed (disposed)");
     if (closedStackTrace != null) {
-      alreadyClosed.addSuppressed(closedStackTrace);
+      alreadyDisposed.addSuppressed(closedStackTrace);
     }
-    return alreadyClosed;
+
+    if (!WRAP_ADE_IN_PCE) {
+      return alreadyDisposed;
+    }
+
+    return ContainerUtilKt.wrapAlreadyDisposedError(alreadyDisposed);
   }
 
 
@@ -604,8 +621,9 @@ public final class FSRecordsImpl implements Closeable {
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
     }
-    catch (IOException e) {
-      throw handleError(e);
+    catch (Throwable t) {
+      //not only IOException: almost everything thrown from .findOrCreateRootRecord() is a sign of VFS structure corruption
+      throw handleError(t);
     }
   }
 
@@ -633,6 +651,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /** Delete fileId from the roots catalog. Does NOT delete fileId record itself */
   void deleteRootRecord(int fileId) {
     try {
       treeAccessor.deleteRootRecord(fileId);
@@ -703,46 +722,34 @@ public final class FSRecordsImpl implements Closeable {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
-  /**
-   * Perform operation on children and save the list atomically:
-   * Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
-   * If everything is still valid (i.e. no one changed the list in the meantime), commit.
-   * Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-   * <p>
-   * TODO actually everything related to this method is kinda of guru code. Please, don't touch it, people are bad in parallel programming.
-   */
+  /** Perform operation on children and save the list atomically */
   @NotNull
   ListResult update(@NotNull VirtualFile parent,
                     int parentId,
                     @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
-    assert parentId > 0 : parentId;
-    ListResult children = list(parentId);
-    ListResult result = childrenConvertor.apply(children);
+    PersistentFSConnection.ensureIdIsValid(parentId);
 
     updateLock.lock(parentId);
     try {
-      ListResult toSave;
-      // optimization: if the children were never changed after list(), do not check for duplicates again
-      if (result.childrenWereChangedSinceLastList(this)) {
-        children = list(parentId);
-        toSave = childrenConvertor.apply(children);
-      }
-      else {
-        toSave = result;
-      }
+      ListResult children = list(parentId);
+      ListResult modifiedChildren = childrenConvertor.apply(children);
+
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
       // then do not save them back again unnecessarily
-      if (!toSave.equals(children)) {
+      if (!modifiedChildren.equals(children)) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
+          LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + modifiedChildren);
         }
         checkNotClosed();
-        updateSymlinksForNewChildren(parent, children, toSave);
-        treeAccessor.doSaveChildren(parentId, toSave);
+
+        //TODO RC: why we update symlinks here, under the lock?
+        updateSymlinksForNewChildren(parent, children, modifiedChildren);
+
+        treeAccessor.doSaveChildren(parentId, modifiedChildren);
         connection.markRecordAsModified(parentId);
       }
-      return toSave;
+      return modifiedChildren;
     }
     catch (ProcessCanceledException e) {
       // NewVirtualFileSystem.list methods can be interrupted now
@@ -781,11 +788,11 @@ public final class FSRecordsImpl implements Closeable {
             setParent(childToMove.getId(), toParentId);
           }
 
-          connection.markRecordAsModified(toParentId);
           treeAccessor.doSaveChildren(toParentId, childrenToMove);
+          connection.markRecordAsModified(toParentId);
 
-          connection.markRecordAsModified(fromParentId);
           treeAccessor.doSaveChildren(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
+          connection.markRecordAsModified(fromParentId);
         }
         catch (ProcessCanceledException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
@@ -806,9 +813,10 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== symlink manipulation: ========================================
 
-  private void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
-                                            @NotNull ListResult oldChildren,
-                                            @NotNull ListResult newChildren) {
+  @VisibleForTesting
+  void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
+                                    @NotNull ListResult oldChildren,
+                                    @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
     ContainerUtil.processSortedListsInOrder(
       oldChildren.children, newChildren.children,
@@ -1133,14 +1141,14 @@ public final class FSRecordsImpl implements Closeable {
                          int parentId,
                          @NotNull FileAttributes attributes,
                          @NotNull String name,
-                         boolean overwriteMissed) {
+                         boolean cleanAttributeRef) {
     int nameId = getNameId(name);
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
     try {
-      fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
+      fillRecord(fileId, timestamp, length, flags, nameId, parentId, cleanAttributeRef);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -1182,7 +1190,12 @@ public final class FSRecordsImpl implements Closeable {
   /** must be called under r or w lock */
   private @Nullable AttributeInputStream readAttribute(int fileId,
                                                        @NotNull FileAttribute attribute) throws IOException {
-    return attributeAccessor.readAttribute(fileId, attribute);
+    try {
+      return attributeAccessor.readAttribute(fileId, attribute);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   @NotNull
@@ -1222,7 +1235,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== file content accessors: ========================================
 
   @Nullable
-  DataInputStream readContent(int fileId) {
+  InputStream readContent(int fileId) {
     try {
       return contentAccessor.readContent(fileId);
     }
@@ -1249,9 +1262,9 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @NotNull
-  DataInputStream readContentById(int contentId) {
+  InputStream readContentById(int contentId) {
     try {
-      return contentAccessor.readContentDirectly(contentId);
+      return contentAccessor.readContentByContentId(contentId);
     }
     catch (InterruptedIOException ie) {
       //RC: goal is to just not go into handleError(), which likely marks VFS corrupted,
@@ -1292,10 +1305,6 @@ public final class FSRecordsImpl implements Closeable {
       public void close() {
         try {
           super.close();
-          if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
-            checkNotClosed();
-            connection.markRecordAsModified(fileId);
-          }
         }
         catch (IOException e) {
           throw handleError(e);
@@ -1372,7 +1381,7 @@ public final class FSRecordsImpl implements Closeable {
   RuntimeException handleError(Throwable e) throws RuntimeException, Error {
     if (e instanceof ClosedStorageException || closed) {
       // no connection means IDE is closing...
-      AlreadyDisposedException alreadyDisposed = alreadyClosedException();
+      RuntimeException alreadyDisposed = alreadyClosedException();
       alreadyDisposed.addSuppressed(e);
       throw alreadyDisposed;
     }

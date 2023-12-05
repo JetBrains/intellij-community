@@ -5,10 +5,12 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
@@ -21,10 +23,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
-import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -323,7 +322,61 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
         if (ktExpression is KtExpressionWithLabel) {
-            return ktExpression.analyze()[BindingContext.LABEL_TARGET, ktExpression.getTargetLabel()]
+            fun PsiElement.getLambdaReceiver(): PsiElement {
+                val lambda = toUElementOfType<ULambdaExpression>()
+                // NB: not value parameters, which will exclude implicit `this` as the lambda receiver
+                return lambda?.parameters?.firstOrNull()?.javaPsi ?: this
+            }
+
+            val bindingContext = ktExpression.analyze()
+            return when (val psiElement = bindingContext[BindingContext.LABEL_TARGET, ktExpression.getTargetLabel()]) {
+                null -> {
+                    if (ktExpression is KtInstanceExpressionWithLabel) {
+                        // A subtype of [KtExpressionWithLabel], including [KtThisExpression]/[KtSuperExpression]
+                        // If it's just `this`, not `this@withLabel`, LABEL_TARGET is empty, of course.
+                        // Try REFERENCE_TARGET one more time.
+                        bindingContext[BindingContext.REFERENCE_TARGET, ktExpression.instanceReference]?.let { descriptor ->
+                            when (descriptor) {
+                                is AnonymousFunctionDescriptor -> {
+                                    descriptor.source.getPsi()?.getLambdaReceiver()
+                                }
+                                is FunctionDescriptor -> {
+                                    if (descriptor.isExtension) {
+                                        // ReceiverType.ext(args...) -> ext(ReceiverType, args...)
+                                        val psiMethod = resolveToDeclarationImpl(ktExpression, descriptor) as? PsiMethod
+                                        psiMethod?.parameterList?.parameters?.firstOrNull()
+                                    } else {
+                                        // member function
+                                        resolveToDeclarationImpl(ktExpression, descriptor.containingDeclaration)
+                                    }
+                                }
+                                is PropertyDescriptor -> {
+                                    if (descriptor.isExtension) {
+                                        // ReceiverType.ext -> getExt(ReceiverType)
+                                        val maybeGetter = resolveToDeclarationImpl(ktExpression, descriptor) as? PsiMethod
+                                        maybeGetter?.parameterList?.parameters?.firstOrNull()
+                                    } else {
+                                        // member property
+                                        resolveToDeclarationImpl(ktExpression, descriptor.containingDeclaration)
+                                    }
+                                }
+                                else -> {
+                                    resolveToDeclarationImpl(ktExpression, descriptor)
+                                }
+                            }
+                        }
+                    } else null
+                }
+                is KtFunctionLiteral -> {
+                    // E.g., this@apply
+                    psiElement.getLambdaReceiver()
+                }
+                is KtDeclaration -> {
+                    // E.g., this@Foo
+                    psiElement.toLightElements().singleOrNull() ?: psiElement
+                }
+                else -> psiElement
+            }
         }
         return resolveToDeclarationImpl(ktExpression)
     }

@@ -69,9 +69,8 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
     List<ExpressionToConstantReplacementContext> copies =
       myProcessDuplicates == ThreeState.NO ? List.of() : findCopies(comparisons, containingClass);
     if (myProcessDuplicates == ThreeState.UNSURE && !copies.isEmpty()) {
-      return new ModChooseAction(JavaBundle.message("intention.extract.set.from.comparison.chain.popup.title"),
-                                 List.of(new ExtractSetFromComparisonChainAction(false),
-                                         new ExtractSetFromComparisonChainAction(true)));
+      return ModCommand.chooseAction(JavaBundle.message("intention.extract.set.from.comparison.chain.popup.title"),
+                                     new ExtractSetFromComparisonChainAction(false), new ExtractSetFromComparisonChainAction(true));
     }
     LinkedHashSet<String> suggestions = getSuggestions(comparisons);
 
@@ -149,6 +148,7 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext actionContext) {
+    if (!BaseIntentionAction.canModify(actionContext.file())) return null;
     PsiElement element = actionContext.findLeaf();
     List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
     if (comparisons.size() <= 1) return null;

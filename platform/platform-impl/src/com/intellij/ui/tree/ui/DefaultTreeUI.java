@@ -222,9 +222,8 @@ public class DefaultTreeUI extends BasicTreeUI {
   }
 
   private void repaintPath(@Nullable TreePath path) {
-    Rectangle bounds = getPathBounds(getTree(), path);
-    // repaint 1 px above and 1 px below to avoid rounding errors with fractional scaling:
-    if (bounds != null) tree.repaint(0, bounds.y - 1, tree.getWidth(), bounds.height + 2);
+    var tree = getTree();
+    if (tree != null) TreeUtil.repaintPath(tree, path);
   }
 
   private void removeCachedRenderers() {

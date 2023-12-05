@@ -19,8 +19,9 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sim
 import com.intellij.openapi.wm.impl.getPreferredWindowHeaderHeight
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
-import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.platform.ide.menu.collectGlobalMenu
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -28,7 +29,6 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.util.childScope
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -58,7 +58,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     isOpaque = false
   }
   private val menuBarContainer = createMenuBarContainer()
-  private val mainMenuButton = MainMenuButton()
+  private val mainMenuButton = MainMenuButton(coroutineScope)
   private var toolbar: MainToolbar? = null
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
@@ -138,6 +138,11 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
         }
       }
     }
+    collectGlobalMenu(coroutineScope) { globalMenuPresent ->
+      ideMenuBar.isVisible = !globalMenuPresent
+      // Repaint gradient
+      repaint()
+    }
   }
 
   override fun updateSize() {
@@ -184,7 +189,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   private val mode: ShowMode
-    get() = if (isToolbarInHeader()) ShowMode.TOOLBAR else ShowMode.MENU
+    get() = if (rootPane.isToolbarInHeader()) ShowMode.TOOLBAR else ShowMode.MENU
 
   private fun wrap(comp: JComponent): NonOpaquePanel {
     return object : NonOpaquePanel(comp) {

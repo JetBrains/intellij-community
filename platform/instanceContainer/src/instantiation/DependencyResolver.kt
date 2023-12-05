@@ -34,5 +34,5 @@ interface DependencyResolver {
    *
    * @param round index of the current try
    */
-  fun resolveDependency(parameterType: Class<*>, round: Int): ArgumentSupplier?
+  fun resolveDependency(parameterType: Class<*>, instanceClass: Class<*>, round: Int): ArgumentSupplier?
 }

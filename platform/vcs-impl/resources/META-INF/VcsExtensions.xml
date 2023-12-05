@@ -276,8 +276,6 @@
     <ignoredFileProvider id="VCS.DefaultIgnoredFileProvider" implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="first"/>
     <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ProjectExcludesIgnoredFileProvider" order="after VCS.DefaultIgnoredFileProvider"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
-    <dateTimeFormatter id="vcs.annotate" name="VCS Annotate" />
-    <dateTimeFormatter id="vcs.log" name="VCS Log" />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>

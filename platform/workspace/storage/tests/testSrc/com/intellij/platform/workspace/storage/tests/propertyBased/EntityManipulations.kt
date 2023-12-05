@@ -196,6 +196,7 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : WorkspaceEntity.Bu
 
     @Suppress("UNCHECKED_CAST") val entity = storage.entityDataByIdOrDie(entityId).createEntity(storage) as E
 
+    env.logMessage("------- modifying entity $entity ----------")
     val modifyEntityAlternatives = modifyEntity(env)
     if (modifyEntityAlternatives.isNotEmpty()) {
       val modifications = env.generateValue(Generator.sampledFrom(modifyEntityAlternatives), null)
@@ -260,7 +261,7 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
         val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as XParentEntity }
         return storage addEntity XChildWithOptionalParentEntity(someProperty, source) {
           optionalParent = parentEntity
-        } to "Select parent for child: $parentId"
+        } to "Select parent for child: ${parentId?.asString()}"
       }
     }
   }
@@ -417,7 +418,7 @@ private object AbstractEntities {
                                 someProperty: String,
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
           val children = selectChildren(env, storage).asSequence()
-          return storage.addRightEntity(children, source) to ""
+          return storage.addRightEntity(children, source) to "Children: ${children.toList()}"
         }
       }
     }

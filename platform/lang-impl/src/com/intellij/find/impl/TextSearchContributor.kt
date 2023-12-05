@@ -52,6 +52,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
                                                         SearchEverywhereExtendedInfoProvider,
                                                         PossibleSlowContributor,
                                                         SearchEverywhereEmptyTextProvider,
+                                                        SearchEverywherePreviewProvider,
                                                         DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
@@ -135,7 +136,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   }
 
   override fun getActions(onChanged: Runnable): List<AnAction> =
-    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
+    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask }, PreviewAction())
 
   override fun createRightActions(registerShortcut: (AnAction) -> Unit, onChanged: Runnable): List<TextSearchRightActionAction> {
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it } }

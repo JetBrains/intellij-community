@@ -31,7 +31,7 @@ class FeaturesFilterConfiguration : EvaluationFilterConfiguration {
   override val description: String = "Filter out session if it doesn't contain concrete features"
   override val hasUI: Boolean = false
 
-  override fun isLanguageSupported(languageName: String): Boolean = Language.values().any { it.displayName == languageName }
+  override fun isLanguageSupported(languageName: String): Boolean = Language.entries.any { it.displayName == languageName }
 
   override fun buildFromJson(json: Any?): EvaluationFilter = if (json == null) EvaluationFilter.ACCEPT_ALL
   else FeaturesFilter(json as List<String>)

@@ -66,7 +66,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         ConvertToIsArrayOfCallFix,
         Errors.CANNOT_CHECK_FOR_ERASED,
     ),
-    fixValToVarDiagnosticBasedProcessing,
     fixTypeMismatchDiagnosticBasedProcessing
 )
 

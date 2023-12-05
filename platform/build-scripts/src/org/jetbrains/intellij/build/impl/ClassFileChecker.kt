@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
@@ -47,7 +47,7 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
     .setAttribute("forbiddenSubPathCount", forbiddenSubPaths.size.toLong())
     .setAttribute("forbiddenSubPathExceptionsCount", forbiddenSubPathExceptions.size.toLong())
     .setAttribute("root", root.toString())
-    .useWithScope2 {
+    .useWithScope {
       val rules = ArrayList<Rule>(versionCheckConfig.size)
       for (entry in versionCheckConfig.entries) {
         rules.add(Rule(path = entry.key, version = classVersion(entry.value)))

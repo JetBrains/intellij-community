@@ -9,8 +9,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun `rename compound module`() = runBlocking {
     assumeTrue(isWorkspaceImport)

@@ -545,11 +545,14 @@ public final class ActionsTree {
       else if (userObject instanceof String) {
         actionId = (String)userObject;
         boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
-        AnAction action = ActionManager.getInstance().getAction(actionId);
-        text = getActionText(action, actionId, null);
-        if (action != null) {
-          icon = action.getTemplatePresentation().getIcon();
-          tooltipText = action.getTemplatePresentation().getDescription();
+        Presentation presentation = getTemplatePresentation(actionId, null);
+        if (presentation == null) {
+          text = actionId;
+        }
+        else {
+          text = StringUtil.notNullize(presentation.getText(), actionId);
+          icon = presentation.getIcon();
+          tooltipText = presentation.getDescription();
         }
         changed = myKeymap != null && isShortcutCustomized(actionId, myKeymap);
       }
@@ -604,12 +607,16 @@ public final class ActionsTree {
       SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
 
       if (boundId != null) {
-        append(" ");
-        append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
-        append(" ");
+        AnAction boundAction = ActionManager.getInstance().getAction(boundId);
+        if (boundAction != null) {
+          append(" ");
+          append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          append(" ");
 
-        String boundText = getActionText(ActionManager.getInstance().getAction(boundId), boundId, actionId);
-        append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
+          Presentation boundPresentation = getTemplatePresentation(boundId, actionId);
+          String boundText = StringUtil.notNullize(boundPresentation == null ? null : boundPresentation.getText(), boundId);
+          append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
+        }
       }
 
       if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
@@ -640,16 +647,29 @@ public final class ActionsTree {
       return result;
     }
 
-    private @NlsActions.ActionText String getActionText(@Nullable AnAction action, @NlsSafe String actionId, @Nullable String boundSourceId) {
-      String text = action == null ? null : action.getTemplateText();
-      if (text == null || text.length() == 0) { //fill dynamic presentation gaps
+    private @Nullable Presentation getTemplatePresentation(@NotNull @NlsSafe String actionId,
+                                                           @Nullable String boundSourceId) {
+      AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
+      Presentation presentation = action == null ? null : action.getTemplatePresentation();
+      String text = presentation == null ? null : presentation.getText();
+      if (StringUtil.isEmpty(text)) { // fill dynamic presentation gaps
         if (myBrokenActions.add(actionId)) {
-          LOG.warn("Template presentation is not defined for '" + actionId + "' - showing internal ID in UI" +
-                   (boundSourceId != null ? ", bound by " + boundSourceId : ""));
+          AnAction action2 = action instanceof ActionStubBase ? ActionManager.getInstance().getAction(actionId) : null;
+          Presentation presentation2 = action2 == null ? null : action2.getTemplatePresentation();
+          String text2 = presentation2 == null ? null : presentation2.getText();
+          if (StringUtil.isEmpty(text2)) {
+            LOG.warn("No text in '" + actionId + "' template presentation" +
+                     (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
+                     ". Showing its action-id instead");
+          }
+          else {
+            LOG.info("No text in '" + actionId + "' stub template presentation" +
+                     (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
+                     ". Creating its instance");
+          }
         }
-        text = actionId;
       }
-      return text;
+      return presentation;
     }
 
     private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {

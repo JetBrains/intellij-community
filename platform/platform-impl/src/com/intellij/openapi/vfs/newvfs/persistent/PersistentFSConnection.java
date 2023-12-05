@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.GentleFlusherBase;
@@ -23,11 +22,10 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.io.storage.RefCountingContentStorage;
+import com.intellij.util.io.storage.VFSContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,7 +43,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -99,12 +96,11 @@ public final class PersistentFSConnection {
 
   private final @NotNull PersistentFSPaths persistentFSPaths;
 
-  private final @NotNull AbstractAttributesStorage attributesStorage;
-  private final @NotNull RefCountingContentStorage contentStorage;
+  private final @NotNull VFSAttributesStorage attributesStorage;
+  private final @NotNull VFSContentStorage contentStorage;
 
   private final @NotNull PersistentFSRecordsStorage records;
 
-  private final @Nullable ContentHashEnumerator contentHashesEnumerator;
   private final @NotNull ScannableDataEnumeratorEx<String> namesEnumerator;
   /**
    * Enumerator for repeating strings used in attributes. Used to support
@@ -126,9 +122,8 @@ public final class PersistentFSConnection {
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
                          @NotNull ScannableDataEnumeratorEx<String> names,
-                         @NotNull AbstractAttributesStorage attributes,
-                         @NotNull RefCountingContentStorage contents,
-                         @Nullable ContentHashEnumerator contentHashesEnumerator,
+                         @NotNull VFSAttributesStorage attributes,
+                         @NotNull VFSContentStorage contents,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @Nullable VfsLogEx vfsLog,
                          @NotNull NotNullLazyValue<? extends IntList> freeRecords,
@@ -145,7 +140,6 @@ public final class PersistentFSConnection {
     namesEnumerator = names;
     attributesStorage = wrapAttributes(attributes, interceptors);
     contentStorage = wrapContents(contents, interceptors);
-    this.contentHashesEnumerator = contentHashesEnumerator;
     this.vfsLog = vfsLog;
     persistentFSPaths = paths;
     this.freeRecords = freeRecords;
@@ -155,7 +149,7 @@ public final class PersistentFSConnection {
 
   //It is 'second level' of wrapping, not really used today, but for the bright future:
 
-  private static RefCountingContentStorage wrapContents(RefCountingContentStorage contents, List<ConnectionInterceptor> interceptors) {
+  private static VFSContentStorage wrapContents(VFSContentStorage contents, List<ConnectionInterceptor> interceptors) {
     var contentInterceptors = interceptors.stream()
       .filter(ContentsInterceptor.class::isInstance)
       .map(ContentsInterceptor.class::cast)
@@ -163,7 +157,7 @@ public final class PersistentFSConnection {
     return InterceptorInjection.INSTANCE.injectInContents(contents, contentInterceptors);
   }
 
-  private static AbstractAttributesStorage wrapAttributes(AbstractAttributesStorage attributes, List<ConnectionInterceptor> interceptors) {
+  private static VFSAttributesStorage wrapAttributes(VFSAttributesStorage attributes, List<ConnectionInterceptor> interceptors) {
     var attributesInterceptors = interceptors.stream()
       .filter(AttributesInterceptor.class::isInstance)
       .map(AttributesInterceptor.class::cast)
@@ -186,17 +180,11 @@ public final class PersistentFSConnection {
     return enumeratedAttributes;
   }
 
-  @NotNull
-  ContentHashEnumerator getContentHashesEnumerator() {
-    return Objects.requireNonNull(contentHashesEnumerator, "Content hash enumerator must be initialized");
-  }
-
-
-  @NotNull RefCountingContentStorage getContents() {
+  @NotNull VFSContentStorage getContents() {
     return contentStorage;
   }
 
-  @NotNull AbstractAttributesStorage getAttributes() {
+  @NotNull VFSAttributesStorage getAttributes() {
     return attributesStorage;
   }
 
@@ -266,10 +254,7 @@ public final class PersistentFSConnection {
     }
     attributesStorage.force();
     contentStorage.force();
-    if (contentHashesEnumerator != null) {
-      contentHashesEnumerator.force();
-    }
-    resetDirty(/*markSafelyClosed: */ markSafelyClosed);
+    resetDirty(markSafelyClosed);
     records.force();
   }
 
@@ -278,8 +263,7 @@ public final class PersistentFSConnection {
            || ((Forceable)namesEnumerator).isDirty()
            || attributesStorage.isDirty()
            || contentStorage.isDirty()
-           || records.isDirty()
-           || (contentHashesEnumerator != null && contentHashesEnumerator.isDirty());
+           || records.isDirty();
   }
 
   int corruptionsDetected() {
@@ -302,7 +286,6 @@ public final class PersistentFSConnection {
     closeStorages(records,
                   namesEnumerator,
                   attributesStorage,
-                  contentHashesEnumerator,
                   contentStorage,
                   vfsLog);
     closed = true;
@@ -325,9 +308,8 @@ public final class PersistentFSConnection {
 
   static void closeStorages(@Nullable PersistentFSRecordsStorage records,
                             @Nullable ScannableDataEnumeratorEx<String> names,
-                            @Nullable AbstractAttributesStorage attributes,
-                            @Nullable ContentHashEnumerator contentHashesEnumerator,
-                            @Nullable RefCountingContentStorage contents,
+                            @Nullable VFSAttributesStorage attributes,
+                            @Nullable VFSContentStorage contents,
                             @Nullable VfsLogEx vfsLog) throws IOException {
     if (names instanceof Closeable) {//implies != null
       ((Closeable)names).close();
@@ -338,11 +320,7 @@ public final class PersistentFSConnection {
     }
 
     if (contents != null) {
-      Disposer.dispose(contents);
-    }
-
-    if (contentHashesEnumerator != null) {
-      contentHashesEnumerator.close();
+      contents.close();
     }
 
     if (records != null) {
@@ -356,10 +334,10 @@ public final class PersistentFSConnection {
 
   int getAttributeId(@NotNull String attributeId) {
     int enumeratedAttributeId = enumeratedAttributes.enumerate(attributeId);
-    if (enumeratedAttributeId > AbstractAttributesStorage.MAX_ATTRIBUTE_ID) {
+    if (enumeratedAttributeId > VFSAttributesStorage.MAX_ATTRIBUTE_ID) {
       throw new IllegalStateException(
         "attribute[" + attributeId + "] assigned id[" + enumeratedAttributeId + "] which is above max " +
-        AbstractAttributesStorage.MAX_ATTRIBUTE_ID +
+        VFSAttributesStorage.MAX_ATTRIBUTE_ID +
         ". Current list of attributes: " + enumeratedAttributes.dumpToString()
       );
     }
@@ -446,6 +424,14 @@ public final class PersistentFSConnection {
     assert id > 0 : id;
   }
 
+  /**@throws IndexOutOfBoundsException if fileId is outside already allocated file ids */
+  void ensureFileIdIsValid(int fileId) throws IndexOutOfBoundsException{
+    int maxAllocatedID = records.maxAllocatedID();
+    if (fileId <= FSRecords.NULL_FILE_ID || fileId > maxAllocatedID) {
+      throw new IndexOutOfBoundsException("fileId[" + fileId + "] is outside valid/allocated ids range [1.." + maxAllocatedID + "]");
+    }
+  }
+
   private static void showCorruptionNotification(boolean insisting) {
     NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
     var actions = new ArrayList<AnAction>();
@@ -512,7 +498,7 @@ public final class PersistentFSConnection {
           try {
             connection.doForce();
           }
-          catch (AlreadyDisposedException | RejectedExecutionException e){
+          catch (AlreadyDisposedException | RejectedExecutionException e) {
             LOG.warn("Stop flushing: pool is shutting down or whole application is closing", e);
             scheduledFuture.cancel(false);
           }
@@ -617,15 +603,6 @@ public final class PersistentFSConnection {
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
-        }
-
-        if (connection.contentHashesEnumerator != null) {
-          connection.contentHashesEnumerator.force();
-
-          unspentContentionQuota -= competingThreads();
-          if (unspentContentionQuota < 0) {
-            return FlushResult.HAS_MORE_TO_FLUSH;
-          }
         }
 
         //Actually, this is no strictly correct: we can set SAFELY_CLOSED only if we just flush _all_ storages,

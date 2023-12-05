@@ -13,7 +13,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
     return GROUP
   }
 
-  private val GROUP = EventLogGroup("python.new.project.wizard", 2)
+  private val GROUP = EventLogGroup("python.new.project.wizard", 5)
   private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
   private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
   private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
@@ -22,6 +22,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent("project.generated",
                                                                   INTERPRETER_TYPE,
                                                                   EXECUTION_TYPE,
+                                                                  INTERPRETER_CREATION_MODE,
                                                                   PYTHON_VERSION,
                                                                   GENERATOR_FIELD,
                                                                   INHERIT_GLOBAL_SITE_PACKAGE_FIELD,
@@ -35,6 +36,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
     PROJECT_GENERATED_EVENT.log(
       INTERPRETER_TYPE.with(info.type.value),
       EXECUTION_TYPE.with(info.target.value),
+      INTERPRETER_CREATION_MODE.with(info.creationMode.value),
       PYTHON_VERSION.with(pythonVersion.toPythonVersion()),
       INHERIT_GLOBAL_SITE_PACKAGE_FIELD.with(info.globalSitePackage),
       MAKE_AVAILABLE_TO_ALL_PROJECTS.with(info.makeAvailableToAllProjects),
@@ -53,5 +55,6 @@ data class InterpreterStatisticsInfo(val type: InterpreterType,
                                      val target: InterpreterTarget,
                                      val globalSitePackage: Boolean,
                                      val makeAvailableToAllProjects: Boolean,
-                                     val previouslyConfigured: Boolean)
+                                     val previouslyConfigured: Boolean,
+                                     val creationMode: InterpreterCreationMode = InterpreterCreationMode.NA)
 

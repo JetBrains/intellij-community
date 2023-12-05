@@ -76,7 +76,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) return
         val optimizedImports = KotlinOptimizeImportsFacility.getInstance().prepareOptimizedImports(file, data) ?: return // return if already optimized
         val project = file.project
-        val modificationTracker = OuterModelsModificationTrackerManager.getInstance(project).tracker
+        val modificationTracker = OuterModelsModificationTrackerManager.getTracker(project)
         val modificationCount = modificationTracker.modificationCount
 
         val extensionsAllowToChangeFileSilently = SilentChangeVetoer.extensionsAllowToChangeFileSilently(project, file.virtualFile)

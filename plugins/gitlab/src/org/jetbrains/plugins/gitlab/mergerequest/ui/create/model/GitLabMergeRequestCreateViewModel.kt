@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create.model
 
+import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -9,7 +11,8 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
@@ -24,8 +27,10 @@ import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal interface GitLabMergeRequestCreateViewModel {
   val projectsManager: GitLabProjectsManager
@@ -34,6 +39,7 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val isBusy: Flow<Boolean>
 
+  val allowsMultipleReviewers: Flow<Boolean>
   val branchState: Flow<BranchState?>
 
   val existingMergeRequest: Flow<String?>
@@ -51,8 +57,7 @@ internal interface GitLabMergeRequestCreateViewModel {
   fun updateTitle(text: String)
   fun updateBranchState(state: BranchState?)
 
-  fun addReviewer(reviewer: GitLabUserDTO)
-  fun removeReviewer(reviewer: GitLabUserDTO)
+  fun adjustReviewer(point: RelativePoint)
 
   fun createMergeRequest()
 }
@@ -64,12 +69,15 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   override val projectsManager: GitLabProjectsManager,
   override val projectData: GitLabProject,
   override val avatarIconProvider: IconsProvider<GitLabUserDTO>,
-  override val openReviewTabAction: suspend (mrIid: String) -> Unit
+  override val openReviewTabAction: suspend (mrIid: String) -> Unit,
+  private val onReviewCreated: () -> Unit
 ) : GitLabMergeRequestCreateViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
+
+  override val allowsMultipleReviewers: Flow<Boolean> = projectData.allowsMultipleReviewers
 
   private val listenableProgressIndicator = ListenableProgressIndicator()
   override val creatingProgressText: Flow<String?> = callbackFlow {
@@ -157,36 +165,45 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     _branchState.value = state
   }
 
-  override fun addReviewer(reviewer: GitLabUserDTO) {
-    // TODO: add ability to select several reviewers
-    val updatedReviewers = _adjustedReviewers.value + reviewer
-    _adjustedReviewers.value = updatedReviewers
-  }
+  override fun adjustReviewer(point: RelativePoint) {
+    cs.launchNow(Dispatchers.Main) {
+      val allowsMultipleReviewers = allowsMultipleReviewers.first()
+      val originalReviewersIds = adjustedReviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
+      val updatedReviewers = if (allowsMultipleReviewers == true)
+        GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
+      else
+        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
 
-  override fun removeReviewer(reviewer: GitLabUserDTO) {
-    val updatedReviewers = _adjustedReviewers.value - reviewer
-    _adjustedReviewers.value = updatedReviewers
+      updatedReviewers ?: return@launchNow
+      _adjustedReviewers.value = updatedReviewers
+      GitLabStatistics.logMrCreationReviewersAdjusted(project)
+    }
   }
 
   override fun createMergeRequest() {
     taskLauncher.launch {
+      GitLabStatistics.logMrCreationStarted(project)
       val (_, baseBranch, headRepo, headBranch) = _branchState.value ?: return@launch
       _reviewCreatingError.value = null
       try {
         val gitRemoteBranch = findGitRemoteBranch(headRepo, headBranch)
-        val mergeRequest = projectData.createMergeRequest(
+        val mergeRequest = projectData.createMergeRequestAndAwaitCompletion(
           sourceBranch = gitRemoteBranch.nameForRemoteOperations,
           targetBranch = baseBranch.nameForRemoteOperations,
           title = title.value.ifBlank { gitRemoteBranch.nameForRemoteOperations }
         )
         projectData.adjustReviewers(mergeRequest.iid, adjustedReviewers.value)
         openReviewTabAction(mergeRequest.iid)
+        onReviewCreated()
+        GitLabStatistics.logMrCreationSucceeded(project)
       }
       catch (e: CancellationException) {
         throw e
       }
       catch (e: Throwable) {
         _reviewCreatingError.value = e
+        val errorCode = (e as? HttpStatusErrorException)?.statusCode ?: -1
+        GitLabStatistics.logMrCreationFailed(project, errorCode)
       }
     }
   }
@@ -199,7 +216,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
           val dialogMessages = GitPushUtil.BranchNameInputDialogMessages(
             GitLabBundle.message("merge.request.create.branch.dialog.title"),
             GitLabBundle.message("merge.request.create.branch.dialog.message"),
-            GitLabBundle.message("merge.request.create.branch.dialog.comment", headBranch.name, headRepo.gitRemote.name)
+            GitLabBundle.message("merge.request.create.branch.dialog.comment")
           )
           GitPushUtil.findOrPushRemoteBranch(
             project, listenableProgressIndicator,

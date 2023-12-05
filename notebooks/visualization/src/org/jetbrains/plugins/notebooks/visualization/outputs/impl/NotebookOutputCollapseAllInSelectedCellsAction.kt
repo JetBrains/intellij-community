@@ -149,8 +149,9 @@ private fun markScrollingPositionBeforeOutputCollapseToggle(e: AnActionEvent) {
       val bounds = inlay.bounds ?: continue
       val outputTopIsAboveScreen = bounds.y < visibleArea.y
       val outputBottomIsOnOrBelowScreen = bounds.y + bounds.height > visibleArea.y
+      val outputCanFit = bounds.height < visibleArea.height
       if (outputTopIsAboveScreen) {
-        if ((outputBottomIsOnOrBelowScreen)) {
+        if ((outputBottomIsOnOrBelowScreen) && outputCanFit) {
           val inputEvent = e.inputEvent
           val additionalShift: Int
           if (inputEvent is MouseEvent) {

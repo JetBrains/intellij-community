@@ -104,7 +104,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
         if (myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
           XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
           if (evaluator != null) {
-            evaluator.evaluate(myExpression, new MyEvaluationCallback((WatchNodeImpl)node, place), myStackFrame.getSourcePosition());
+            evaluator.evaluate(myExpression, new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
             return;
           }
         }
@@ -117,10 +117,10 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
-      @NotNull private final WatchNodeImpl myNode;
+      @NotNull private final XValueNode myNode;
       @NotNull private final XValuePlace myPlace;
 
-      MyEvaluationCallback(@NotNull WatchNodeImpl node, @NotNull XValuePlace place) {
+      MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
         myNode = node;
         myPlace = place;
       }
@@ -133,7 +133,9 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
       @Override
       public void evaluated(@NotNull XValue result) {
         myValue = result;
-        myNode.evaluated();
+        if (myNode instanceof WatchNodeImpl watchNode) {
+          watchNode.evaluated();
+        }
         result.computePresentation(myNode, myPlace);
       }
 

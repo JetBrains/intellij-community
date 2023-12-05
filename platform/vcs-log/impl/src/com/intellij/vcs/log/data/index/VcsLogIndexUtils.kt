@@ -3,11 +3,14 @@
 
 package com.intellij.vcs.log.data.index
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsLogSharedSettings
 
-internal fun isIndexingPausedFor(root: VirtualFile): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(root)
+fun isIndexingPausedFor(root: VirtualFile): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(root)
 internal fun VcsLogIndex.isScheduledForIndexing(root: VirtualFile): Boolean = isIndexingEnabled(root) && !isIndexed(root)
 
 /**
@@ -64,7 +67,7 @@ private fun VcsLogModifiableIndex.resumeIndexing(roots: Collection<VirtualFile>)
  * @see [VcsLogModifiableIndex.toggleIndexing]
  */
 internal fun VcsLogData.toggleIndexing() {
-  enableIndexing(VcsLogPersistentIndex.getAvailableIndexers(logProviders).keys)
+  if (enableIndexing(project, VcsLogPersistentIndex.getAvailableIndexers(logProviders).keys)) return
 
   val index = index as? VcsLogModifiableIndex ?: return
   if (index.indexingRoots.isEmpty()) return
@@ -73,18 +76,28 @@ internal fun VcsLogData.toggleIndexing() {
 }
 
 /**
- * Enables indexing in the registry if it is disabled. Resumes indexing for the provided repositories if it was paused.
+ * Enables indexing in the registry and project settings if it was disabled. Resumes indexing for the provided repositories if it was paused.
  */
-internal fun VcsLogData.enableAndResumeIndexing(roots: Collection<VirtualFile>) {
-  enableIndexing(roots)
+fun enableAndResumeIndexing(project: Project, data: VcsLogData?, roots: Collection<VirtualFile>) {
+  if (enableIndexing(project, roots)) return
 
-  val index = index as? VcsLogModifiableIndex ?: return
+  val index = data?.index as? VcsLogModifiableIndex ?: return
   index.resumeIndexing(roots)
 }
 
-private fun enableIndexing(roots: Collection<VirtualFile>) {
-  if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
-    roots.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
-    VcsLogData.getIndexingRegistryValue().setValue(true)
-  }
+/**
+ * Enables indexing in the registry and project settings if it was disabled. Returns true if indexing state changed.
+ */
+private fun enableIndexing(project: Project, roots: Collection<VirtualFile>): Boolean {
+  if (project.isIndexingEnabled) return false
+
+  roots.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
+  VcsLogData.getIndexingRegistryValue().setValue(true)
+  project.service<VcsLogSharedSettings>().isIndexSwitchedOn = true
+  return true
 }
+
+val Project.isIndexingEnabled: Boolean
+  get() {
+    return VcsLogData.isIndexSwitchedOnInRegistry() && VcsLogSharedSettings.isIndexSwitchedOn(this)
+  }

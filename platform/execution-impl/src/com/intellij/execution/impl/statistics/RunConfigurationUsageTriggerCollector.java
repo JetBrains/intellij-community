@@ -33,7 +33,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 72);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 73);
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
@@ -61,7 +61,9 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                                                           RunConfigurationTypeUsagesCollector.ID_FIELD,
                                                                                           EventFields.PluginInfo,
                                                                                           ENV_FILES_COUNT},
-                                                                                        new EventField<?>[]{FINISH_TYPE});
+                                                                                        new EventField<?>[]{FINISH_TYPE},
+                                                                                        null,
+                                                                                        true);
 
   public static final VarargEventId UI_SHOWN_STAGE = ACTIVITY_GROUP.registerStage("ui.shown");
 
@@ -77,6 +79,18 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                        boolean isRerun) {
     return ACTIVITY_GROUP
       .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
+        .expireWith(project)
+        .submit(NonUrgentExecutor.getInstance()));
+  }
+
+  public static @NotNull StructuredIdeActivity triggerWithParent(@NotNull StructuredIdeActivity parentActivity,
+                                                                 @NotNull Project project,
+                                                                 @NotNull ConfigurationFactory factory,
+                                                                 @NotNull Executor executor,
+                                                                 @Nullable RunConfiguration runConfiguration,
+                                                                 boolean isRerun) {
+    return ACTIVITY_GROUP
+      .startedAsyncWithParent(project, parentActivity, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
   }

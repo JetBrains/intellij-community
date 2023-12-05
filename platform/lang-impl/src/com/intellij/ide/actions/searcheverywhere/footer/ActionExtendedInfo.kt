@@ -26,21 +26,20 @@ internal fun createActionExtendedInfo(project: Project?): ExtendedInfo {
   }
 
   val shortcut = fun(it: Any?): AnAction? = (it as? MatchedValue)?.let { AssignShortcutAction(project, it) }
-
   return ExtendedInfo(description, shortcut)
 }
 
-private class AssignShortcutAction(val project: Project?, val value: MatchedValue) :
+private class AssignShortcutAction(private val project: Project?, private val value: MatchedValue) :
   AnAction(Supplier { LangBundle.message("label.assign.shortcut") },
            Supplier {
              LangBundle.message("actions.tab.assign.a.shortcut", KeymapUtil.getFirstKeyboardShortcutText(
                KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
              )
            }) {
+  init {
+    shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
+  }
 
-    init {
-      shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
-    }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {

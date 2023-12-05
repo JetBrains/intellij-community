@@ -9,8 +9,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   @Test
   fun testMirrorCentralImport() = runBlocking {
     val oldSettingsFile = mavenGeneralSettings.userSettingsFile

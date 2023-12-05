@@ -827,8 +827,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
-    if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode<?>)component).getBackgroundColorCached(myProject);
+    if (component instanceof ChangesBrowserNode<?> node) {
+      node.cacheBackgroundColor(myProject); // use AsyncChangesTree to move this on pooled thread
+      return node.getBackgroundColorCached();
     }
     return null;
   }

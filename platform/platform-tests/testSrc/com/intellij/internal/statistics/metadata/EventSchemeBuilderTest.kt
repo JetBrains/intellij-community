@@ -19,7 +19,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 class EventSchemeBuilderTest : BasePlatformTestCase() {
 
   fun `test generate string field validated by regexp`() {
-    doFieldTest(EventFields.StringValidatedByRegexp("count", "integer"), hashSetOf("{regexp#integer}"))
+    doFieldTest(EventFields.StringValidatedByRegexpReference("count", "integer"), hashSetOf("{regexp#integer}"))
   }
 
   fun `test generate string field validated by enum`() {
@@ -91,8 +91,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   private fun buildGroupDescription(eventField: EventField<*>): GroupDescriptor {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
-    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup),
-                                                                  PluginSchemeDescriptor("testPlugin", "testPluginVersion"))
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
     assertSize(1, groups)
     return groups.first()

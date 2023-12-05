@@ -83,4 +83,20 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       }
     """.trimIndent())
   }
+
+  fun `test URL doesn't highlight when comparing with null`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.net.URL;
+      
+      class Foo {
+          static {
+              try {
+                  var url = new URL("");
+                  if (url.equals(null)) {
+                  }
+              } catch (Exception e) {}
+          }
+      }
+    """.trimIndent())
+  }
 }

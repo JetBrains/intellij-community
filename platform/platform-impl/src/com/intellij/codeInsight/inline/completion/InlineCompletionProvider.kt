@@ -2,23 +2,21 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionTooltipFactory
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
-import javax.swing.JComponent
-import javax.swing.JLabel
 
 /**
  * Proposals provider for inline completion.
  *
- * The [getSuggestion] method should return a [Flow] of [InlineCompletionElement] objects representing the proposals for completion.
- * The [isEnabled] method should be implemented to control whether the provider should be called for a particular [InlineCompletionEvent].
+ * Leave feedback or feature requests in [YouTrack](https://youtrack.jetbrains.com/issues/IDEA?q=Subsystem:%20%7BEditor.%20Code%20Completion.%20Inline%7D%20)
  *
  * #### Things to note:
  *   - Currently delay ([Flow.debounce]) for [InlineCompletionEvent.DocumentChange] is disabled and might be implemented later.
- *   You may implement it on provider side or use [DebouncedInlineCompletionProvider] as a entrypoint,
+ *   You may implement it on provider side or use [DebouncedInlineCompletionProvider] as an entrypoint,
  *   otherwise, proposals will be generated/canceled on each typing.
  *   - Any inline completion request will be cancelled if inline is in rendering mode
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
@@ -26,12 +24,18 @@ import javax.swing.JLabel
  *   - If you need to do something specific after insertion of provided elements, provide custom [InlineCompletionInsertHandler]
  *   - If some elements are rendered and a user types a new symbol, [overtyper] is used to update rendered elements.
  *
+ * If you need custom logic, like invoking completion, getting current state or listen for events:
+ * - [InlineCompletionHandler] for everything related to actions with inline completion, adding listeners, ect (get for editor via [InlineCompletion.getHandlerOrNull])
+ * - By default only main editor is supported. If you need custom one - use [InlineCompletion.install]
+ * - To get if inline completion is currently shown or get current state see [InlineCompletionSession] and [InlineCompletionContext]
+ * - To test this feature use `InlineCompletionLifecycleTestDSL` via `CodeInsightTestFixture.testInlineCompletion`
  *
  * @see InlineCompletionElement
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
  * @see InlineCompletionInsertHandler
  * @see InlineCompletionOvertyper
+ * @see InlineCompletionProviderPresentation
  */
 interface InlineCompletionProvider {
   /**
@@ -45,21 +49,54 @@ interface InlineCompletionProvider {
    */
   val id: InlineCompletionProviderID
 
+  /**
+   * Allow to add custom tooltip presentation for inline suggestion
+   */
   val providerPresentation: InlineCompletionProviderPresentation
     get() = InlineCompletionProviderPresentation.dummy(this)
 
+  /**
+   * Retrieves an inline completion suggestion based on the provided request.
+   *
+   * Every suggestion represents only one proposal and might be rendered as streaming using [Flow] (see [InlineCompletionSuggestion.Default])
+   *
+   * @param request The inline completion request containing information about the event, file, editor, document,
+   * startOffset, endOffset, and lookupElement.
+   * @return The inline completion suggestion. Use [InlineCompletionSuggestion.empty] to return empty suggestion
+   */
   suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion
 
+  /**
+   * Determines whether the given inline completion event enables the feature.
+   *
+   * This method runs in edt and will block UI thread, use only simple check here like settings.
+   * Note, that request might be invoked by different events (typing in editor, lookup navigation, action call or custom one)
+   * and provider needs to handle them all.
+   *
+   * @return True if the feature is enabled for the event, false otherwise.
+   */
+  @RequiresEdt
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
+  /**
+   * Determines whether the given inline completion event should restart current session and .
+   * If provider renders something and returns true here, then getSuggestion is invoked again.
+   * Also, the same provider will be called in this case.
+   *
+   * @return True if the session should be restarted, false otherwise.
+   */
   fun restartOn(event: InlineCompletionEvent): Boolean = false
 
   /**
-   * Use [InlineCompletionTooltipFactory] here to improve tooltip or create a custom tooltip.
+   * This method allows to implement any specific behavior needed after the inline completion suggestion has been selected and inserted.
+   * This can include any necessary cleanup or additional insertion behavior.
    */
   val insertHandler: InlineCompletionInsertHandler
     get() = DefaultInlineCompletionInsertHandler.INSTANCE
 
+  /**
+   * @see InlineCompletionOvertyper
+   */
   val overtyper: InlineCompletionOvertyper
     get() = DefaultInlineCompletionOvertyper()
 

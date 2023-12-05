@@ -7,6 +7,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
+
   override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("""

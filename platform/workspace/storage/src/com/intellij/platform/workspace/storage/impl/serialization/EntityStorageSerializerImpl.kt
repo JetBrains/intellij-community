@@ -11,26 +11,22 @@ import com.esotericsoftware.kryo.kryo5.objenesis.strategy.StdInstantiatorStrateg
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
+import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
+import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageClassesRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.StorageSerializerUtil
-import com.intellij.platform.workspace.storage.metadata.diff.CacheMetadataComparator
-import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
-import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -45,7 +41,7 @@ public class EntityStorageSerializerImpl(
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "v4"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "version5"
 
     private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
 
@@ -71,14 +67,14 @@ public class EntityStorageSerializerImpl(
   @set:TestOnly
   override var serializerDataFormatVersion: String = STORAGE_SERIALIZATION_VERSION
 
-  internal fun createKryo(): Pair<Kryo, Object2IntMap<TypeInfo>> {
+  internal fun createKryo(): Pair<Kryo, Object2IntWithDefaultMap<TypeInfo>> {
     val kryo = Kryo()
 
     kryo.setAutoReset(false)
     kryo.references = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
-    val classCache = Object2IntOpenHashMap<TypeInfo>()
+    val classCache = Object2IntWithDefaultMap<TypeInfo>()
     val registrar: StorageRegistrar = StorageClassesRegistrar(
       StorageSerializerUtil(
         typesResolver,
@@ -105,10 +101,11 @@ public class EntityStorageSerializerImpl(
       // Save version
       output.writeString(serializerDataFormatVersion)
 
-      val entitiesMetadata = getCacheMetadata(storage, typesResolver)
-      kryo.writeObject(output, entitiesMetadata)// Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+      val cacheMetadata = getCacheMetadata(storage, typesResolver)
 
-      writeAndRegisterClasses(kryo, output, storage, entitiesMetadata, classCache) // Register entities classes
+      kryo.writeObject(output, cacheMetadata)// Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+
+      writeAndRegisterClasses(kryo, output, storage, cacheMetadata, classCache) // Register entities classes
 
       // Write entity data and references
       kryo.writeClassAndObject(output, storage.entitiesByType)
@@ -128,8 +125,7 @@ public class EntityStorageSerializerImpl(
     }
     catch (e: Exception) {
       output.reset()
-      LOG.warn("Exception at project serialization", e)
-      SerializationResult.Fail(e.message)
+      SerializationResult.Fail(e)
     }
     finally {
       closeOutput(output)
@@ -153,14 +149,13 @@ public class EntityStorageSerializerImpl(
         val metadataDeserializationStartTimeMs = System.currentTimeMillis()
 
         val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
-        val currentMetadata = loadCurrentEntitiesMetadata(cacheMetadata, typesResolver)
-        val comparisonResult = compareMetadata(cacheMetadata, currentMetadata)
+        val comparisonResult = compareWithCurrentEntitiesMetadata(cacheMetadata, typesResolver)
         if (!comparisonResult.areEquals) {
           LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
           return Result.failure(UnsupportedEntitiesVersionException())
         }
 
-        loadCacheMetadataFromFileTimeMs.addElapsedTimeMs(metadataDeserializationStartTimeMs)
+        loadCacheMetadataFromFileTimeMs.addElapsedTimeMillis(metadataDeserializationStartTimeMs)
 
         time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: $measuredTime ns" }
 
@@ -182,7 +177,7 @@ public class EntityStorageSerializerImpl(
 
         val entityId2VirtualFileUrlInfo = kryo.readObject(input, Long2ObjectOpenHashMap::class.java) as Long2ObjectOpenHashMap<Any>
         val vfu2VirtualFileUrlInfo = kryo.readObject(input,
-                                                     Object2ObjectOpenCustomHashMap::class.java) as Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<EntityIdWithProperty>>
+                                                     Object2ObjectOpenCustomHashMap::class.java) as Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongWithDefaultMap<EntityIdWithProperty>>
         val entityId2JarDir = kryo.readObject(input, BidirectionalLongMultiMap::class.java) as BidirectionalLongMultiMap<VirtualFileUrl>
 
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
@@ -223,19 +218,8 @@ public class EntityStorageSerializerImpl(
   }
 
 
-  private fun compareMetadata(cacheMetadata: CacheMetadata, currentMetadata: List<StorageTypeMetadata>?): ComparisonResult {
-    if (currentMetadata == null) {
-      return object : ComparisonResult {
-        override val areEquals: Boolean = false
-        override val info: String = "Failed to load existing metadata"
-      }
-    }
-    return CacheMetadataComparator().areEquals(cacheMetadata.toList(), currentMetadata)
-  }
-
-
   private fun writeAndRegisterClasses(kryo: Kryo, output: Output, entityStorage: EntityStorageSnapshotImpl,
-                                      cacheMetadata: CacheMetadata, classCache: Object2IntMap<TypeInfo>) {
+                                      cacheMetadata: CacheMetadata, classCache: Object2IntWithDefaultMap<TypeInfo>) {
     registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
 
     val vfsClasses = hashSetOf<Class<*>>()
@@ -251,7 +235,7 @@ public class EntityStorageSerializerImpl(
   }
 
   private fun readAndRegisterClasses(kryo: Kryo, input: Input, cacheMetadata: CacheMetadata,
-                                     classCache: Object2IntMap<TypeInfo>) {
+                                     classCache: Object2IntWithDefaultMap<TypeInfo>) {
     registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
 
     val nonObjectCount = input.readVarInt(true)
@@ -267,26 +251,25 @@ public class EntityStorageSerializerImpl(
     get() = getTypeInfo(this, interner, typesResolver)
 
 
-  internal fun createKryoOutput(file: Path): Output {
+  private fun createKryoOutput(file: Path): Output {
     val output = KryoOutput(file)
     output.variableLengthEncoding = false
     return output
   }
 
-  internal fun createKryoInput(file: Path): Input {
+  private fun createKryoInput(file: Path): Input {
     val input = KryoInput(file)
     input.variableLengthEncoding = false
     return input
   }
 
 
-  internal fun closeOutput(output: Output) {
+  private fun closeOutput(output: Output) {
     try {
       output.close()
     }
     catch (e: KryoException) {
       LOG.warn("Exception at project serialization", e)
-      SerializationResult.Fail(e.message)
     }
   }
 

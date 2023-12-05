@@ -63,6 +63,14 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveLocalDefaultConstructor(myFixture)
     }
 
+    fun testResolveJavaDefaultConstructor() {
+        checkResolveJavaDefaultConstructor(myFixture)
+    }
+
+    fun testResolveKotlinDefaultConstructor() {
+        checkResolveKotlinDefaultConstructor(myFixture)
+    }
+
     fun testResolveJavaClassAsAnonymousObjectSuperType() {
         checkResolveJavaClassAsAnonymousObjectSuperType(myFixture)
     }
@@ -143,6 +151,14 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveKotlinPropertyAccessor(myFixture)
     }
 
+    fun testResolveBackingField() {
+        checkResolveBackingField(myFixture)
+    }
+
+    fun testResolveBackingFieldInCompanionObject() {
+        checkResolveBackingFieldInCompanionObject(myFixture)
+    }
+
     fun testResolveStaticImportFromObject() {
         checkResolveStaticImportFromObject(myFixture)
     }
@@ -153,6 +169,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveEnumEntrySuperType() {
         checkResolveEnumEntrySuperType(myFixture)
+    }
+
+    fun testResolveFunInterfaceSamWithValueClassInSignature() {
+        checkResolveFunInterfaceSamWithValueClassInSignature(myFixture, isK2 = false)
     }
 
     fun testResolveLambdaInvoke() {
@@ -181,5 +201,13 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testCompanionConstantAsVarargAnnotationValue() {
         checkCompanionConstantAsVarargAnnotationValue(myFixture)
+    }
+
+    fun testResolveThisExpression() {
+        checkResolveThisExpression(myFixture)
+    }
+
+    fun testResolveThisExpressionAsLambdaReceiver() {
+        checkResolveThisExpressionAsLambdaReceiver(myFixture)
     }
 }

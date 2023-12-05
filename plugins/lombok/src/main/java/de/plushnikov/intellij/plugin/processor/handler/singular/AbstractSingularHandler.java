@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -48,67 +49,84 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info) {
-    List<PsiMethod> methods = new ArrayList<>();
+  public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info, Map<String, List<List<PsiType>>> alreadyExistedMethods) {
+    final List<PsiMethod> methods = new ArrayList<>();
 
     final PsiType returnType = info.getBuilderType();
     final String fieldName = info.getFieldName();
     final String singularName = createSingularName(info.getSingularAnnotation(), fieldName);
 
     final PsiClass builderClass = info.getBuilderClass();
-    final LombokLightMethodBuilder oneAddMethodBuilder = new LombokLightMethodBuilder(
-      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), singularName, info.getCapitalizationStrategy()))
-      .withContainingClass(builderClass)
-      .withMethodReturnType(returnType)
-      .withNavigationElement(info.getVariable())
-      .withModifier(info.getVisibilityModifier())
-      .withAnnotations(info.getAnnotations());
 
-    addOneMethodParameter(oneAddMethodBuilder, info.getFieldType(), singularName);
-    if(info.getVariable() instanceof PsiField psiField) {
-      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, oneAddMethodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_BUILDER_SINGULAR_SETTER);
+    final String singularAddOneMethodName =
+      LombokUtils.buildAccessorName(info.getSetterPrefix(), singularName, info.getCapitalizationStrategy());
+    if (!BuilderHandler.matchMethodWithParams(alreadyExistedMethods, singularAddOneMethodName, getOneMethodParameterTypes(info))) {
+      final LombokLightMethodBuilder oneAddMethodBuilder = new LombokLightMethodBuilder(
+        info.getManager(), singularAddOneMethodName)
+        .withContainingClass(builderClass)
+        .withMethodReturnType(returnType)
+        .withNavigationElement(info.getVariable())
+        .withModifier(info.getVisibilityModifier())
+        .withAnnotations(info.getAnnotations())
+        .withWriteAccess();
+
+      addOneMethodParameter(oneAddMethodBuilder, info.getFieldType(), singularName);
+      if (info.getVariable() instanceof PsiField psiField) {
+        LombokCopyableAnnotations.copyCopyableAnnotations(psiField, oneAddMethodBuilder.getModifierList(),
+                                                          LombokCopyableAnnotations.COPY_TO_BUILDER_SINGULAR_SETTER);
+      }
+
+      final String oneMethodBody = getOneMethodBody(singularName, info);
+      oneAddMethodBuilder.withBodyText(oneMethodBody);
+
+      createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), oneAddMethodBuilder);
+
+      methods.add(oneAddMethodBuilder);
     }
 
-    final String oneMethodBody = getOneMethodBody(singularName, info);
-    oneAddMethodBuilder.withBodyText(oneMethodBody);
+    final String singularAddAllMethodName =
+      LombokUtils.buildAccessorName(info.getSetterPrefix(), fieldName, info.getCapitalizationStrategy());
+    if (!BuilderHandler.matchMethodWithParams(alreadyExistedMethods, singularAddAllMethodName, getAllMethodParameterTypes(info))) {
+      final LombokLightMethodBuilder allAddMethodBuilder = new LombokLightMethodBuilder(
+        info.getManager(), singularAddAllMethodName)
+        .withContainingClass(builderClass)
+        .withMethodReturnType(returnType)
+        .withNavigationElement(info.getVariable())
+        .withModifier(info.getVisibilityModifier())
+        .withAnnotations(info.getAnnotations())
+        .withWriteAccess();
 
-    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), oneAddMethodBuilder);
+      addAllMethodParameter(allAddMethodBuilder, info.getFieldType(), fieldName);
+      if (info.getVariable() instanceof PsiField psiField) {
+        LombokCopyableAnnotations.copyCopyableAnnotations(psiField, allAddMethodBuilder.getModifierList(),
+                                                          LombokCopyableAnnotations.COPY_TO_SETTER);
+      }
 
-    methods.add(oneAddMethodBuilder);
+      final String allMethodBody = getAllMethodBody(fieldName, info);
+      allAddMethodBuilder.withBodyText(allMethodBody);
 
-    final LombokLightMethodBuilder allAddMethodBuilder = new LombokLightMethodBuilder(
-      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), fieldName, info.getCapitalizationStrategy()))
-      .withContainingClass(builderClass)
-      .withMethodReturnType(returnType)
-      .withNavigationElement(info.getVariable())
-      .withModifier(info.getVisibilityModifier())
-      .withAnnotations(info.getAnnotations());
+      createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), allAddMethodBuilder);
 
-    addAllMethodParameter(allAddMethodBuilder, info.getFieldType(), fieldName);
-    if(info.getVariable() instanceof PsiField psiField) {
-      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, allAddMethodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_SETTER);
+      methods.add(allAddMethodBuilder);
     }
 
-    final String allMethodBody = getAllMethodBody(fieldName, info);
-    allAddMethodBuilder.withBodyText(allMethodBody);
+    final String singularClearMethodName = createSingularClearMethodName(fieldName, info.getCapitalizationStrategy());
+    if (!BuilderHandler.matchMethodWithParams(alreadyExistedMethods, singularClearMethodName, Collections.emptyList())) {
+      final LombokLightMethodBuilder clearMethodBuilder = new LombokLightMethodBuilder(
+        info.getManager(), singularClearMethodName)
+        .withContainingClass(builderClass)
+        .withMethodReturnType(returnType)
+        .withNavigationElement(info.getVariable())
+        .withModifier(info.getVisibilityModifier())
+        .withAnnotations(info.getAnnotations())
+        .withWriteAccess();
+      final String clearMethodBlockText = getClearMethodBody(info);
+      clearMethodBuilder.withBodyText(clearMethodBlockText);
 
-    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), allAddMethodBuilder);
+      createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), clearMethodBuilder);
 
-    methods.add(allAddMethodBuilder);
-
-    final LombokLightMethodBuilder clearMethodBuilder = new LombokLightMethodBuilder(
-      info.getManager(), createSingularClearMethodName(fieldName, info.getCapitalizationStrategy()))
-      .withContainingClass(builderClass)
-      .withMethodReturnType(returnType)
-      .withNavigationElement(info.getVariable())
-      .withModifier(info.getVisibilityModifier())
-      .withAnnotations(info.getAnnotations());
-    final String clearMethodBlockText = getClearMethodBody(info);
-    clearMethodBuilder.withBodyText(clearMethodBlockText);
-
-    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), clearMethodBuilder);
-
-    methods.add(clearMethodBuilder);
+      methods.add(clearMethodBuilder);
+    }
 
     return methods;
   }
@@ -135,17 +153,28 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
   @Override
   public String renderToBuilderAppendCall(@NotNull BuilderInfo info) {
+    final String accessorName =
+      LombokUtils.buildAccessorName(info.getSetterPrefix(), info.getFieldName(), info.getCapitalizationStrategy());
+
     final String instanceGetter = info.getInstanceVariableName() + '.' + info.getVariable().getName();
-    return "if(" + instanceGetter + " != null) "+BUILDER_TEMP_VAR +"."+info.getFieldName() +'('+ instanceGetter + ");";
+    return "if(" + instanceGetter + " != null) " + BUILDER_TEMP_VAR + "." + accessorName + '(' + instanceGetter + ");";
   }
 
   protected abstract String getEmptyCollectionCall(@NotNull BuilderInfo info);
 
   protected abstract String getClearMethodBody(@NotNull BuilderInfo info);
 
-  protected abstract void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName);
+  protected abstract List<PsiType> getOneMethodParameterTypes(@NotNull BuilderInfo info);
 
-  protected abstract void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName);
+  protected abstract List<PsiType> getAllMethodParameterTypes(@NotNull BuilderInfo info);
+
+  protected abstract void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                                @NotNull PsiType psiFieldType,
+                                                @NotNull String singularName);
+
+  protected abstract void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                                @NotNull PsiType psiFieldType,
+                                                @NotNull String singularName);
 
   protected abstract String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info);
 
@@ -171,5 +200,4 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     }
     return true;
   }
-
 }

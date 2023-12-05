@@ -5,18 +5,30 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.terminal.exp.ui.GradientTextureCache
 import java.awt.Graphics
 
 class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
                               private val editor: EditorEx) : TerminalOutputModel.TerminalOutputListener {
+  private val gradientCache: GradientTextureCache = GradientTextureCache(
+    scheme = editor.colorsScheme,
+    colorStartKey = BlockTerminalColors.BLOCK_BACKGROUND_START,
+    colorEndKey = BlockTerminalColors.BLOCK_BACKGROUND_END,
+    defaultColorStart = TerminalUi.blockBackgroundStart,
+    defaultColorEnd = TerminalUi.blockBackgroundEnd
+  )
+
   init {
     outputModel.addListener(this)
+    EditorUtil.disposeWithEditor(editor, gradientCache)
     editor.markupModel.addRangeHighlighter(0, 0,
                                            // the order doesn't matter because there is only custom renderer with its own order
                                            HighlighterLayer.LAST, null,
@@ -35,7 +47,7 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
     val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
-    val commandToOutputInlay = if (!block.command.isNullOrEmpty()) {
+    val commandToOutputInlay = if (block.withCommand) {
       val renderer = EmptyWidthInlayRenderer(TerminalUi.commandToOutputInset)
       editor.inlayModel.addBlockElement(block.outputStartOffset, false, true, 0, renderer)!!
     }
@@ -54,7 +66,7 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
 
     val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay, commandToOutputInlay)
     outputModel.putDecoration(block, decoration)
-    outputModel.addBlockState(block, DefaultBlockDecorationState(editor.colorsScheme))
+    outputModel.addBlockState(block, DefaultBlockDecorationState(gradientCache))
   }
 
   override fun blockDecorationStateChanged(block: CommandBlock,

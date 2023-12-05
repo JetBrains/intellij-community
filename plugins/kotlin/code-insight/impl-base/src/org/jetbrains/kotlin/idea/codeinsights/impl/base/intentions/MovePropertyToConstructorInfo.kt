@@ -27,12 +27,11 @@ sealed interface MovePropertyToConstructorInfo {
 
     companion object {
         context(KtAnalysisSession)
-        fun create(element: KtProperty): MovePropertyToConstructorInfo? {
-            val initializer = element.initializer
+        fun create(element: KtProperty, initializer: KtExpression? = element.initializer): MovePropertyToConstructorInfo? {
             if (initializer != null && !initializer.isValidInConstructor()) return null
 
             val propertyAnnotationsText = element.collectAnnotationsAsText()
-            val constructorParameter = element.findConstructorParameter()
+            val constructorParameter = initializer?.findConstructorParameter()
 
             if (constructorParameter != null) {
                 return ReplacementParameter(
@@ -97,8 +96,8 @@ sealed interface MovePropertyToConstructorInfo {
         }
 
         context(KtAnalysisSession)
-        private fun KtProperty.findConstructorParameter(): KtParameter? {
-            val constructorParam = initializer?.mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return null
+        private fun KtExpression.findConstructorParameter(): KtParameter? {
+            val constructorParam = mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return null
             return constructorParam.psi as? KtParameter
         }
     }

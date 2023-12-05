@@ -26,7 +26,7 @@ public abstract class AbstractKotlinFoldingTest extends KotlinLightCodeInsightFi
         try {
             myFixture.testFolding(path);
         } catch (FileComparisonFailure e) {
-            throw new FileComparisonFailure(e.getMessage(), e.getExpected(), e.getActual(), new File(e.getFilePath()).getAbsolutePath());
+            throw new FileComparisonFailure(e.getMessage(), e.getExpectedStringPresentation(), e.getActualStringPresentation(), new File(e.getFilePath()).getAbsolutePath());
         }
     }
 

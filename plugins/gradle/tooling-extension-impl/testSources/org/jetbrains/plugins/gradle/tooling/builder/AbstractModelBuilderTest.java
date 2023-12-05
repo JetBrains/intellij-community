@@ -141,14 +141,14 @@ public abstract class AbstractModelBuilderTest {
     final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
-    int daemonMaxIdleTime = 10;
+    int daemonMaxIdleTimeSeconds = 5;
     try {
-      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "10"));
+      daemonMaxIdleTimeSeconds = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "5"));
     }
     catch (NumberFormatException ignore) {
     }
 
-    ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
+    ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTimeSeconds, TimeUnit.SECONDS);
 
     try (ProjectConnection connection = connector.connect()) {
       final ProjectImportAction projectImportAction = new ProjectImportAction(false);

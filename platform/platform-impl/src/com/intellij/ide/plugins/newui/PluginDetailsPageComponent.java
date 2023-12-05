@@ -921,6 +921,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
           });
         }
+        else if (!node.isConverted() && !myMarketplace) {
+          component.setInstalledPluginMarketplaceNode(node);
+        }
       }
       else if (!descriptor.isBundled() && component.getInstalledPluginMarketplaceNode() == null) {
         syncLoading = false;
@@ -1660,37 +1663,45 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @Nullable @Nls String getDescription() {
-    if (!SystemProperties.getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false)) {
-      PluginNode node = getInstalledPluginMarketplaceNode();
-      if (node != null) {
-        String description = node.getDescription();
-        if (!Strings.isEmptyOrSpaces(description)) {
-          return description;
-        }
+    if (myUpdateDescriptor != null) {
+      String description = myUpdateDescriptor.getDescription();
+      if (!Strings.isEmptyOrSpaces(description)) {
+        return description;
       }
     }
     String description = myPlugin.getDescription();
-    return Strings.isEmptyOrSpaces(description) ? null : description;
+    if (!Strings.isEmptyOrSpaces(description)) {
+      return description;
+    }
+    PluginNode node = getInstalledPluginMarketplaceNode();
+    if (node != null) {
+      String description = node.getDescription();
+      if (!Strings.isEmptyOrSpaces(description)) {
+        return description;
+      }
+    }
+    return null;
   }
 
   private @Nullable @NlsSafe String getChangeNotes() {
-    if (!SystemProperties.getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false)) {
-      if (myUpdateDescriptor != null) {
-        String notes = myUpdateDescriptor.getChangeNotes();
-        if (!Strings.isEmptyOrSpaces(notes)) {
-          return notes;
-        }
-      }
-      PluginNode node = getInstalledPluginMarketplaceNode();
-      if (node != null) {
-        String changeNotes = node.getChangeNotes();
-        if (!Strings.isEmptyOrSpaces(changeNotes)) {
-          return changeNotes;
-        }
+    if (myUpdateDescriptor != null) {
+      String notes = myUpdateDescriptor.getChangeNotes();
+      if (!Strings.isEmptyOrSpaces(notes)) {
+        return notes;
       }
     }
     String notes = myPlugin.getChangeNotes();
-    return Strings.isEmptyOrSpaces(notes) ? null : notes;
+    if (!Strings.isEmptyOrSpaces(notes)) {
+      return notes;
+    }
+    PluginNode node = getInstalledPluginMarketplaceNode();
+    if (node != null) {
+      String changeNotes = node.getChangeNotes();
+      if (!Strings.isEmptyOrSpaces(changeNotes)) {
+        return changeNotes;
+      }
+    }
+    return null;
   }
 
   private static @NotNull BorderLayoutPanel createNotificationPanel(@NotNull Icon icon, @NotNull @Nls String message) {
@@ -1707,10 +1718,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private static @NotNull BorderLayoutPanel createBaseNotificationPanel() {
     BorderLayoutPanel panel = new BorderLayoutPanel();
-    Border customLine = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+    Border customLine = JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, 1, 0, 1, 0);
     panel.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
-    panel.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
-    panel.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
+    panel.setBackground(JBUI.CurrentTheme.Banner.INFO_BACKGROUND);
     return panel;
   }
 

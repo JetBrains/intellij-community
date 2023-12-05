@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
@@ -47,7 +46,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   companion object {
     @JvmStatic
     fun getInstanceImpl(): ApplicationInspectionProfileManager =
-      service<InspectionProfileManager>() as ApplicationInspectionProfileManager
+      InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
 
     private fun registerProvidedSeverities() {
       val map = HashMap<String, HighlightInfoType>()

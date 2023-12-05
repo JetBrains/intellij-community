@@ -29,6 +29,7 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -133,6 +134,21 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       }
       return null
     }
+
+    @JvmStatic
+    fun fireGlobalSchemeChange(newScheme: EditorColorsScheme?) {
+      val manager = getInstance()
+      if (manager is EditorColorsManagerImpl) {
+        manager.schemeChangedOrSwitched(newScheme)
+      }
+      else {
+        // This branch may not be necessary, but we've had such calls scattered around the codebase,
+        // bypassing the manager, so it's better to have a fallback here in case of some unusual environment, like a test.
+        runCatching {
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
+        }.getOrLogException(LOG)
+      }
+    }
   }
 
   override fun getSchemeModificationCounter() = schemeModificationCounter.get()
@@ -180,6 +196,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     for (scheme in to) {
       schemeManager.addScheme(scheme)
     }
+
+    hideIntellijLightSchemeIfNeeded()
   }
 
   private fun resolveLinksToBundledSchemes() {
@@ -348,8 +366,12 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   private fun callGlobalSchemeChange(scheme: EditorColorsScheme?) {
     schemeModificationCounter.incrementAndGet()
     // we need to push events to components that use editor font, e.g., HTML editor panes
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(scheme)
-    treeDispatcher.multicaster.globalSchemeChange(scheme)
+    runCatching {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(scheme)
+    }.getOrLogException(LOG)
+    runCatching {
+      treeDispatcher.multicaster.globalSchemeChange(scheme)
+    }.getOrLogException(LOG)
   }
 
   override fun getGlobalScheme(): EditorColorsScheme {
@@ -436,7 +458,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
         }
       }
     }
-
     schemeManager.setCurrent(scheme = colorScheme, notify = isInitialConfigurationLoaded)
     isInitialConfigurationLoaded = true
 
@@ -470,6 +491,22 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     schemeManager.setCurrent(scheme = scheme, notify = isInitialConfigurationLoaded)
     isInitialConfigurationLoaded = true
     activity.end()
+  }
+
+  //IDEA-331405 Hide IntelliJ Light from new UI
+  private fun hideIntellijLightSchemeIfNeeded() {
+    if (!ExperimentalUI.isNewUI()) return
+    val themeName = "IntelliJ Light"
+    val intellijLightThemes = schemeManager.allSchemes.filter { it.name.contains(themeName) }
+    val customTheme = intellijLightThemes.find { it.name.startsWith(Scheme.EDITABLE_COPY_PREFIX) }
+    if (customTheme != null) {
+      val defaultScheme = schemeManager.findSchemeByName(themeName)
+      val isSchemeCustomized = (customTheme as? AbstractColorsScheme)?.settingsEqual(defaultScheme, null, true) != true
+      if (isSchemeCustomized) {
+        return
+      }
+    }
+    intellijLightThemes.forEach { schemeManager.removeScheme(it) }
   }
 
   override fun isDefaultScheme(scheme: EditorColorsScheme): Boolean = scheme is DefaultColorsScheme

@@ -15,8 +15,6 @@ import java.io.File
 import java.io.IOException
 
 class StructureImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   @Test
   fun testInheritProjectJdkForModules() = runBlocking {
     importProjectAsync("""

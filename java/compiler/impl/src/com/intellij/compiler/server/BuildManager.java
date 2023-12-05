@@ -91,7 +91,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import com.intellij.util.text.DateFormatUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -132,6 +131,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
@@ -251,14 +252,14 @@ public final class BuildManager implements Disposable {
     for (File buildSystemDir : systemDirs) {
       File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
       if (dirs != null) {
-        final Date now = new Date();
+        Instant now = Instant.now();
         for (File buildDataProjectDir : dirs) {
           File usageFile = getUsageFile(buildDataProjectDir);
           if (usageFile.exists()) {
             final Pair<Date, File> usageData = readUsageFile(usageFile);
             if (usageData != null) {
               final File projectFile = usageData.second;
-              if (projectFile != null && !projectFile.exists() || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
+              if (projectFile != null && !projectFile.exists() || Duration.between(usageData.first.toInstant(), now).toDays() > unusedThresholdDays) {
                 LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir);
                 FileUtil.delete(buildDataProjectDir);
               }

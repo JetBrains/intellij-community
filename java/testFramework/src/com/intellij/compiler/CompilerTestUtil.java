@@ -42,7 +42,7 @@ public final class CompilerTestUtil {
   // should be invoked in EDT
   public static void saveApplicationSettings() {
     IComponentStore store = getApplicationStore();
-    store.saveComponent((PersistentStateComponent<?>)ProjectJdkTable.getInstance());
+    ProjectJdkTable.getInstance().saveOnDisk();
     store.saveComponent((PersistentStateComponent<?>)FileTypeManager.getInstance());
     store.saveComponent((PersistentStateComponent<?>)PathMacros.getInstance());
   }

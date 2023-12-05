@@ -8,6 +8,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.net.httpserver.Authenticator
 import com.sun.net.httpserver.BasicAuthenticator
 import com.sun.net.httpserver.HttpServer
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.net.InetSocketAddress
@@ -72,7 +73,9 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
       else if (file.isFile) {
         exchange.responseHeaders.add("Content-Type", "application/octet-stream")
         exchange.sendResponseHeaders(200, 0)
-        StreamUtil.copy(FileInputStream(file), exchange.responseBody)
+        BufferedInputStream(FileInputStream(file)).use {
+          StreamUtil.copy(it, exchange.responseBody)
+        }
       }
       else {
         exchange.sendResponseHeaders(404, -1)

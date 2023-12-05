@@ -1,0 +1,8 @@
+# <13.11 remove status
+# <13.11 remove allowFailure
+fragment ciJob on CiJob {
+  name
+  detailedStatus {
+    detailsPath
+  }
+}

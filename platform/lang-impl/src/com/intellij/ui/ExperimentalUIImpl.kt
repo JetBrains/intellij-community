@@ -303,6 +303,8 @@ private const val iconPathPrefix = "expui/"
 private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
   return object : IconPathPatcher() {
     private val dumpNotPatchedIcons = System.getProperty("ide.experimental.ui.dump.not.patched.icons").toBoolean()
+    // https://youtrack.jetbrains.com/issue/IDEA-335974
+    private val useReflectivePath = System.getProperty("ide.experimental.ui.use.reflective.path").toBoolean()
 
     override fun patchPath(path: String, classLoader: ClassLoader?): String? {
       val mappings = paths.get(classLoader) ?: return null
@@ -311,15 +313,16 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
         NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader)
       }
 
-      if (patchedPath != null && patchedPath.startsWith(iconPathPrefix)) {
-        // isRunningFromSources - don't care about broken "run from sources", dev mode should be used instead
-        val useReflective = classLoader !is PluginAwareClassLoader && !PluginManagerCore.isRunningFromSources()
-        if (useReflective) {
-          val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
-          builder.append(reflectivePathPrefix)
-          builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
-          return toReflectivePath(builder).toString()
-        }
+      // isRunningFromSources - don't care about broken "run from sources", dev mode should be used instead
+      if (patchedPath != null &&
+          useReflectivePath &&
+          classLoader !is PluginAwareClassLoader &&
+          patchedPath.startsWith(iconPathPrefix) &&
+          !PluginManagerCore.isRunningFromSources()) {
+        val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
+        builder.append(reflectivePathPrefix)
+        builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
+        return toReflectivePath(builder).toString()
       }
 
       return patchedPath

@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.security.CompositeX509TrustManager
 import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.HttpRequests
@@ -39,14 +41,17 @@ import java.util.*
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.*
 
-internal object ITNProxy {
+@Service
+internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
   @OptIn(ExperimentalCoroutinesApi::class)
-  val dispatcher = Dispatchers.IO.limitedParallelism(2)
+  @JvmField
+  val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
 
-  @Suppress("DEPRECATION")
-  internal val cs: CoroutineScope =
-    ApplicationManager.getApplication().coroutineScope + SupervisorJob() + dispatcher + CoroutineName("ITNProxy call")
+  @JvmField
+  internal val coroutineScope: CoroutineScope = coroutineScope.childScope(dispatcher + CoroutineName("ITNProxy call"))
+}
 
+internal object ITNProxy {
   internal const val EA_PLUGIN_ID = "com.intellij.sisyphus"
 
   private const val DEFAULT_USER = "idea_anonymous"

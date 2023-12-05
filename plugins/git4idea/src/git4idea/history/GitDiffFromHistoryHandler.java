@@ -265,10 +265,9 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.SHOW);
     handler.addParameters(rev.getHash());
     GitCommandResult result = Git.getInstance().runCommand(handler);
-    if (result.success()) {
-      return isFilePresentInOutput(root, rev.getPath(), result.getOutput());
-    }
-    throw new VcsException(result.getErrorOutputAsJoinedString());
+    result.throwOnError();
+
+    return isFilePresentInOutput(root, rev.getPath(), result.getOutput());
   }
 
   private static boolean isFilePresentInOutput(@NotNull VirtualFile root, @NotNull FilePath path, @NotNull List<String> output) {

@@ -32,7 +32,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.WorkspaceModelUnloadedStorageChangeListener
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
@@ -180,13 +180,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       addUnloadedModuleEntities(unloadedBuilder)
       sourcesToSave.removeAll(reloadingResult.affectedSources)
 
-      // Update orphanage storage
       if (reloadingResult.orphanageBuilder.hasChanges()) {
         EntitiesOrphanage.getInstance(project).update { it.addDiff(reloadingResult.orphanageBuilder) }
       }
     }
 
-    reloadProjectEntitiesTimeMs.addElapsedTimeMs(start)
+    reloadProjectEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   private inline fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
@@ -321,7 +320,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       null
     }
 
-    jpsLoadProjectToEmptyStorageTimeMs.addElapsedTimeMs(start)
+    jpsLoadProjectToEmptyStorageTimeMs.addElapsedTimeMillis(start)
     WorkspaceModelFusLogger.logLoadingJpsFromIml(System.currentTimeMillis() - start)
     return loadedProjectEntities
   }
@@ -366,7 +365,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     activity?.end()
     activity = null
 
-    applyLoadedStorageTimeMs.addElapsedTimeMs(start)
+    applyLoadedStorageTimeMs.addElapsedTimeMillis(start)
   }
 
   suspend fun loadProject(project: Project) {
@@ -431,7 +430,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     LOG.debugValues("Saving affected entities", affectedSources)
     data.saveEntities(storage, unloadedEntitiesStorage, affectedSources, writer)
 
-    saveChangedProjectEntitiesTimeMs.addElapsedTimeMs(start)
+    saveChangedProjectEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   fun convertToDirectoryBasedFormat() {

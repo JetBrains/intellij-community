@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.*
@@ -124,32 +124,41 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   }
 }
 
-open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase() {
+class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase() {
 
   init {
     // Initialize facet bridges after loading from cache
     val moduleEntity = (moduleBridge.diff ?: moduleBridge.entityStorage.current).resolve(moduleBridge.moduleEntityId)
                        ?: error("Module entity should be available")
     val facetTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList.associateBy { it.supportedFacetType }
-    WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetContributor ->
+    val facetMapping = facetMapping()
+    val mappings = ArrayList<Pair<WorkspaceEntity, Facet<*>>>()
+    for (facetContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
       if (facetContributor.rootEntityType != FacetEntity::class.java) {
         facetContributor.getRootEntitiesByModuleEntity(moduleEntity).forEach {
-          updateDiffOrStorage{ this.getOrPutDataByEntity(it) { facetContributor.createFacetFromEntity(it, moduleBridge) }}
+          if (facetMapping.getDataByEntity(it) == null) {
+            mappings.add(it to facetContributor.createFacetFromEntity(it, moduleBridge))
+          }
         }
-      } else {
+      }
+      else {
         moduleEntity.facets.filter { !facetTypeToSerializer.containsKey(it.facetType) }.forEach {
           fun initFacet(entity: FacetEntity): Facet<*> {
             val under = entity.underlyingFacet?.let { initFacet(it) }
             var existingFacet = facetMapping().getDataByEntity(entity)
             if (existingFacet == null) {
               existingFacet = createFacet(entity, under)
-              updateDiffOrStorage { this.addMapping(entity, existingFacet) }
+              mappings.add(entity to existingFacet)
             }
             return existingFacet
           }
           initFacet(it)
         }
       }
+    }
+
+    if (mappings.isNotEmpty()) {
+      updateDiffOrStorage { mappings.forEach { this.addIfAbsent(it.first, it.second) } }
     }
   }
 
@@ -161,7 +170,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     }
     val facetEntities: MutableList<WorkspaceEntity> = mutableListOf()
     facetEntities.addAll(moduleEntity.facets)
-    WorkspaceFacetContributor.EP_NAME.extensions.forEach {
+    for (it in WorkspaceFacetContributor.EP_NAME.extensionList) {
       if (it.rootEntityType != FacetEntity::class.java) {
         facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
       }
@@ -263,10 +272,6 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     private val LOG = logger<FacetModelBridge>()
 
     internal fun EntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
-      return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
-    }
-
-    fun MutableEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 

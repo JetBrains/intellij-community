@@ -64,7 +64,7 @@ import java.util.function.Function;
  */
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
-  private Function<ProcessBuilder, Process> myProcessCreator;
+  private @Nullable Function<ProcessBuilder, Process> myProcessCreator;
 
   /**
    * Determines the scope of a parent environment passed to a child process.
@@ -87,6 +87,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;
+  private boolean myIsEscapingForLocalRun = true;
 
   public GeneralCommandLine() {
     this(Collections.emptyList());
@@ -278,6 +279,35 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
+   * See {@link #withEscapingForLocalRun(boolean)}.
+   * <p>
+   * The default is {@code true}.
+   *
+   * @return {@code true if arguments and environment variables will be checked and <b>altered</b> before starting the process,
+   * {@code false} otherwise.
+   */
+  public boolean isEscapingForLocalRun() {
+    return myIsEscapingForLocalRun;
+  }
+
+  /**
+   * Allows to enable or disable the validation and escaping for local run.
+   * <p>
+   * Historically, {@link GeneralCommandLine} was supposed to prepare processes locally. Later, it turned out that
+   * {@link GeneralCommandLine#createProcess()}} is also used sometimes for running commands on other machines with different operating
+   * systems.
+   * <p>
+   * Quoting, which is required for running processes locally, may be harmful for remote operating systems. F.i., arguments with spaces
+   * must be quoted before passing them into {@code CreateProcess} on Windows, and must not be quoted for {@code exec} on a Unix-like OS.
+   * <p>
+   * See also {@link #setProcessCreator}.
+   */
+  public GeneralCommandLine withEscapingForLocalRun(boolean isEscapingForLocalRun) {
+    myIsEscapingForLocalRun = isEscapingForLocalRun;
+    return this;
+  }
+
+  /**
    * Returns string representation of this command line.<br/>
    * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
    *
@@ -343,7 +373,14 @@ public class GeneralCommandLine implements UserDataHolder {
       LOG.debug("  charset: " + myCharset);
     }
 
-    List<String> commands = validateAndPrepareCommandLine();
+    List<String> commands;
+    if (myIsEscapingForLocalRun) {
+      commands = validateAndPrepareCommandLineForLocalRun();
+    }
+    else {
+      commands = new ArrayList<>(myProgramParams.getList());
+      commands.add(0, myExePath);
+    }
     try {
       return startProcess(commands);
     }
@@ -359,20 +396,25 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
-  protected final Function<ProcessBuilder, Process> getProcessCreator() {
+  protected final @Nullable Function<ProcessBuilder, Process> getProcessCreator() {
     return myProcessCreator;
   }
 
-  public final void setProcessCreator(Function<ProcessBuilder, Process> processCreator) {
+  /**
+   * Allows to specify a handler for creating processes different from {@link ProcessBuilder#start()}.
+   * <p>
+   * See also {@link #withEscapingForLocalRun(boolean)}.
+   */
+  public final void setProcessCreator(@Nullable Function<ProcessBuilder, Process> processCreator) {
     myProcessCreator = processCreator;
   }
 
   public @NotNull ProcessBuilder toProcessBuilder() throws ExecutionException {
-    List<String> escapedCommands = validateAndPrepareCommandLine();
+    List<String> escapedCommands = validateAndPrepareCommandLineForLocalRun();
     return toProcessBuilderInternal(escapedCommands);
   }
 
-  private List<String> validateAndPrepareCommandLine() throws ExecutionException {
+  private List<String> validateAndPrepareCommandLineForLocalRun() throws ExecutionException {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
@@ -466,18 +508,18 @@ public class GeneralCommandLine implements UserDataHolder {
     return builder;
   }
 
-  protected Process createProcess(ProcessBuilder processBuilder) throws IOException {
+  protected @NotNull Process createProcess(ProcessBuilder processBuilder) throws IOException {
     return myProcessCreator != null ? myProcessCreator.apply(processBuilder) : processBuilder.start();
   }
 
   protected void setupEnvironment(@NotNull Map<String, String> environment) {
     environment.clear();
 
-    if (myParentEnvironmentType != ParentEnvironmentType.NONE) {
+    if (myParentEnvironmentType != ParentEnvironmentType.NONE && myIsEscapingForLocalRun) {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfo.isUnix) {
+    if (SystemInfo.isUnix && myIsEscapingForLocalRun) {
       File workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
@@ -485,7 +527,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfo.isWindows && myIsEscapingForLocalRun) {
         Map<String, String> envVars = CollectionFactory.createCaseInsensitiveStringMap();
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);

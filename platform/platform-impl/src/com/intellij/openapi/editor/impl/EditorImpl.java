@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -792,10 +789,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     if (myProject != null && myVirtualFile != null) {
-      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensionList()) {
         if (LightEdit.owns(myProject) && !(painter instanceof LightEditCompatible)) {
           continue;
         }
+
         Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
         if (extensions != null) {
           for (LineExtensionInfo extension : extensions) {
@@ -1612,7 +1610,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset,
+      // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
       // and it does occupy a particular amount of visual space that may be necessary to repaint.
       if (startOffset <= minEndOffset) {
         int startLine = myView.offsetToVisualLine(startOffset, false);
@@ -1946,6 +1944,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!Registry.is("editor.dumb.mode.available")) return;
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
+    if (rect.isEmpty()) return;
     // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
     Graphics imageGraphics = image.createGraphics();
@@ -1980,39 +1979,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (clip == null) {
       return;
     }
+
     Color bg = isReleased ? getDisposedBackground() : getBackgroundColor();
     g.setColor(bg);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
   }
 
   void paint(@NotNull Graphics2D g) {
-    ReadAction.run(() -> {
-      if (g.getClipBounds() == null) return;
-      BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
-      if (buffer != null) {
-        Rectangle rect = getContentComponent().getVisibleRect();
-        StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
-        return;
-      }
-      if (!shouldPaint()) {
-        fillPlaceholder(g);
-        return;
-      }
+    if (g.getClipBounds() == null) {
+      return;
+    }
+
+    BufferedImage buffer = Registry.is("editor.dumb.mode.available", true) ? getUserData(BUFFER) : null;
+    if (buffer != null) {
+      Rectangle rect = getContentComponent().getVisibleRect();
+      StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
+      return;
+    }
+
+    if (!shouldPaint()) {
+      fillPlaceholder(g);
+      return;
+    }
+
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (myUpdateCursor && !myPurePaintingMode) {
         setCursorPosition();
         myUpdateCursor = false;
       }
-      if (myProject != null && myProject.isDisposed()) return;
+
+      if (myProject != null && myProject.isDisposed()) {
+        return;
+      }
 
       myView.paint(g);
-
-      boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
-      if (myBackgroundImageSet != isBackgroundImageSet) {
-        myBackgroundImageSet = isBackgroundImageSet;
-        updateOpaque(myScrollPane.getHorizontalScrollBar());
-        updateOpaque(myScrollPane.getVerticalScrollBar());
-      }
     });
+
+    boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
+    if (myBackgroundImageSet != isBackgroundImageSet) {
+      myBackgroundImageSet = isBackgroundImageSet;
+      updateOpaque(myScrollPane.getHorizontalScrollBar());
+      updateOpaque(myScrollPane.getVerticalScrollBar());
+    }
   }
 
   @NotNull Color getDisposedBackground() {
@@ -2253,7 +2261,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
      Another approach is to make scrollbars opaque, but only in the editor (as editor is a slow-to-draw component with large screen area).
      This is what "true smooth scrolling" option currently does. Interestingly, making the vertical scrollbar opaque might actually be
-     a good thing because on modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
+     a good thing. On modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
      when it does, its coupling with the navigation bar only reduces intelligibility of both the navigation bar and the code itself.
 
      Horizontal scrollbar is another story - a single long line of text forces horizontal scrollbar in the whole document,
@@ -5425,7 +5433,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScheme instanceof MyColorSchemeDelegate) {
       ((MyColorSchemeDelegate)myScheme).resetEditorFontSize();
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+    EditorColorsManagerImpl.fireGlobalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {

@@ -14,7 +14,6 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -24,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
@@ -90,7 +91,7 @@ public final class LicensePanel extends NonOpaquePanel {
   }
 
   public void setTextFromStamp(@NotNull String stamp, @Nullable Date expirationDate) {
-    long days = expirationDate == null ? 0 : DateFormatUtil.getDifferenceInDays(new Date(), expirationDate);
+    long days = expirationDate == null ? 0 : Duration.between(Instant.now(), expirationDate.toInstant()).toDays();
 
     if (stamp.startsWith("eval:")) {
       if (days <= 0) {

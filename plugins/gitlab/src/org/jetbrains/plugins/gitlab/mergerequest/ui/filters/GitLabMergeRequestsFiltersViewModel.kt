@@ -31,6 +31,8 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
 
   val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>>
   val labels: Flow<Result<List<GitLabLabelDTO>>>
+
+  fun reloadData()
 }
 
 @OptIn(FlowPreview::class)
@@ -82,6 +84,10 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
 
   override val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>> = projectData.members
   override val labels: Flow<Result<List<GitLabLabelDTO>>> = projectData.labels
+
+  override fun reloadData() {
+    projectData.reloadData()
+  }
 
   init {
     scope.launchNow {

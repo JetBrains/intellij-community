@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.*
@@ -51,6 +52,10 @@ internal class KotlinChangeSignatureDialog(
                 return ktType !is KtErrorType
             }
         }
+    }
+
+    override fun validateButtons() {
+        validateButtonsAsync()
     }
 
     override fun createParametersInfoModel(method: KotlinMethodDescriptor): KotlinCallableParameterTableModel<KotlinParameterInfo, Visibility> {
@@ -115,11 +120,11 @@ internal class KotlinChangeSignatureDialog(
 
 
     override fun createRefactoringProcessor(): BaseRefactoringProcessor {
-        val changeInfo = evaluateChangeSignatureInfo()
+        val changeInfo = evaluateChangeSignatureInfo(false)
         return KotlinChangeSignatureProcessor(project, changeInfo)
     }
 
-    private fun evaluateChangeSignatureInfo(): KotlinChangeInfo {
+    private fun evaluateChangeSignatureInfo(forPreview: Boolean): KotlinChangeInfo {
         val callable = myMethod.method
         var receiverInfo: KotlinParameterInfo? = null
         val parameters = parametersTableModel.items.map { parameter ->
@@ -133,11 +138,15 @@ internal class KotlinChangeSignatureDialog(
 
             val codeFragment = parameter.defaultValueCodeFragment as KtExpressionCodeFragment
 
-            //todo if (!forPreview) AddFullQualifierIntention.Holder.addQualifiersRecursively(codeFragment)
+            if (!forPreview) AddQualifiersUtil.addQualifiersRecursively(codeFragment)
 
             val oldDefaultValue = parameterInfo.defaultValueForCall
-            if (codeFragment.text != (if (oldDefaultValue != null) oldDefaultValue.text else "") && parameter.parameter.defaultValueAsDefaultParameter) {
-                parameterInfo.defaultValue = codeFragment.getContentElement()
+            if (codeFragment.text != (if (oldDefaultValue != null) oldDefaultValue.text else "")) {
+                if (parameter.parameter.defaultValueAsDefaultParameter) {
+                    parameterInfo.defaultValue = codeFragment.getContentElement()
+                } else {
+                    parameterInfo.defaultValueForCall = codeFragment.getContentElement()
+                }
             }
 
             parameterInfo
@@ -188,7 +197,7 @@ internal class KotlinChangeSignatureDialog(
     }
 
     override fun calculateSignature(): String {
-        val changeSignatureInfo = evaluateChangeSignatureInfo()
+        val changeSignatureInfo = evaluateChangeSignatureInfo(true)
         return changeSignatureInfo.getNewSignature()
     }
 

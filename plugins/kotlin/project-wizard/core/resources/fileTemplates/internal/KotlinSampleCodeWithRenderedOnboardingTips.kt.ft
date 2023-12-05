@@ -6,9 +6,9 @@ package ${PACKAGE_NAME}
 //TIP ${SearchEverywhereComment1}
 // ${SearchEverywhereComment2}
 fun main() {
+    val name = "Kotlin"
     //TIP ${ShowIntentionComment1}
     // ${ShowIntentionComment2}
-    val name = "Kotlin"
     println("Hello, " + name + "!")
 
     //TIP ${RunComment2}

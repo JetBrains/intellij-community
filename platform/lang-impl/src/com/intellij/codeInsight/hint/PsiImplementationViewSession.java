@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -75,7 +76,9 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
   @Override
   @NotNull
   public List<ImplementationViewElement> getImplementationElements() {
-    return ContainerUtil.map(myImpls, PsiImplementationViewElement::new);
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      return ReadAction.compute(() -> ContainerUtil.map(myImpls, PsiImplementationViewElement::new));
+    }, ImplementationSearcher.getSearchingForImplementations(), true, myProject);
   }
 
   @Override
@@ -198,7 +201,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
 
         @Override
         protected void processElement(PsiElement element) {
-          if (!processor.process(new PsiImplementationViewElement(element))) {
+          if (!processor.process(ReadAction.compute(() -> new PsiImplementationViewElement(element)))) {
             indicator.cancel();
           }
           indicator.checkCanceled();
@@ -216,7 +219,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     else {
       psiElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher);
     }
-    return ContainerUtil.map(psiElements, PsiImplementationViewElement::new);
+    return ContainerUtil.map(psiElements, psiElement -> ReadAction.compute(() -> new PsiImplementationViewElement(psiElement)));
   }
 
   @Nullable

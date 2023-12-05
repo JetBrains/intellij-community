@@ -80,8 +80,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
     private annotation class MppGoal
 
-    override fun runInDispatchThread() = false
-
     override fun setUp() {
         super.setUp()
         if(KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) {
@@ -1162,8 +1160,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
          */
         @Test
         fun testFacetGetsExternalSource() = runBlocking {
-            // Disable test since we don't store this info anymore
-            if (KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) return@runBlocking
 
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
@@ -2278,10 +2274,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
     }
 
     class JpsCompilerMultiModule : AbstractKotlinMavenImporterTest() {
-        override fun runInDispatchThread(): Boolean {
-            return false
-        }
-
         @Test
         fun testJpsCompilerMultiModule() = runBlocking {
             createProjectSubDirs(

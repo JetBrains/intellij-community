@@ -28,7 +28,7 @@ fun getJunit4Version(): String {
 }
 
 fun getJunit5Version(): String {
-  return "5.9.1"
+  return "5.10.0"
 }
 
 fun isJavaLibraryPluginSupported(gradleVersion: GradleVersion): Boolean {

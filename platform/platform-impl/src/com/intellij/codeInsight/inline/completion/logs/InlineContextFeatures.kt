@@ -3,14 +3,27 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.ObjectEventData
-import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import org.jetbrains.annotations.ApiStatus
 
-internal object InlineContextFeatures {
-  fun capture(editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
+@ApiStatus.Internal
+object InlineContextFeatures {
+  fun capture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
+    try {
+      doCapture(psiFile, editor, offset, contextFeatures)
+    } catch (e: Exception) {
+      LOG.error(e)
+    }
+  }
+
+  private fun doCapture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
     val columnNumber = logicalPosition.column
@@ -51,6 +64,9 @@ internal object InlineContextFeatures {
     if (followingNonEmptyLineText != null) {
       contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
     }
+
+    psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
+    contextFeatures.addTypingFeatures()
   }
 
   private fun Document.findNonBlankLine(lineNumber: Int, following: Boolean): Pair<Int, String?> {
@@ -70,34 +86,42 @@ internal object InlineContextFeatures {
     return res.trim().ifEmpty { null }
   }
 
-  fun getEventPair(triggerFeatures: List<EventPair<*>>) = CONTEXT_FEATURES.with(ObjectEventData(triggerFeatures))
+  private fun MutableList<EventPair<*>>.addPsiParents(element: PsiElement) {
+    // First parent is always referenceExpression
+    val curParent: PsiElement = element.parent ?: return
+    val firstParent = curParent.parent
+    if (firstParent == null || firstParent is PsiFileSystemItem) return
+    add(FIRST_PARENT.with(firstParent::class.java))
+    val secondParent = firstParent.parent
+    if (secondParent == null || secondParent is PsiFileSystemItem) return
+    add(SECOND_PARENT.with(secondParent::class.java))
+  }
 
-  private val LINE_NUMBER = EventFields.Int("line_number")
-  private val COLUMN_NUMBER = EventFields.Int("column_number")
-  private val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
-  private val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
-  private val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
-  private val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
-  private val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
-  private val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
-  private val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
-  private val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
-  private val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
-  private val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
+  private fun MutableList<EventPair<*>>.addTypingFeatures() {
+    val typingSpeedTracker = TypingSpeedTracker.getInstance()
+    val timeSinceLastTyping = typingSpeedTracker.getTimeSinceLastTyping()
+    if (timeSinceLastTyping != null) {
+      add(TIME_SINCE_LAST_TYPING.with(timeSinceLastTyping))
+      addAll(typingSpeedTracker.getTypingSpeedEventPairs())
+    }
+  }
 
-  val CONTEXT_FEATURES = ObjectEventField(
-    "context_features",
-    LINE_NUMBER,
-    COLUMN_NUMBER,
-    SYMBOLS_IN_LINE_BEFORE_CARET,
-    SYMBOLS_IN_LINE_AFTER_CARET,
-    IS_WHITE_SPACE_BEFORE_CARET,
-    IS_WHITE_SPACE_AFTER_CARET,
-    NON_SPACE_SYMBOL_BEFORE_CARET,
-    NON_SPACE_SYMBOL_AFTER_CARET,
-    PREVIOUS_EMPTY_LINES_COUNT,
-    PREVIOUS_NON_EMPTY_LINE_LENGTH,
-    FOLLOWING_EMPTY_LINES_COUNT,
-    FOLLOWING_NON_EMPTY_LINE_LENGTH
-  )
+  val KEY: Key<MutableList<EventPair<*>>> = Key.create("inline_context_features")
+  private val LOG = logger<InlineContextFeatures>()
+
+  val LINE_NUMBER = EventFields.Int("line_number")
+  val COLUMN_NUMBER = EventFields.Int("column_number")
+  val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
+  val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
+  val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
+  val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
+  val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
+  val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
+  val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
+  val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
+  val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
+  val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
+  val FIRST_PARENT = EventFields.Class("first_parent")
+  val SECOND_PARENT = EventFields.Class("second_parent")
+  val TIME_SINCE_LAST_TYPING = EventFields.Long("time_since_last_typing")
 }

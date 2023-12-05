@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
@@ -39,7 +38,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -48,6 +47,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
@@ -102,37 +102,31 @@ public final class GradleUtil {
   @Nullable
   public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
     Path wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
-    if (wrapperPropertiesFile == null) return null;
-
+    if (wrapperPropertiesFile == null) {
+      return null;
+    }
+    Properties props = readGradleProperties(wrapperPropertiesFile);
+    if (props == null) {
+      return null;
+    }
+    URI uri = parseDistributionUri(props, wrapperPropertiesFile);
+    if (uri == null) {
+      return null;
+    }
     final WrapperConfiguration wrapperConfiguration = new WrapperConfiguration();
+    wrapperConfiguration.setDistribution(uri);
+    applyPropertyValue(props, WrapperExecutor.DISTRIBUTION_PATH_PROPERTY, wrapperConfiguration::setDistributionPath);
+    applyPropertyValue(props, WrapperExecutor.DISTRIBUTION_BASE_PROPERTY, wrapperConfiguration::setDistributionBase);
+    applyPropertyValue(props, WrapperExecutor.ZIP_STORE_PATH_PROPERTY, wrapperConfiguration::setZipPath);
+    applyPropertyValue(props, WrapperExecutor.ZIP_STORE_BASE_PROPERTY, wrapperConfiguration::setZipBase);
+    return wrapperConfiguration;
+  }
 
-    try (Reader wrapperPropertiesReader = Files.newBufferedReader(wrapperPropertiesFile)) {
+  private static @Nullable Properties readGradleProperties(@NotNull Path wrapperPropertiesFile) {
+    try (InputStream wrapperInputStream = Files.newInputStream(wrapperPropertiesFile)) {
       final Properties props = new Properties();
-      props.load(wrapperPropertiesReader);
-      String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
-      if (isEmpty(distributionUrl)) {
-        throw new ExternalSystemException("Wrapper 'distributionUrl' property does not exist!");
-      }
-      else {
-        wrapperConfiguration.setDistribution(prepareDistributionUri(distributionUrl, wrapperPropertiesFile));
-      }
-      String distributionPath = props.getProperty(WrapperExecutor.DISTRIBUTION_PATH_PROPERTY);
-      if (!isEmpty(distributionPath)) {
-        wrapperConfiguration.setDistributionPath(distributionPath);
-      }
-      String distPathBase = props.getProperty(WrapperExecutor.DISTRIBUTION_BASE_PROPERTY);
-      if (!isEmpty(distPathBase)) {
-        wrapperConfiguration.setDistributionBase(distPathBase);
-      }
-      String zipStorePath = props.getProperty(WrapperExecutor.ZIP_STORE_PATH_PROPERTY);
-      if (!isEmpty(zipStorePath)) {
-        wrapperConfiguration.setZipPath(zipStorePath);
-      }
-      String zipStoreBase = props.getProperty(WrapperExecutor.ZIP_STORE_BASE_PROPERTY);
-      if (!isEmpty(zipStoreBase)) {
-        wrapperConfiguration.setZipBase(zipStoreBase);
-      }
-      return wrapperConfiguration;
+      props.load(wrapperInputStream);
+      return props;
     }
     catch (Exception e) {
       GradleLog.LOG.warn(
@@ -141,9 +135,30 @@ public final class GradleUtil {
     return null;
   }
 
-  private static URI prepareDistributionUri(String distributionUrl, Path propertiesFile) throws URISyntaxException {
-    URI source = new URI(distributionUrl);
-    return source.getScheme() != null ? source : propertiesFile.resolveSibling(source.getSchemeSpecificPart()).toUri();
+  private static void applyPropertyValue(@NotNull Properties props,
+                                         @NotNull String propertyName,
+                                         @NotNull Consumer<@NotNull String> valueConsumer) {
+    String value = props.getProperty(propertyName);
+    if (!isEmpty(value)) {
+      valueConsumer.accept(value.trim());
+    }
+  }
+
+  private static @Nullable URI parseDistributionUri(@NotNull Properties props, @NotNull Path propertiesFile) {
+    String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
+    if (isEmpty(distributionUrl)) {
+      GradleLog.LOG.warn(String.format("Wrapper 'distributionUrl' property does not exist in file '%s'", propertiesFile.toAbsolutePath()));
+      return null;
+    }
+    try {
+      URI source = new URI(distributionUrl);
+      return source.getScheme() != null ? source : propertiesFile.resolveSibling(source.getSchemeSpecificPart()).toUri();
+    }
+    catch (URISyntaxException e) {
+      GradleLog.LOG.warn(
+        String.format("Unable to resolve Gradle distribution path '%s' in file '%s'", distributionUrl, propertiesFile.toAbsolutePath()));
+    }
+    return null;
   }
 
   /**

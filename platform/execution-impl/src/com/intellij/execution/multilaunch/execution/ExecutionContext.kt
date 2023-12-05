@@ -1,5 +1,6 @@
 package com.intellij.execution.multilaunch.execution
 
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.openapi.components.Service
@@ -17,7 +18,7 @@ class ExecutionModel {
   val configurations = ViewableMap<MultiLaunchConfiguration, MultiLaunchExecutionModel>()
 }
 
-class MultiLaunchExecutionModel(val configuration: MultiLaunchConfiguration) {
+class MultiLaunchExecutionModel(val settings: RunnerAndConfigurationSettings, val configuration: MultiLaunchConfiguration) {
   val executables = ViewableMap<Executable, ExecutableExecutionModel>()
   val isDone = Property(false)
 

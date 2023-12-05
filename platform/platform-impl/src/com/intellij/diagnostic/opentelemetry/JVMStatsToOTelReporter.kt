@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.opentelemetry
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -25,7 +24,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
   }
 
   @Service(Service.Level.APP)
-  private class ReportingService : Disposable {
+  private class ReportingService {
     private var batchCallback: BatchCallback? = null
 
     init {
@@ -35,9 +34,9 @@ private class JVMStatsToOTelReporter : ProjectActivity {
       val maxHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.maxHeapBytes").ofLongs().buildObserver()
 
       val usedNativeMemoryGauge = otelMeter.gaugeBuilder("JVM.usedNativeBytes").ofLongs().buildObserver()
-      val maxNativeMemoryGauge = otelMeter.gaugeBuilder("JVM.maxNativeBytes").ofLongs().buildObserver()
 
       val threadCountGauge = otelMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
+      val threadCountMaxGauge = otelMeter.gaugeBuilder("JVM.maxThreadCount").ofLongs().buildObserver()
 
       val osLoadAverageGauge = otelMeter.gaugeBuilder("OS.loadAverage").buildObserver()
 
@@ -66,9 +65,9 @@ private class JVMStatsToOTelReporter : ProjectActivity {
           maxHeapMemoryGauge.record(heapUsage.max)
 
           usedNativeMemoryGauge.record(nonHeapUsage.used)
-          maxNativeMemoryGauge.record(nonHeapUsage.max)
 
           threadCountGauge.record(threadMXBean.threadCount.toLong())
+          threadCountMaxGauge.record(threadMXBean.peakThreadCount.toLong())
 
           osLoadAverageGauge.record(osMXBean.systemLoadAverage)
 
@@ -92,17 +91,14 @@ private class JVMStatsToOTelReporter : ProjectActivity {
         },
 
         usedHeapMemoryGauge, maxHeapMemoryGauge,
-        usedNativeMemoryGauge, maxNativeMemoryGauge,
+        usedNativeMemoryGauge,
         threadCountGauge,
+        threadCountMaxGauge,
         osLoadAverageGauge,
         gcCollectionsCounter, gcCollectionTimesCounterMs,
         totalBytesAllocatedCounter,
         totalCpuTimeCounterMs
       )
-    }
-
-    override fun dispose() {
-      batchCallback?.close()
     }
   }
 

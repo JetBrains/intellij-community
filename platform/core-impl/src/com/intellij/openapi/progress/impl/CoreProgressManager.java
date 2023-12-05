@@ -50,17 +50,31 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>(); // guarded by threadsUnderIndicator
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators =
-    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    Java11Shim.INSTANCE.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators =
-    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    Java11Shim.INSTANCE.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
   // THashSet is avoided here because of possible tombstones overhead
   static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
 
   private static volatile @NotNull CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
 
-  private enum CheckCanceledBehavior {NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS}
+  private enum CheckCanceledBehavior {
+    /**
+     * Nothing to be executed during ProgressManager.checkCanceled
+     */
+    NONE,
+    /**
+     * At least one hook exists and should be executed during ProgressManager.checkCanceled
+     */
+    ONLY_HOOKS,
+    /**
+     * There is at least one indicator in the canceled state,
+     * during ProgressManager.checkCanceled the processes underneath are to be canceled, and all existing hooks are to be executed
+     */
+    INDICATOR_PLUS_HOOKS
+  }
 
   /**
    * active (i.e., which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
@@ -496,9 +510,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         }
 
         ApplicationUtil.invokeLaterSomewhere(task.whereToRunCallbacks(), modalityState, () -> {
-          finishTask(task, result.isCanceled(), result.getThrowable() instanceof ProcessCanceledException ? null : result.getThrowable());
-          if (indicatorDisposable != null) {
-            Disposer.dispose(indicatorDisposable);
+          try {
+            finishTask(task, result.isCanceled(), result.getThrowable() instanceof ProcessCanceledException ? null : result.getThrowable());
+          }
+          finally {
+            if (indicatorDisposable != null) {
+              Disposer.dispose(indicatorDisposable);
+            }
           }
         });
       }));

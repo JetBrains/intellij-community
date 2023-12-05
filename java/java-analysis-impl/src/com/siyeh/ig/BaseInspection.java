@@ -233,7 +233,8 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     out.append(strings[0].get(index));
     for (int i = 1; i < strings.length; i++) {
       out.append(',');
-      out.append(strings[i].get(index));
+      List<String> list = strings[i];
+      out.append(list.size() > index ? list.get(index) : "");
     }
   }
 }

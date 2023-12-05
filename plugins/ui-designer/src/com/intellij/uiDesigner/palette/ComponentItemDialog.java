@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -394,7 +395,6 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       PsiFile formFile = null;
       if (myTextField.getText().length() > 0) {
         VirtualFile formVFile = ResourceFileUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
@@ -402,6 +402,7 @@ public final class ComponentItemDialog extends DialogWrapper {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }
       }
+      final TreeFileChooserFactory factory = TreeFileChooserFactory.getInstance(myProject);
       TreeFileChooser fileChooser = factory.createFileChooser(myTitle, formFile, null, myFilter, true, true);
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();

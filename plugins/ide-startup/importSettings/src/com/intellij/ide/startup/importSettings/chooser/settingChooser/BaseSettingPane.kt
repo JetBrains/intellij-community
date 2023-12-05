@@ -19,13 +19,14 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
-fun createSettingPane(setting: BaseSetting, configurable: Boolean): BaseSettingPane {
+fun createSettingPane(setting: BaseSetting, configurable: Boolean, changeHandler: () -> Unit): BaseSettingPane {
   return if (setting is Multiple) {
-    MultipleSettingPane(createMultipleItem(setting, configurable))
+    MultipleSettingPane(createMultipleItem(setting, configurable), changeHandler)
   }
   else {
-    BaseSettingPane(SettingItem(setting, configurable))
+    BaseSettingPane(SettingItem(setting, configurable), changeHandler)
   }
 }
 
@@ -46,7 +47,7 @@ private fun createMultipleItem(setting: Multiple, configurable: Boolean): Settin
   return SettingItem(setting, configurable, childItems = list)
 }
 
-open class BaseSettingPane(val item: SettingItem) {
+open class BaseSettingPane(val item: SettingItem, protected val changeHandler: () -> Unit) {
   val setting = item.setting
 
   private val pane by lazy {
@@ -59,7 +60,10 @@ open class BaseSettingPane(val item: SettingItem) {
             if (item.configurable) {
               checkBox("")
                 .selected(item.selected)
-                .onChanged { cb -> item.selected = cb.isSelected }
+                .onChanged { cb ->
+                  item.selected = cb.isSelected
+                  changeHandler()
+                }
                 .customize(UnscaledGaps(0, 0, 2, 0))
             }
           }
@@ -91,7 +95,7 @@ open class BaseSettingPane(val item: SettingItem) {
 }
 
 
-class MultipleSettingPane(item: SettingItem) : BaseSettingPane(item) {
+class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit) : BaseSettingPane(item, changeHandler) {
 
   private val configurable = item.configurable && setting is Configurable
 
@@ -125,12 +129,13 @@ class MultipleSettingPane(item: SettingItem) : BaseSettingPane(item) {
   private fun showPopup() {
     item.childItems ?: return
 
-    val component = ChildSettingsList(item.childItems, configurable)
+    val component = ChildSettingsList(item.childItems, configurable, changeHandler)
 
     val panel = JPanel(BorderLayout())
     panel.border = JBUI.Borders.empty()
 
     val scrollPane = JBScrollPane(component)
+    scrollPane.horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
     panel.add(scrollPane, BorderLayout.CENTER)
     scrollPane.border = JBUI.Borders.empty(ChildSettingsList.SCROLL_PANE_INSETS, ChildSettingsList.SCROLL_PANE_INSETS,
                                            ChildSettingsList.SCROLL_PANE_INSETS, 0)

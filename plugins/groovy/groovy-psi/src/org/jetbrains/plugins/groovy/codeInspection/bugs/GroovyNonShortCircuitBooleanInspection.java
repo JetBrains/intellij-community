@@ -15,18 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -41,13 +42,11 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new NonShortCircuitBooleanFix();
   }
 
-  private static class NonShortCircuitBooleanFix
-      extends GroovyFix {
-
+  private static class NonShortCircuitBooleanFix extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -55,17 +54,14 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final GrBinaryExpression expression =
-          (GrBinaryExpression) descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final GrBinaryExpression expression = (GrBinaryExpression) element;
       final GrExpression lhs = expression.getLeftOperand();
       final GrExpression rhs = expression.getRightOperand();
       final IElementType operationSign = expression.getOperationTokenType();
       assert rhs != null;
-      final String newExpression = lhs.getText() +
-          getShortCircuitOperand(operationSign) + rhs.getText();
-      replaceExpression(expression, newExpression);
+      final String newExpression = lhs.getText() + getShortCircuitOperand(operationSign) + rhs.getText();
+      GrInspectionUtil.replaceExpression(expression, newExpression);
     }
 
     private static String getShortCircuitOperand(IElementType tokenType) {

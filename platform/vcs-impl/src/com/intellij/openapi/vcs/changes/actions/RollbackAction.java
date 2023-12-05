@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.commit.CommitMode;
 import com.intellij.vcs.commit.CommitModeManager;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +98,7 @@ public class RollbackAction extends DumbAwareAction {
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-    Collection<Change> changes = getSelectedChanges(e);
+    Collection<? extends Change> changes = getSelectedChanges(e);
     Set<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null) {
       changes = filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
@@ -125,7 +126,7 @@ public class RollbackAction extends DumbAwareAction {
     }
   }
 
-  private static @NotNull Collection<Change> getSelectedChanges(@NotNull AnActionEvent e) {
+  private static @NotNull Collection<? extends Change> getSelectedChanges(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
     ChangesListView changesView = e.getData(ChangesListView.DATA_KEY);
@@ -140,12 +141,8 @@ public class RollbackAction extends DumbAwareAction {
 
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (!ArrayUtil.isEmpty(files)) {
-      ChangeListManager clmManager = ChangeListManager.getInstance(project);
-      List<Change> result = new ArrayList<>();
-      for (VirtualFile vf : files) {
-        result.addAll(clmManager.getChangesIn(vf));
-      }
-      return result;
+      Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
+      return VcsImplUtil.filterChangesUnderFiles(allChanges, List.of(files)).toList();
     }
 
     return emptyList();

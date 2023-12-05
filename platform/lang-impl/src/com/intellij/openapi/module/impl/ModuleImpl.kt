@@ -35,6 +35,7 @@ import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -96,12 +97,10 @@ open class ModuleImpl @ApiStatus.Internal constructor(
             ?: RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
   }
 
-  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      moduleMethodType,
-      emptyConstructorMethodType,
-    )
-  }
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    moduleMethodType,
+    emptyConstructorMethodType,
+  )
 
   override fun init(beforeComponentCreation: Runnable?) {
     // do not measure (activityNamePrefix method not overridden by this class)

@@ -7,8 +7,8 @@ import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.ui.components.JBPanel
-import com.intellij.util.attachAsChildTo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.awt.BorderLayout

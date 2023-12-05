@@ -30,6 +30,7 @@ abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
         project.executeWriteCommand("") {
             optimizer.run()
         }
+        userNotificationInfo = optimizer.userNotificationInfo
 
         return null
     }

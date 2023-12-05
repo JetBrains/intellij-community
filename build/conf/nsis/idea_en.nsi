@@ -12,6 +12,10 @@ LangString update_path_var_label ${LANG_ENGLISH} 'Add "bin" folder to the PATH'
 LangString update_context_menu_group ${LANG_ENGLISH} "Update Context Menu"
 LangString update_context_menu_label ${LANG_ENGLISH} 'Add "Open Folder as Project"'
 LangString create_associations_group ${LANG_ENGLISH} "Create Associations"
+;; Rider-specific:
+LangString additional_features ${LANG_ENGLISH} "Additional features"
+LangString install_etw_service ${LANG_ENGLISH} "Install JetBrains ETW Host Service"
+LangString windows_defender_exclusions ${LANG_ENGLISH} "Add Rider executables to Microsoft Defender exclusions"
 
 ; Uninstall options page
 LangString uninstall_options ${LANG_ENGLISH} "Uninstall ${MUI_PRODUCT}"

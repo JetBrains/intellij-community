@@ -9,8 +9,7 @@ import kotlinx.coroutines.*
 fun commonStdlibAndBuiltins() {
     listOf(1, 2, 3).map { it }
     val ea = emptyArray<String>()
-    // Issue: KT-61757
-    val unit = <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'Unit'.'")!>Unit<!>
+    val unit = Unit
 }
 
 fun stdlibJvm(param: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'JvmRepeatable'.'")!>JvmRepeatable<!>) {}
@@ -30,8 +29,7 @@ fun nativeDistFoundation(param: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESO
 suspend fun commonCoroutines() {
     coroutineScope {
         launch {
-            // Issue: KT-61757
-            <!HIGHLIGHTING("severity='ERROR'; descr='[MISSING_DEPENDENCY_CLASS] Cannot access class 'kotlin.Unit'. Check your module classpath for missing or conflicting dependencies.'")!>delay<!>(1000)
+            delay(1000)
         }
     }
 }
@@ -47,10 +45,8 @@ fun js(param: Deferred<String>) {
 }
 
 // no natural native-specific API in coroutines
-// Issue: KT-61757
-@<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'Suppress'.'")!>Suppress<!>("invisible_reference")
+@Suppress("invisible_reference")
 private fun native(param: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'WorkerDispatcher'.'")!>WorkerDispatcher<!>) {}
 
-// Issue: KT-61757
-@<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'Suppress'.'")!>Suppress<!>("invisible_reference")
+@Suppress("invisible_reference")
 private fun darwin(param: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'DarwinGlobalQueueDispatcher'.'")!>DarwinGlobalQueueDispatcher<!>) {}

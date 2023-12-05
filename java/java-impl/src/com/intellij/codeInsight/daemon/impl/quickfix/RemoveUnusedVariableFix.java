@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.RemoveInitializerFix;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.util.TextRange;
@@ -34,9 +35,15 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
     return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.VARIABLE.object());
   }
 
+  @IntentionName
+  @NotNull
+  protected String getText(@NotNull PsiVariable variable) {
+    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(variable).object(), variable.getName());
+  }
+
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiVariable variable) {
-    String message = CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(variable).object(), variable.getName());
+    String message = getText(variable);
     return Presentation.of(message);
   }
 
@@ -73,9 +80,9 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
       return new RemoveVariableSideEffectAware(variable, false).perform(context);
     }
     else {
-      return new ModChooseAction(JavaBundle.message("popup.title.remove.unused.variable"),
-                                 List.of(new RemoveVariableSideEffectAware(variable, true), 
-                                         new RemoveVariableSideEffectAware(variable, false)));
+      return ModCommand.chooseAction(JavaBundle.message("popup.title.remove.unused.variable"),
+                                     new RemoveVariableSideEffectAware(variable, true),
+                                     new RemoveVariableSideEffectAware(variable, false));
     }
   }
 

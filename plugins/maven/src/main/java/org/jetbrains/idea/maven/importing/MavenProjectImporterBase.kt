@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -15,7 +16,6 @@ import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImp
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImporter.CountAndTime
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -45,14 +45,13 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
   protected class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
-                         console: MavenConsole,
-                         indicator: MavenProgressIndicator) {
+                         indicator: ProgressIndicator) {
       runImportActivitySync(project, MavenUtil.SYSTEM_ID, RefreshingFilesTask::class.java) {
         doPerform(indicator)
       }
     }
 
-    private fun doPerform(indicator: MavenProgressIndicator) {
+    private fun doPerform(indicator: ProgressIndicator) {
       indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"))
       doRefreshFiles(myFiles)
     }

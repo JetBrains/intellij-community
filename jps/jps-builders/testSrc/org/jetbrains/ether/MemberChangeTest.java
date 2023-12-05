@@ -1,9 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+
+import java.util.Set;
+
 public class MemberChangeTest extends IncrementalTestCase {
+  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("addLambdaTargetMethod", "addLambdaTargetMethod2", "addLambdaTargetMethodNoRecompile");
+
   public MemberChangeTest() {
     super("membersChange");
+  }
+
+  @Override
+  protected boolean shouldRunTest() {
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      return super.shouldRunTest();
+    }
+    return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
   public void testAddAbstractMethod() {
@@ -30,6 +44,18 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddLambdaTargetMethod() {
+    doTest();
+  }
+
+  public void testAddLambdaTargetMethod2() {
+    doTest();
+  }
+
+  public void testAddLambdaTargetMethodNoRecompile() {
+    doTest();
+  }
+
   public void testAddPrivateMethodToAbstractClass() {
     doTest();
   }
@@ -39,6 +65,10 @@ public class MemberChangeTest extends IncrementalTestCase {
   }
 
   public void testAddFieldToBaseClass() {
+    doTest();
+  }
+
+  public void testAddFieldOfSameKindToBaseClass() {
     doTest();
   }
 

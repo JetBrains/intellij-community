@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableChangeInfo
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 
 class KotlinChangeInfo(
@@ -22,8 +23,8 @@ class KotlinChangeInfo(
     private val oldName = methodDescriptor.name
 
     private val oldNameToParameterIndex: Map<String, Int> = HashMap<String, Int>().apply {
-        val parameters = methodDescriptor.method.valueParameters
-        parameters.indices.forEach { i -> this[parameters[i].name!!] = i }
+        val parameters = (methodDescriptor.method as? KtCallableDeclaration)?.valueParameters
+        parameters?.indices?.forEach { i -> this[parameters[i].name!!] = i }
     }
 
     override fun getOldParameterIndex(oldParameterName: String): Int? {
@@ -131,7 +132,7 @@ class KotlinChangeInfo(
     }
 
     override fun isParameterTypesChanged(): Boolean {
-        return false
+        return true
     }
 
     override fun isParameterNamesChanged(): Boolean {
@@ -146,7 +147,7 @@ class KotlinChangeInfo(
         return name != oldName
     }
 
-    override fun getMethod(): KtCallableDeclaration {
+    override fun getMethod(): KtNamedDeclaration {
         return methodDescriptor.baseDeclaration
     }
 
@@ -163,12 +164,12 @@ class KotlinChangeInfo(
     }
 
     override fun isReceiverTypeChanged(): Boolean {
-        val receiverInfo = receiverParameterInfo ?: return method.receiverTypeReference != null
-        return method.receiverTypeReference == null || receiverInfo.typeText != methodDescriptor.oldReceiverType
+        val receiverInfo = receiverParameterInfo ?: return (method as? KtCallableDeclaration)?.receiverTypeReference != null
+        return (method as? KtCallableDeclaration)?.receiverTypeReference == null || receiverInfo.typeText != methodDescriptor.oldReceiverType
     }
 
     fun hasAppendedParametersOnly(): Boolean {
-        val oldParamCount = method.valueParameters.size
+        val oldParamCount = (method as? KtCallableDeclaration)?.valueParameters?.size ?: 0
         return newParameters.asSequence().withIndex().all { (i, p) -> if (i < oldParamCount) p.oldIndex == i else p.isNewParameter }
     }
 

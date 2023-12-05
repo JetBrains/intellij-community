@@ -621,7 +621,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               project!!,
               mavenGeneralSettings,
               embeddersManager,
-              NULL_MAVEN_CONSOLE,
               mavenProgressIndicator
       )
     }
@@ -1775,7 +1774,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                 </profile>
                                 """.trimIndent())
     updateAll(myProjectPom)
-    val existingManagedFiles = tree.getExistingManagedFiles()
+    val existingManagedFiles = tree.existingManagedFiles
     val obsoleteFiles = tree.rootProjectsFiles
     assertEquals(existingManagedFiles, obsoleteFiles)
   }
@@ -1830,7 +1829,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               parentProject!!,
               mavenGeneralSettings,
               embeddersManager,
-              NULL_MAVEN_CONSOLE,
               mavenProgressIndicator)
     }
     finally {
@@ -1847,8 +1845,8 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     assertEquals(m1, read.getModules(rootProject)[0].file)
     assertEquals(m2, read.getModules(rootProject)[1].file)
     assertNull(read.findAggregator(rootProject))
-    assertEquals(rootProject, read.findAggregator(read.findProject(m1)))
-    assertEquals(rootProject, read.findAggregator(read.findProject(m2)))
+    assertEquals(rootProject, read.findAggregator(read.findProject(m1)!!))
+    assertEquals(rootProject, read.findAggregator(read.findProject(m2)!!))
   }
 
   @Test
@@ -1877,7 +1875,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                         </profiles>
                         """.trimIndent())
     updateAll(myProjectPom)
-    assertUnorderedElementsAreEqual(tree.getAvailableProfiles(), "one", "two", "three")
+    assertUnorderedElementsAreEqual(tree.availableProfiles, "one", "two", "three")
   }
 
   @Test
@@ -1912,14 +1910,13 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               tree.rootProjects[0],
               mavenGeneralSettings,
               embeddersManager,
-              NULL_MAVEN_CONSOLE,
               mavenProgressIndicator
       )
     }
     finally {
       embeddersManager.releaseInTests()
     }
-    assertUnorderedElementsAreEqual(tree.getAvailableProfiles(), "one", "two", "three")
+    assertUnorderedElementsAreEqual(tree.availableProfiles, "one", "two", "three")
   }
 
   @Test
@@ -2020,7 +2017,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               project,
               mavenGeneralSettings,
               embeddersManager,
-              NULL_MAVEN_CONSOLE,
               mavenProgressIndicator
       )
     }
@@ -2214,7 +2210,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               project,
               mavenGeneralSettings,
               embeddersManager,
-              NULL_MAVEN_CONSOLE,
               mavenProgressIndicator)
     }
     finally {

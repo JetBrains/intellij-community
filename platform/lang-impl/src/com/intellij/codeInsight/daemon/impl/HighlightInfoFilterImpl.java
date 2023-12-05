@@ -19,7 +19,9 @@ public final class HighlightInfoFilterImpl implements HighlightInfoFilter {
     if (file != null && file.getOriginalFile() instanceof PsiCompiledFile) {
       return info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
     }
-
+    if (info.findRegisteredQuickFix((__, __1) -> true) != null) {
+      return true; // must not hide if there are fixes to show
+    }
     if (Holder.ourTestMode) {
       return true; // Tests need to verify highlighting is applied no matter what attributes are defined for this kind of highlighting
     }

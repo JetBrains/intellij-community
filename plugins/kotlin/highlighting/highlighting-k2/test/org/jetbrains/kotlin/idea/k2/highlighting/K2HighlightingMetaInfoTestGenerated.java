@@ -140,6 +140,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/Annotations.kt");
         }
 
+        @TestMetadata("AnnotationsInDumbMode.kt")
+        public void testAnnotationsInDumbMode() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
+        }
+
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
@@ -238,6 +243,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")
         public void testPropertiesWithPropertyDeclarations() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
+        }
+
+        @TestMetadata("PropertiesWithPropertyDeclarationsInDumbMode.kt")
+        public void testPropertiesWithPropertyDeclarationsInDumbMode() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarationsInDumbMode.kt");
         }
 
         @TestMetadata("script.kts")

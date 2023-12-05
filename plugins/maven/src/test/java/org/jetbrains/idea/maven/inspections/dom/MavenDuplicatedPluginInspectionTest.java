@@ -5,6 +5,9 @@ import org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection;
 import org.junit.Test;
 
 public class MavenDuplicatedPluginInspectionTest extends MavenDomTestCase {
+  @Override
+  public boolean runInDispatchThread() { return true; }
+
   @Test
   public void testDuplicatedPlugin() {
     myFixture.enableInspections(MavenDuplicatePluginInspection.class);

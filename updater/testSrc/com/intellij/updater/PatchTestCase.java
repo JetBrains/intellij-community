@@ -51,7 +51,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath());
-    return new Patch(tuner.apply(spec), TEST_UI);
+    return new Patch(tuner.apply(spec));
   }
 
   protected void resetNewerDir() throws IOException {
@@ -60,7 +60,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   }
 
   protected static Map<String, Long> digest(Patch patch, File dir) throws IOException {
-    return new TreeMap<>(patch.digestFiles(dir, Collections.emptySet()));
+    return new TreeMap<>(patch.digestFiles(dir, Set.of()));
   }
 
   protected static List<PatchAction> sortActions(List<PatchAction> actions) {

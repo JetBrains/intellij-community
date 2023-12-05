@@ -68,7 +68,7 @@ public final class ByteContentRetriever extends ChangeSetsProcessor {
 
     myVcs.accept(new ChangeVisitor() {
       @Override
-      public void begin(ChangeSet c) throws StopVisitingException {
+      public void begin(ChangeSet c) {
         if (c.affectsPath(myPath)) result.add(c);
       }
     });

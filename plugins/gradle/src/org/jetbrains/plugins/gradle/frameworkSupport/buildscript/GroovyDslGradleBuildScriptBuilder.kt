@@ -23,6 +23,15 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
     withPlugin("org.jetbrains.kotlin.jvm", version)
   }
 
+  override fun withKotlinTest() = apply {
+    withMavenCentral()
+    // version is inherited from the Kotlin plugin
+    addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
+    configureTestTask {
+      call("useJUnitPlatform")
+    }
+  }
+
   override fun generate() = GroovyScriptBuilder().generate(generateTree())
 
   internal class Impl(gradleVersion: GradleVersion) : GroovyDslGradleBuildScriptBuilder<Impl>(gradleVersion) {

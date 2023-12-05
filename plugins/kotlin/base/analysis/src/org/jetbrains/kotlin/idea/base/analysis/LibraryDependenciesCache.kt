@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache.LibraryDependencies
@@ -101,6 +102,11 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     override fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies = cache[library]
 
     override fun dispose() = Unit
+
+    @TestOnly
+    fun getCacheContentForTests(): Map<LibraryInfo, LibraryDependencies> {
+        return cache.getCacheContentForTests().toMap()
+    }
 
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibraryDependencies {
         val libraryDependencyCandidatesAndSdkInfos = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
@@ -254,6 +260,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
 
+        @TestOnly
+        @Suppress("deprecation_error")
+        fun getCacheContentForTests() = cache
     }
 
     private inner class ModuleDependenciesCache :

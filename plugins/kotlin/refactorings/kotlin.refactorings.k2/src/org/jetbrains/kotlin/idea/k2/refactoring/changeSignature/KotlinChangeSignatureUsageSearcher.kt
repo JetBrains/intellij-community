@@ -2,12 +2,16 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -89,7 +93,8 @@ internal object KotlinChangeSignatureUsageSearcher {
 
                     if (partiallyAppliedSymbol != null) {
                         val receiverValue = partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver
-                        val containingSymbol = partiallyAppliedSymbol.symbol.getContainingSymbol()
+                        val symbol = partiallyAppliedSymbol.symbol
+                        val containingSymbol = symbol.getContainingSymbol()
                         if (receiverValue != null) {
                             val receiverExpression = (receiverValue as? KtExplicitReceiverValue)?.expression
                                 ?: ((receiverValue as? KtSmartCastedReceiverValue)?.original as? KtExplicitReceiverValue)?.expression
@@ -103,16 +108,36 @@ internal object KotlinChangeSignatureUsageSearcher {
                                         result.add(KotlinImplicitThisToParameterUsage(receiverExpression, originalReceiverInfo!!))
                                     }
                                 }
-                            }
-                            else  {
+                            } else {
                                 val name = (containingSymbol as? KtClassOrObjectSymbol)?.name
                                 if (name != null) {
                                     if (receiverExpression is KtThisExpression) {
                                         result.add(KotlinNonQualifiedOuterThisUsage(receiverExpression, name))
-                                    }
-                                    else if (receiverValue is KtImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
+                                    } else if (receiverValue is KtImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
                                         result.add(KotlinImplicitThisUsage(receiverExpression, name))
                                     }
+                                }
+                            }
+                        } else if (symbol !is KtValueParameterSymbol && originalReceiverType == null) {
+                            val declaration = symbol.psi
+                            val receiverParameterInfo = changeInfo.receiverParameterInfo
+                            require(receiverParameterInfo != null)
+                            if (declaration != null) {
+                                val currentType = receiverParameterInfo.currentType
+                                val referenceThroughNewReceiver = "(___p___ as ${currentType.text}).${expression.getReferencedName()}"
+                                val fragment = KtPsiFactory(declaration.project).createExpressionCodeFragment(
+                                    referenceThroughNewReceiver, currentType.context
+                                )
+                                val dotQualifiedExpression = fragment.getContentElement() as? KtDotQualifiedExpression
+                                if (dotQualifiedExpression?.selectorExpression?.mainReference?.resolve() != null) {
+                                    val prefix = RefactoringUIUtil.getDescription(declaration, true)
+                                    result.add(
+                                        KotlinChangeSignatureConflictingUsageInfo(
+                                            expression, KotlinBundle.message(
+                                                "text.0.will.no.longer.be.accessible.after.signature.change", prefix.capitalize()
+                                            )
+                                        )
+                                    )
                                 }
                             }
                         }

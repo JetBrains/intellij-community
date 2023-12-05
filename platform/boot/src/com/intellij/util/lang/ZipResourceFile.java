@@ -85,6 +85,9 @@ final class ZipResourceFile implements ResourceFile {
         }
       };
     }
+    else if (zipFile instanceof EmptyZipFile) {
+      return new ClasspathCache.LoaderDataBuilder();
+    }
     else {
       return computePackageIndex();
     }

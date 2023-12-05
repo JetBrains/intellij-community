@@ -18,7 +18,6 @@ fun fail() {
   <error descr="The project-level service is retrieved as an application-level service">serviceIfCreated</error><ProjectService>()
 
   ApplicationManager.getApplication().<error descr="The project-level service is retrieved as an application-level service">getService</error>(ProjectService::class.java)
-  ApplicationManager.getApplication().<error descr="The project-level service is retrieved as an application-level service">getService</error>(ProjectService::class.java, true)
 }
 
 fun success() {
@@ -27,5 +26,4 @@ fun success() {
   serviceIfCreated<ApplicationService>()
 
   ApplicationManager.getApplication().getService(ApplicationService::class.java)
-  ApplicationManager.getApplication().getService(ApplicationService::class.java, true)
 }

@@ -16,8 +16,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import org.jetbrains.annotations.ApiStatus
 
-data class InlineCompletionRequest(
+class InlineCompletionRequest(
   val event: InlineCompletionEvent,
 
   val file: PsiFile,
@@ -40,7 +41,7 @@ sealed interface TypingEvent {
     override val range: TextRange = TextRange(offset, offset + 1)
   }
 
-  class NewLine internal constructor(override val typed: String, override val range: TextRange) : TypingEvent
+  class NewLine @ApiStatus.Internal constructor(override val typed: String, override val range: TextRange) : TypingEvent
 
   class PairedEnclosureInsertion internal constructor(override val typed: String, offset: Int) : TypingEvent {
     override val range: TextRange = TextRange(offset, offset) // caret does not move
@@ -58,7 +59,7 @@ interface InlineCompletionEvent {
   /**
    * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
    */
-  data class DirectCall(
+  class DirectCall(
     val editor: Editor,
     val caret: Caret,
     val context: DataContext? = null,
@@ -76,7 +77,7 @@ interface InlineCompletionEvent {
    *
    * Since document changes are hard to correctly track, it's forbidden to create them outside this module.
    */
-  data class DocumentChange internal constructor(val typing: TypingEvent, val editor: Editor) : InlineCompletionEvent {
+  class DocumentChange @ApiStatus.Internal constructor(val typing: TypingEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val project = editor.project ?: return null
       val caretModel = editor.caretModel
@@ -95,7 +96,7 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event.
    */
-  data class LookupChange(override val event: LookupEvent) : InlineLookupEvent {
+  class LookupChange(override val event: LookupEvent) : InlineLookupEvent {
     override fun toRequest(): InlineCompletionRequest? {
       return super.toRequest()?.takeIf { it.lookupElement != null }
     }
@@ -106,7 +107,7 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event associated with the cancellation.
    */
-  data class LookupCancelled(override val event: LookupEvent) : InlineLookupEvent
+  class LookupCancelled(override val event: LookupEvent) : InlineLookupEvent
 
   sealed interface InlineLookupEvent : InlineCompletionEvent {
     val event: LookupEvent

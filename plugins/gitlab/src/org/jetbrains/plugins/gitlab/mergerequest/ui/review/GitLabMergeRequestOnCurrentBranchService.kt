@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @Service(Service.Level.PROJECT)
 class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineScope) {
@@ -82,7 +83,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
 
     override fun update(e: AnActionEvent) {
       val action = e.project?.serviceIfCreated<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value?.let {
-        { it.showMergeRequest() }
+        { it.showMergeRequest(GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION) }
       }
       e.presentation.isEnabledAndVisible = action != null
       // required for thread safety

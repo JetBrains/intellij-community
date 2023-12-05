@@ -312,6 +312,16 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
+        val receiverType = explicitReceiver.getKtType().takeUnless { it is KtErrorType } ?: return@sequence
+        val callablesWithMetadata = collectDotCompletionForCallableReceiver(
+            receiverType,
+            visibilityChecker,
+            scopeContext,
+            extensionChecker,
+            sessionParameters,
+        )
+        yieldAll(callablesWithMetadata)
+
         val smartCastInfo = explicitReceiver.getSmartCastInfo()
         if (smartCastInfo?.isStable == false) {
             // Collect members available from unstable smartcast as well.
@@ -326,16 +336,6 @@ internal open class FirCallableCompletionContributor(
             )
             yieldAll(callablesWithMetadataFromUnstableSmartCast)
         }
-
-        val receiverType = explicitReceiver.getKtType().takeUnless { it is KtErrorType } ?: return@sequence
-        val callablesWithMetadata = collectDotCompletionForCallableReceiver(
-            receiverType,
-            visibilityChecker,
-            scopeContext,
-            extensionChecker,
-            sessionParameters,
-        )
-        yieldAll(callablesWithMetadata)
     }
 
     context(KtAnalysisSession)

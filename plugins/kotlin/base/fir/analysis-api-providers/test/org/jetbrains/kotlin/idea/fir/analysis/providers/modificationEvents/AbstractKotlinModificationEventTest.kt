@@ -27,10 +27,6 @@ abstract class AbstractKotlinModificationEventTest<TRACKER : ModificationEventTr
         // While the not-under-content-root module is named as it is, it is still decidedly under the project's content root, just not a
         // part of any other kind of `KtModule`.
         createKtFileUnderNewContentRoot(FileWithText("$name.kt", text))
-
-    protected fun disposeTrackers(vararg trackers: TRACKER) {
-        trackers.forEach { Disposer.dispose(it) }
-    }
 }
 
 abstract class ModificationEventTracker(
@@ -41,7 +37,9 @@ abstract class ModificationEventTracker(
 
     protected val receivedEvents: MutableList<ReceivedEvent> = mutableListOf()
 
-    fun initialize() {
+    fun initialize(testRootDisposable: Disposable) {
+        Disposer.register(testRootDisposable, this)
+
         val busConnection = project.analysisMessageBus.connect(this)
         configureSubscriptions(busConnection)
     }
@@ -57,23 +55,27 @@ abstract class ModificationEventTracker(
         )
     }
 
-    fun assertModifiedOnce(label: String, shouldBeRemoval: Boolean = false) {
-        assertModified(label, expectedEventCount = 1, shouldBeRemoval)
+    fun assertModified(label: String, shouldBeRemoval: Boolean = false) {
+        Assert.assertTrue(
+            "At least one $eventKind event for '$label' should have been published, but no events were received.",
+            receivedEvents.isNotEmpty(),
+        )
+        checkShouldBeRemoval(label, shouldBeRemoval)
     }
 
-    fun assertModified(label: String, expectedEventCount: Int, shouldBeRemoval: Boolean = false) {
-        val eventCountString = if (expectedEventCount == 1) "A single" else expectedEventCount.toString()
-        val eventOrEvents = if (expectedEventCount == 1) "event" else "events"
+    fun assertModifiedOnce(label: String, shouldBeRemoval: Boolean = false) {
         Assert.assertTrue(
-            "$eventCountString $eventKind $eventOrEvents for '$label' should have been published, but ${receivedEvents.size} events were received.",
-            receivedEvents.size == expectedEventCount,
+            "A single $eventKind event for '$label' should have been published, but ${receivedEvents.size} events were received.",
+            receivedEvents.size == 1,
         )
+        checkShouldBeRemoval(label, shouldBeRemoval)
+    }
 
-        val shouldOrShouldNotBeRemoval = if (shouldBeRemoval) "should" else "should not"
+    private fun checkShouldBeRemoval(label: String, shouldBeRemoval: Boolean) {
+        val shouldOrShouldNot = if (shouldBeRemoval) "should" else "should not"
         receivedEvents.forEachIndexed { index, receivedEvent ->
-            val indexInfo = if (expectedEventCount > 0) " (event index: $index)" else ""
             Assert.assertTrue(
-                "The $eventKind event for '$label' $shouldOrShouldNotBeRemoval be a removal event$indexInfo.",
+                "The $eventKind event #$index for '$label' $shouldOrShouldNot be a removal event.",
                 receivedEvent.isRemoval == shouldBeRemoval,
             )
         }

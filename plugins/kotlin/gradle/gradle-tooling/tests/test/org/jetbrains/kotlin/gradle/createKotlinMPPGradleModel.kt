@@ -93,6 +93,7 @@ internal fun createKotlinCompilation(
         associateCompilations = associateCompilations,
         extras = IdeaKotlinExtras.wrap(extras),
         isTestComponent = associateCompilations.isNotEmpty(),
+        archiveFile = null,
     )
 }
 

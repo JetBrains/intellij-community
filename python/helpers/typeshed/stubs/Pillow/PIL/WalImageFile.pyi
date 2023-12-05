@@ -2,11 +2,12 @@ from typing import ClassVar
 from typing_extensions import Literal
 
 from . import ImageFile
+from ._imaging import _PixelAccessor
 
 class WalImageFile(ImageFile.ImageFile):
     format: ClassVar[Literal["WAL"]]
     format_description: ClassVar[str]
-    def load(self) -> None: ...
+    def load(self) -> _PixelAccessor: ...
 
 def open(filename): ...
 

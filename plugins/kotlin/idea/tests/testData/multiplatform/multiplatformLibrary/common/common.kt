@@ -1,11 +1,11 @@
 package sample
 
-expect class <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm; icon=nodes/Module.svg); (text=js; icon=nodes/Module.svg)]")!>Sample<!>() {
-    fun <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm; icon=nodes/Module.svg); (text=js; icon=nodes/Module.svg)]")!>checkMe<!>(): Int
+expect class <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm); (text=js)]")!>Sample<!>() {
+    fun <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm); (text=js)]")!>checkMe<!>(): Int
 }
 
-expect object <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm; icon=nodes/Module.svg); (text=js; icon=nodes/Module.svg)]")!>Platform<!> {
-    val <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm; icon=nodes/Module.svg); (text=js; icon=nodes/Module.svg)]")!>name<!>: String
+expect object <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm); (text=js)]")!>Platform<!> {
+    val <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm); (text=js)]")!>name<!>: String
 }
 
 fun hello(): String = "Hello from ${Platform.name}"

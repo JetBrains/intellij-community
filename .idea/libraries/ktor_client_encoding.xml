@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ktor-client-encoding" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-encoding-jvm:2.3.5">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-encoding-jvm:2.3.6">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.5/ktor-client-encoding-jvm-2.3.5.jar">
-          <sha256sum>b78b73d2467f7d9615cddce8ccddd4e5b3929ec3ca56074668df0583c6b0611b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.6/ktor-client-encoding-jvm-2.3.6.jar">
+          <sha256sum>7436f803cc925dfc39d48db1315c2f19f5dadc69760f7a0d49ad0641b229399c</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.5/ktor-client-encoding-jvm-2.3.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.6/ktor-client-encoding-jvm-2.3.6.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.5/ktor-client-encoding-jvm-2.3.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/2.3.6/ktor-client-encoding-jvm-2.3.6-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

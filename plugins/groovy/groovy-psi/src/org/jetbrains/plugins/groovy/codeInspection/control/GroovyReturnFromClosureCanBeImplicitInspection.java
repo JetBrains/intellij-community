@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+
+import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceStatement;
 
 public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspection {
 
@@ -49,21 +54,19 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
 
     @Override
     @Nullable
-    protected GroovyFix buildFix(@NotNull PsiElement location) {
+    protected LocalQuickFix buildFix(@NotNull PsiElement location) {
         return new MakeReturnImplicitFix();
     }
 
-    private static class MakeReturnImplicitFix extends GroovyFix {
+    private static class MakeReturnImplicitFix extends PsiUpdateModCommandQuickFix {
         @Override
         @NotNull
         public String getFamilyName() {
             return GroovyBundle.message("intention.family.name.make.return.implicit");
         }
 
-        @Override
-        public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-
-            final PsiElement returnKeywordElement = descriptor.getPsiElement();
+      @Override
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement returnKeywordElement, @NotNull ModPsiUpdater updater) {
             final GrReturnStatement returnStatement = (GrReturnStatement) returnKeywordElement.getParent();
             if (returnStatement == null) return;
             if (returnStatement.getReturnValue() == null) return;

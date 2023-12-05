@@ -67,9 +67,10 @@ public final class CodeFormatterFacade {
     assert psiElement != null;
     final PsiFile file = psiElement.getContainingFile();
     final Document document = file.getViewProvider().getDocument();
+    final boolean delegateToTopLevel = shouldDelegateToTopLevel(document, file);
 
-    PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageManager
-          .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
+    PsiElement elementToFormat = delegateToTopLevel ? InjectedLanguageManager
+      .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
 
@@ -102,8 +103,8 @@ public final class CodeFormatterFacade {
         }
 
         TextRange range = preprocess(codeFormattingData, element, TextRange.create(startOffset, endOffset));
-        if (document instanceof DocumentWindow documentWindow) {
-          range = documentWindow.injectedToHost(range);
+        if (delegateToTopLevel) {
+          range = ((DocumentWindow)document).injectedToHost(range);
         }
 
         final FormattingModel model = CoreFormatterUtil.buildModel(builder, elementToFormat, range, mySettings, FormattingMode.REFORMAT);
@@ -179,9 +180,10 @@ public final class CodeFormatterFacade {
             return;
           }
 
-            TextRange formattingModelRange = ObjectUtils.notNull(ranges.getBoundRange(), file.getTextRange());
+          TextRange formattingModelRange = ObjectUtils.notNull(ranges.getBoundRange(), file.getTextRange());
 
-          final FormattingModel originalModel = CoreFormatterUtil.buildModel(builder, file, formattingModelRange, mySettings, FormattingMode.REFORMAT);
+          final FormattingModel originalModel =
+            CoreFormatterUtil.buildModel(builder, file, formattingModelRange, mySettings, FormattingMode.REFORMAT);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel,
                                                                          document,
                                                                          project, mySettings, file.getFileType(), file);
@@ -325,8 +327,7 @@ public final class CodeFormatterFacade {
             // Allow only range expansion (not reduction) for injected context.
             if ((initialInjectedRange.getStartOffset() > injectedRange.getStartOffset() && initialInjectedRange.getStartOffset() > 0)
                 || (initialInjectedRange.getEndOffset() < injectedRange.getEndOffset()
-                    && initialInjectedRange.getEndOffset() < injected.getTextLength()))
-            {
+                    && initialInjectedRange.getEndOffset() < injected.getTextLength())) {
               range = TextRange.create(
                 range.getStartOffset() + injectedRange.getStartOffset() - initialInjectedRange.getStartOffset(),
                 range.getEndOffset() + initialInjectedRange.getEndOffset() - injectedRange.getEndOffset());
@@ -337,7 +338,7 @@ public final class CodeFormatterFacade {
     }
 
     if (!mySettings.FORMATTER_TAGS_ENABLED) {
-      for (PreFormatProcessor processor: PreFormatProcessor.EP_NAME.getExtensionList()) {
+      for (PreFormatProcessor processor : PreFormatProcessor.EP_NAME.getExtensionList()) {
         if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
           result = processor.process(node, result);
         }
@@ -369,12 +370,16 @@ public final class CodeFormatterFacade {
 
 
   static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
-    for (var provider: InjectedFormattingOptionsProvider.EP_NAME.getExtensions()) {
+    for (var provider : InjectedFormattingOptionsProvider.EP_NAME.getExtensionList()) {
       var result = provider.shouldDelegateToTopLevel(file);
       if (result == null) continue;
       return result;
     }
     return true;
+  }
+
+  static boolean shouldDelegateToTopLevel(Document document, @NotNull PsiFile file) {
+    return document instanceof DocumentWindow && shouldDelegateToTopLevel(file);
   }
 }
 

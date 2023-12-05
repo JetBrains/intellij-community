@@ -71,7 +71,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.useInstanceContainer
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
@@ -382,13 +381,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project)
       if (project is ProjectImpl) {
-        if (useInstanceContainer) {
-          // must happen before startDispose()
-          cancelAndJoinExistingContainerCoroutines(project)
-        }
-        else {
-          cancelAndJoinBlocking(project)
-        }
+        cancelAndJoinBlocking(project)
       }
     }
 
@@ -407,28 +400,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         ZipHandler.clearFileAccessorCache()
       }
       LaterInvocator.purgeExpiredItems()
-    }
 
-    if (useInstanceContainer && project is ProjectImpl) {
-      cancelAndJoinBlocking(project)
-    }
-
-    val projectDisposeDurationMs = app.runWriteAction<Long> {
-      measureTimeMillis {
+      val projectDisposeDurationMs = measureTimeMillis {
         if (dispose) {
           Disposer.dispose(project)
         }
       }
+      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(project,
+                                                                projectCloseStartedMs,
+                                                                projectSaveSettingsDurationMs,
+                                                                projectClosingDurationMs,
+                                                                projectDisposeDurationMs)
     }
-
-    LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
-      project,
-      projectCloseStartedMs,
-      projectSaveSettingsDurationMs,
-      projectClosingDurationMs,
-      projectDisposeDurationMs,
-    )
-
     return true
   }
 
@@ -745,7 +728,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         throw e
       }
 
-      LOG.error(e)
+      LOG.error("project loading failed", e)
       failedToOpenProject(frameAllocator = frameAllocator, exception = e, options = options)
       return null
     }
@@ -1194,12 +1177,7 @@ private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStor
   return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     project,
-    IdeBundle.message("untrusted.project.open.dialog.title", project.name),
-    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-  )
+    IdeBundle.message("untrusted.project.open.dialog.title", project.name))
 }
 
 private suspend fun initProject(file: Path,
@@ -1398,11 +1376,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     null,
-    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName),
-    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName)
   )
 }
 

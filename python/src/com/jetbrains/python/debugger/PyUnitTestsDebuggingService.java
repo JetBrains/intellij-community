@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -120,7 +121,7 @@ final class PyUnitTestsDebuggingService {
     if (inlays != null) {
       inlays.forEach((inlay) -> {
         inlay.getEditor().getComponent().removeComponentListener(ourEditorListeners.get(inlay));
-        Disposer.dispose(inlay);
+        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(inlay));
       });
       ourActiveInlays.remove(session);
     }

@@ -5,12 +5,13 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation
-import com.intellij.collaboration.ui.codereview.list.search.showAndAwait
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.ShowDirection
+import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
+import com.intellij.collaboration.ui.util.popup.showAndAwait
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ExperimentalUI
@@ -55,7 +56,7 @@ object CodeReviewDetailsBranchComponentFactory {
             .setRenderer(popupActionsRenderer(source))
             .setAdText(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source))
             .createPopup()
-            .showAndAwait(point)
+            .showAndAwait(point, ShowDirection.BELOW)
           branchesVm.fetchAndCheckoutRemoteBranch()
         }
       }
@@ -76,7 +77,7 @@ object CodeReviewDetailsBranchComponentFactory {
 }
 
 private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<Any> {
-  return ChooserPopupUtil.createSimpleItemRenderer { item ->
+  return SimplePopupItemRenderer.create { item ->
     when (item) {
       CHECKOUT_ACTION_MARKER -> PopupItemPresentation.Simple(
         CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)

@@ -21,6 +21,7 @@
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <xi:include href="intellij.java.frontback.psi.impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="intellij.java.frontback.impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -325,7 +326,7 @@
 
     <editorFactoryDocumentListener implementation="com.intellij.compiler.server.BuildManager$MyDocumentListener"/>
 
-    <postStartupActivity implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$MyPostStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.framework.detection.impl.FrameworkDetectionManagerProjectActivity"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
 
@@ -1011,7 +1012,7 @@
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
     <defaultLiveTemplates file="liveTemplates/Java"/>
-    <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last"/>
+    <treeStructureProvider id="ClassesTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last, after NestingTreeStructureProvider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
     <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowFromPanel$Provider"/>
     <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowToPanel$Provider"/>
@@ -1331,8 +1332,9 @@
     <inspectionElementsMerger implementation="com.intellij.codeInspection.ExplicitArrayFillingInspectionMerger"/>
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaModuleDataService"/>
+    <externalWorkspaceDataService implementation="com.intellij.externalSystem.JarTaskManifestDataService"/>
     <libraryDataServiceExtension implementation="com.intellij.externalSystem.JavaLibraryDataServiceExtension"/>
-    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings$AcceptedLanguageLevelsSettingsStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettingsStartupActivity"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAdapter" order="first"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavadocInjector" />
@@ -1737,6 +1739,10 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"
                      key="inspection.convert.2.streamapi.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="UseHashCodeMethodInspection"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.UseHashCodeMethodInspection"
+                     key="inspection.name.can.be.replaced.with.long.hashcode" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FuseStreamOperations"
                      bundle="messages.JavaBundle" key="inspection.fuse.stream.operations.display.name"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
@@ -2391,6 +2397,7 @@
     <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.JavaCodeVisionMigrator" />
     <notificationGroup id="Clean artifact" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Compiler" displayType="NONE" bundle="messages.JavaCompilerBundle" key="notification.group.compiler"/>
     <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON" hideFromSettings="true"/>
@@ -2446,12 +2453,18 @@
     <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
     <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
 
+    <virtualFileCustomDataProvider implementation="com.intellij.openapi.roots.impl.JavaLangLevelVirtualFileCustomDataProvider"/>
+
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.compilation.InvalidCompilationStatistics"/>
     <notificationGroup id="Invalid Compilation Errors" displayType="STICKY_BALLOON" hideFromSettings="true" />
 
     <iconMapper mappingFile="JavaUIIconsMapping.json"/>
+    <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
+
+    <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

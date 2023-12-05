@@ -10,21 +10,25 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
 import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.remoteDev.util.ProductInfo
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
@@ -52,6 +56,19 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
+    val launcherData = findJetBrainsClientLauncher()
+    if (launcherData != null) {
+      LOG.debug("Start embedded client using launcher")
+      val workingDirectory = Path(PathManager.getHomePath())
+      return CodeWithMeClientDownloader.runJetBrainsClientProcess(
+        launcherData, 
+        workingDirectory,
+        clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
+        urlToOpen, 
+        lifetime
+      )
+    }
+
     val processLifetimeDef = lifetime.createNested()
     
     val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
@@ -76,6 +93,44 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
 
     handler.startNotify()
     return processLifetimeDef
+  }
+
+  private fun findJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
+    return when (OS.CURRENT) {
+      OS.macOS -> {
+        val homePath = Path(PathManager.getHomePath())
+        val productInfoPath = homePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC)
+        if (!productInfoPath.exists()) {
+          LOG.warn("$productInfoPath does not exist")
+          return null
+        }
+        val productInfoData = try {
+          ProductInfo.fromJson(productInfoPath.readText())
+        }
+        catch (e: IOException) {
+          LOG.warn("Failed to parse $productInfoPath: $e", e)
+          return null
+        }
+        if (productInfoData.launch.none { launchData -> launchData.customCommands.any { it.commands.contains("thinClient") } }) {
+          LOG.info("Cannot use launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
+          return null
+        }
+        val appPath = homePath.parent
+        //on macOS, the default launcher is modified to start JetBrains Client when running with 'thinClient' command
+        if (appPath.fileName.toString().endsWith(".app")) {
+          CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
+        }
+        else {
+          null
+        }
+      }
+      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let { 
+        JetBrainsClientLauncherData(it, listOf(it.pathString))
+      }
+      else -> PathManager.findBinFile("jetbrains_client.sh")?.let {
+        JetBrainsClientLauncherData(it, listOf(it.pathString))
+      }
+    }
   }
 
   private fun createProcessParameters(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, urlToOpen: String): SimpleJavaParameters {
@@ -121,7 +176,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val vmOptionsFile = PathManager.getConfigDir() / "embedded-client" / "jetbrains_client64.vmoptions"
     val customizableOptions: List<String>
     if (vmOptionsFile.exists()) {
-      customizableOptions = vmOptionsFile.readLines()
+      customizableOptions = vmOptionsFile.readLines().mapNotNull { line -> line.trim().takeIf { it.isNotEmpty() } }
     }
     else {
       customizableOptions = getDefaultCustomizableVmOptions()
@@ -141,11 +196,14 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
-      "-Dintellij.platform.product.scope=${ProductMode.FRONTEND.id}",
+      "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
       "-Dintellij.platform.load.app.info.from.resources=true",
       "-Dsplash=true",
     )
     vmParametersList.addAll(jetBrainsClientOptions)
+    if (SystemInfo.isMac) {
+      vmParametersList.add("-Dapple.awt.application.name=JetBrains Client")
+    }
     
     val openedPackagesStream = EmbeddedClientLauncher::class.java.getResourceAsStream("/META-INF/OpenedPackages.txt")
                                ?: error("Cannot load OpenedPackages.txt")

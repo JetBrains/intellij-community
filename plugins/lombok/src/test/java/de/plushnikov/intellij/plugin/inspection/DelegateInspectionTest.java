@@ -30,4 +30,8 @@ public class DelegateInspectionTest extends LombokInspectionTest {
     doTest();
   }
 
+  public void testDelegateIncludeUnknownMethods() {
+    doTest();
+  }
+
 }

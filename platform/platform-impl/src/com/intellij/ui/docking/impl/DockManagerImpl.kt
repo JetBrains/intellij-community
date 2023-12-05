@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
@@ -33,7 +34,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.util.IconUtil
-import com.intellij.util.childScope
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
@@ -120,12 +120,12 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     if (parentDisposable !== project) {
       Disposer.register(parentDisposable) { factories.remove(id) }
     }
-    readStateFor(id)
+    readStateFor(id, true)
   }
 
-  fun readState() {
+  fun readState(requestFocus: Boolean) {
     for (id in factories.keys) {
-      readStateFor(id)
+      readStateFor(id, requestFocus)
     }
   }
 
@@ -435,7 +435,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
                             coroutineScope = coroutineScope,
                             dimensionKey = dimensionKey,
                             id = id ?: (windowIdCounter++).toString(),
-                            project = project,
                             container = container,
                             isDialog = container is DockContainer.Dialog,
                             supportReopen = canReopenWindow)
@@ -497,7 +496,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     loadedState = state
   }
 
-  private fun readStateFor(type: String) {
+  private fun readStateFor(type: String, requestFocus: Boolean) {
     for (windowElement in (loadedState ?: return).getChildren("window")) {
       val eachContent = windowElement.getChild("content") ?: continue
       val eachType = eachContent.getAttributeValue("type")
@@ -524,8 +523,16 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
       // If the window exists, it's already visible. Don't show multiple times as this will set up additional listeners and window decoration
       EdtInvocationManager.invokeLaterIfNeeded {
-        if (!window.getFrame().isVisible) {
-          window.show()
+        val frame = window.getFrame()
+        if (!frame.isVisible) {
+          (container as? DockableEditorTabbedContainer)?.focusOnShowing = requestFocus
+          frame.isAutoRequestFocus = requestFocus
+          try {
+            window.show()
+          }
+          finally {
+            frame.isAutoRequestFocus = true
+          }
         }
       }
     }

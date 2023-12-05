@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -23,6 +24,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val model = MyPopupModel()
     model.addActionListener { actionEvent ->
+      val start = System.nanoTime()
       val combo = (actionEvent.source as? ToolbarComboButton) ?: return@addActionListener
       val dataContext = DataManager.getInstance().getDataContext(combo)
       val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, dataContext)
@@ -36,8 +38,13 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
           model.isPopupShown = false
         }
       })
+      Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
       popup.showUnderneathOf(combo)
     }
+    return createToolbarComboButton(model)
+  }
+
+  protected open fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
     return ToolbarComboButton(model)
   }
 
@@ -47,7 +54,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     e.project?.let { createPopup(e)?.showCenteredInCurrentWindow(it) }
   }
 
-  private class MyPopupModel: DefaultToolbarComboButtonModel() {
+  private class MyPopupModel : DefaultToolbarComboButtonModel() {
     var isPopupShown: Boolean = false
 
     override fun isSelected(): Boolean {

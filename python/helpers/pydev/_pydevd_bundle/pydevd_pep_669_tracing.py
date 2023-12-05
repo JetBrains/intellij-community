@@ -6,19 +6,19 @@ from os.path import splitext, basename
 
 from _pydev_bundle import pydev_log
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
-from _pydevd_bundle.pydevd_additional_thread_info_regular import \
-    set_additional_thread_info
+from _pydevd_bundle.pydevd_trace_dispatch import set_additional_thread_info, \
+    handle_breakpoint_condition, handle_breakpoint_expression, \
+    DEBUG_START, DEBUG_START_PY3K, should_stop_on_exception, handle_exception, \
+    manage_return_values
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, \
     find_last_func_call_order
 from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_OVER, CMD_SMART_STEP_INTO, \
-    CMD_SET_BREAK, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE
+    CMD_SET_BREAK, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, \
+    CMD_STEP_RETURN
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, PYDEVD_TOOL_NAME, \
     STATE_RUN, STATE_SUSPEND
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
-from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, \
-    handle_breakpoint_expression, DEBUG_START, DEBUG_START_PY3K, \
-    should_stop_on_exception, handle_exception, manage_return_values
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import NORM_PATHS_AND_BASE_CONTAINER, \
     get_abs_path_real_path_and_base_from_frame
@@ -62,7 +62,7 @@ class PEP669CallbackBase:
         return additional_info
 
     @staticmethod
-    def _get_filename(frame):
+    def _get_abs_path_real_path_and_base_from_frame(frame):
         try:
             abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[
                 frame.f_code.co_filename]
@@ -70,7 +70,13 @@ class PEP669CallbackBase:
             abs_path_real_path_and_base \
                 = get_abs_path_real_path_and_base_from_frame(frame)
 
-        return abs_path_real_path_and_base[1]
+        return abs_path_real_path_and_base
+
+    @staticmethod
+    def clear_run_state(info):
+        info.pydev_step_stop = None
+        info.pydev_step_cmd = -1
+        info.pydev_state = STATE_RUN
 
 
 class PyStartCallback(PEP669CallbackBase):
@@ -122,8 +128,11 @@ class PyStartCallback(PEP669CallbackBase):
                 # print('skipped: PY_START (cache hit)', frame_cache_key, frame.f_lineno, code.co_name)
                 return
 
-            filename = self._get_filename(frame)
-            file_type = get_file_type(filename)
+            abs_path_real_path_and_base = \
+                self._get_abs_path_real_path_and_base_from_frame(frame)
+
+            filename = abs_path_real_path_and_base[1]
+            file_type = get_file_type(abs_path_real_path_and_base[-1])
 
             if file_type is not None:
                 if file_type == 1:  # inlining LIB_FILE = 1
@@ -141,6 +150,11 @@ class PyStartCallback(PEP669CallbackBase):
                 return
 
             if is_stepping:
+                if (pydev_step_cmd == CMD_STEP_OVER
+                        and frame is not additional_info.pydev_step_stop):
+                    if frame.f_back is additional_info.pydev_step_stop:
+                        self._return_callback.start_monitoring(code)
+                    return
                 if (py_db.is_filter_enabled
                         and py_db.is_ignored_by_filters(filename)):
                     return
@@ -166,7 +180,7 @@ class PyStartCallback(PEP669CallbackBase):
                 return
 
         except SystemExit:
-            self.stop_monitoring()
+            return
         except Exception:
             try:
                 if traceback is not None:
@@ -303,7 +317,7 @@ class PyLineCallback(PEP669CallbackBase):
             stop_frame = info.pydev_step_stop
             step_cmd = info.pydev_step_cmd
 
-            filename = self._get_filename(frame)
+            filename = self._get_abs_path_real_path_and_base_from_frame(frame)[1]
             breakpoints_for_file = self.py_db.breakpoints.get(filename)
 
             frame_cache_key = self._make_frame_cache_key(code)
@@ -374,6 +388,7 @@ class PyLineCallback(PEP669CallbackBase):
                     global_cache_frame_skips[line_cache_key] = 0
             except KeyboardInterrupt:
                 self.clear_run_state(info)
+                raise
             except:
                 traceback.print_exc()
                 raise
@@ -383,7 +398,6 @@ class PyLineCallback(PEP669CallbackBase):
                 stop = False
 
                 if step_cmd == CMD_SMART_STEP_INTO:
-                    stop = False
                     if smart_stop_frame is frame:
                         if not is_within_context:
                             # We don't stop on jumps in multiline statements, which
@@ -433,17 +447,13 @@ class PyLineCallback(PEP669CallbackBase):
 
             except KeyboardInterrupt:
                 self.clear_run_state(info)
+                raise
             except:
                 traceback.print_exc()
                 raise
 
         finally:
             info.is_tracing = False
-
-    def clear_run_state(self, info):
-        info.pydev_step_stop = None
-        info.pydev_step_cmd = -1
-        info.pydev_state = STATE_RUN
 
     @staticmethod
     def start_monitoring(code):
@@ -485,24 +495,32 @@ class PyRaiseCallback(PEP669CallbackBase):
         exc_info = (type(exception), exception, exception.__traceback__)
 
         frame = self.frame
+        thread = self.thread
+        info = self._get_additional_info(thread)
 
-        if frame is self._get_top_level_frame():
-            self._stop_on_unhandled_exception(exc_info)
-            return
+        try:
+            if frame is self._get_top_level_frame():
+                self._stop_on_unhandled_exception(exc_info)
+                return
 
-        has_exception_breakpoints = (self.py_db.break_on_caught_exceptions
-                                     or self.py_db.has_plugin_exception_breaks
-                                     or self.py_db.stop_on_failed_tests)
-        if has_exception_breakpoints:
-            args = (
-                self.py_db, self._get_filename(frame),
-                self._get_additional_info(self.thread), self.thread, global_cache_skips,
-                global_cache_frame_skips
-            )
-            should_stop, frame = should_stop_on_exception(
-                args, self.frame, 'exception', exc_info)
-            if should_stop:
-                handle_exception(args, frame, 'exception', exc_info)
+            has_exception_breakpoints = (self.py_db.break_on_caught_exceptions
+                                         or self.py_db.has_plugin_exception_breaks
+                                         or self.py_db.stop_on_failed_tests)
+            if has_exception_breakpoints:
+                args = (
+                    self.py_db,
+                    self._get_abs_path_real_path_and_base_from_frame(frame)[1],
+                    self._get_additional_info(self.thread), self.thread,
+                    global_cache_skips,
+                    global_cache_frame_skips
+                )
+                should_stop, frame = should_stop_on_exception(
+                    args, self.frame, 'exception', exc_info)
+                if should_stop:
+                    handle_exception(args, frame, 'exception', exc_info)
+        except KeyboardInterrupt:
+            self.clear_run_state(info)
+            raise
 
     def _stop_on_unhandled_exception(self, exc_info):
         additional_info = self._get_additional_info(self.thread)
@@ -520,25 +538,34 @@ class PyReturnCallback(PEP669CallbackBase):
         thread = self.thread
         info = self._get_additional_info(thread)
 
-        if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
-            manage_return_values(self.py_db, frame, 'return', retval)
+        try:
+            if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
+                manage_return_values(self.py_db, frame, 'return', retval)
 
-        step_cmd = info.pydev_step_cmd
+            step_cmd = info.pydev_step_cmd
 
-        if step_cmd == CMD_STEP_OVER:
-            if frame.f_back and self.py_db.in_project_scope(code.co_filename):
-                back = frame.f_back
-                if back is not None:
-                    _, back_filename, base \
-                        = get_abs_path_real_path_and_base_from_frame(back)
+            if step_cmd in (CMD_STEP_OVER, CMD_STEP_RETURN):
+                if frame.f_back:
+                    back = frame.f_back
                     back_code = back.f_code
-                    if (base, back_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
-                        back = None
-                    self.py_db.set_suspend(thread, step_cmd)
-                    self.py_db.do_wait_suspend(thread, back, 'return', retval)
-                    PyLineCallback.start_monitoring(back_code)
-                    if back_code.co_name != '<module>':
-                        PyReturnCallback.start_monitoring(back_code)
+                    if not self.py_db.in_project_scope(back_code.co_filename):
+                        return
+                    if back is not None:
+                        _, back_filename, base \
+                            = get_abs_path_real_path_and_base_from_frame(back)
+                        if (base, back_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
+                            back = None
+                        if back is not info.pydev_step_stop:
+                            self.py_db.set_suspend(thread, step_cmd)
+                            self.py_db.do_wait_suspend(thread, back, 'return', retval)
+                        PyLineCallback.start_monitoring(back_code)
+                        if back_code.co_name != '<module>':
+                            PyReturnCallback.start_monitoring(back_code)
+        except KeyboardInterrupt:
+            self.clear_run_state(info)
+            raise
+        finally:
+            self.stop_monitoring(code)
 
     @staticmethod
     def start_monitoring(code):

@@ -4,6 +4,10 @@ package org.jetbrains.jps.dependency;
 import java.util.Collections;
 
 public interface DifferentiateResult {
+  default String getSessionName() {
+    return "";
+  }
+  
   Delta getDelta();
 
   Iterable<Node<?, ?>> getDeletedNodes();
@@ -14,8 +18,13 @@ public interface DifferentiateResult {
     return true;
   }
 
-  static DifferentiateResult createNonIncremental(Delta delta, Iterable<Node<?, ?>> deletedNodes) {
+  static DifferentiateResult createNonIncremental(String sessionName, Delta delta, Iterable<Node<?, ?>> deletedNodes) {
     return new DifferentiateResult() {
+      @Override
+      public String getSessionName() {
+        return sessionName;
+      }
+
       @Override
       public boolean isIncremental() {
         return false;

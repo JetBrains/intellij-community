@@ -11,14 +11,17 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.IS_SHARED
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.IS_TEMPORARY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.RUN_CONFIGURATION_TYPE
 
 internal class SearchEverywhereRunConfigurationFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(RunConfigurationsSEContributor::class.java) {
-  companion object {
-    private val IS_SHARED = EventFields.Boolean("isShared")
-    private val IS_TEMPORARY = EventFields.Boolean("isTemporary")
-    private val RUN_CONFIGURATION_TYPE =
-      EventFields.StringValidatedByCustomRule("runConfigType", RunConfigurationTypeValidator::class.java)
+  object Fields {
+    val IS_SHARED = EventFields.Boolean("isShared")
+    val IS_TEMPORARY = EventFields.Boolean("isTemporary")
+    val RUN_CONFIGURATION_TYPE = EventFields.StringValidatedByCustomRule("runConfigType",
+                                                                         RunConfigurationTypeValidator::class.java)
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

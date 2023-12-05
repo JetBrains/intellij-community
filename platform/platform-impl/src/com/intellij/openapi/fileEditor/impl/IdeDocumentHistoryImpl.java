@@ -295,8 +295,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return createPlaceInfo(selectedEditorWithProvider.getFileEditor(), selectedEditorWithProvider.getProvider());
   }
 
-  private static @Nullable PlaceInfo getPlaceInfoFromFocus() {
-    FileEditor fileEditor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+  private static @Nullable PlaceInfo getPlaceInfoFromFocus(Project project) {
+    FileEditor fileEditor = new FocusBasedCurrentEditorProvider().getCurrentEditor(project);
     if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
       VirtualFile file = fileEditor.getFile();
       if (file != null) {
@@ -362,7 +362,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       placeInfo = null;
     }
     if (placeInfo == null && acceptPlaceFromFocus) {
-      placeInfo = getPlaceInfoFromFocus();
+      placeInfo = getPlaceInfoFromFocus(myProject);
     }
     if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
       placeInfo = null;

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
-import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -27,7 +25,9 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+
 /**
  * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do some of the
  * required operations. It is OK and on purpose - this functionality will be added later.
@@ -35,36 +35,44 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 @Suppress("UNCHECKED_CAST")
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = when (ktReference) {
-        is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.DELAYED_SHORTENING)
-        is KDocReference -> bindToElement(ktReference, element)
+        is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+        is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
         else -> throw IncorrectOperationException()
     }
 
     private fun KtFile.unusedImports(): Set<KtImportDirective> =
         KotlinOptimizeImportsFacility.getInstance().analyzeImports(this)?.unusedImports?.toSet().orEmpty()
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class)
-    private fun <R : KtElement> KtFile.withOptimizedImports(replacement: () -> R?): PsiElement? {
+    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    private fun <R : KtElement> KtFile.withOptimizedImports(shorten: Boolean, replacement: () -> R?): PsiElement? {
         allowAnalysisFromWriteAction {
-            val unusedImportsBefore = unusedImports()
-            val newElement = replacement() ?: return null
-            val unusedImportsAfter = unusedImports()
-            val importsToRemove =  unusedImportsAfter - unusedImportsBefore
-            importsToRemove.forEach(PsiElement::delete)
-            val newShortenings = analyze(newElement) {
-                collectPossibleReferenceShorteningsInElement(newElement)
+            allowAnalysisOnEdt {
+                val unusedImportsBefore = unusedImports()
+                val newElement = replacement() ?: return null
+                val unusedImportsAfter = unusedImports()
+                val importsToRemove =  unusedImportsAfter - unusedImportsBefore
+                importsToRemove.forEach(PsiElement::delete)
+                return if (shorten) {
+                    val newShortenings = analyze(newElement) {
+                        collectPossibleReferenceShorteningsInElement(newElement)
+                    }
+                    newShortenings.invokeShortening().firstOrNull() ?: newElement
+                } else newElement
             }
-            val shortened = newShortenings.invokeShortening().firstOrNull() ?: newElement
-            return shortened
         }
     }
 
     @RequiresWriteLock
-    private fun bindToElement(docReference: KDocReference, targetElement: PsiElement): PsiElement {
+    private fun bindToElement(
+        docReference: KDocReference,
+        targetElement: PsiElement,
+        shorteningMode: KtSimpleNameReference.ShorteningMode
+    ): PsiElement {
         val docElement = docReference.element
         val targetFqn = targetElement.kotlinFqName ?: return docElement
         if (targetFqn.isRoot) return docElement
-        return docElement.containingKtFile.withOptimizedImports {
+        val shorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING
+        return docElement.containingKtFile.withOptimizedImports(shorten) {
             val newDocReference = KDocElementFactory(targetElement.project).createNameFromText(targetFqn.asString())
             docReference.expression.replaced(newDocReference)
         } ?: docElement
@@ -74,29 +82,32 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     override fun bindToFqName(
         simpleNameReference: KtSimpleNameReference,
         fqName: FqName,
-        shorteningMode: KtSimpleNameReference.ShorteningMode, // not supported in K2, it always does FORCED_SHORTENING
+        shorteningMode: KtSimpleNameReference.ShorteningMode, // delayed shortening is not supported
         targetElement: PsiElement?
     ): PsiElement {
-        if (targetElement !is KtElement) operationNotSupportedInK2Error() // TODO fix reference shortener for non-Kotlin target elements
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
+        val parent = expression.parent
+        val writableFqn = if (parent is KtCallableReferenceExpression && parent.callableReference == expression) {
+            FqName.topLevel(fqName.shortName())
+        } else if (fqName.pathSegments().last().asString() == "Companion") {
+            fqName.parent()
+        } else {
+            fqName
+        }
         val importDirective = expression.parentOfType<KtImportDirective>(withSelf = false)
-        if (importDirective != null) return importDirective.replaceWith(fqName) ?: expression
-        val newElement = expression.containingKtFile.withOptimizedImports {
-            when (val elementToReplace = expression.getQualifiedElement()) {
-                is KtUserType -> elementToReplace.replaceWith(fqName)
-                is KtDotQualifiedExpression -> elementToReplace.replaceWith(fqName)
-                is KtCallExpression -> elementToReplace.replaceWith(fqName)
-                is KtSimpleNameExpression -> elementToReplace.replaceWith(fqName)
+        val shorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING && importDirective == null
+        val newElement = expression.containingKtFile.withOptimizedImports(shorten) {
+            val element = when (val elementToReplace = expression.getQualifiedElement()) {
+                is KtUserType -> elementToReplace.replaceWith(writableFqn)
+                is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtCallExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn)
                 else -> null
             }
+            element
         } ?: expression
         return newElement
-    }
-
-    private fun KtImportDirective.replaceWith(fqName: FqName): KtExpression? {
-        val newImportReferenceExpression = KtPsiFactory(project).createExpression(fqName.asString())
-        return importedReference?.replaced(newImportReferenceExpression)
     }
 
     private fun KtUserType.replaceWith(fqName: FqName): KtUserType {
@@ -170,7 +181,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 allowAnalysisOnEdt {
                     analyze(ktReference.element) {
                         val symbol = ktReference.resolveToSymbol()
-                        if (symbol is KtSyntheticJavaPropertySymbol || symbol is KtJavaFieldSymbol) {
+                        if (symbol is KtSyntheticJavaPropertySymbol) {
                             val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
                             if (newName == null) {
                                 return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
@@ -186,10 +197,8 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
     }
 
-    override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? =
-      OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)
-
-    private fun operationNotSupportedInK2Error(): Nothing {
-        throw IncorrectOperationException("K2 plugin does not yet support this operation")
+    override fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean {
+        return newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
     }
+
 }

@@ -8,49 +8,48 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-class RunAnythingUsageCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("actions.runAnything", 3)
+internal object RunAnythingUsageCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
-    private val WITH_SHIFT_FIELD = EventFields.Boolean("with_shift")
-    private val WITH_ALT_FIELD = EventFields.Boolean("with_alt")
-    private val LIST_FIELD = EventFields.Class("list")
-    private val GROUP_FIELD = EventFields.Class("group")
-    private val EXECUTE = GROUP.registerVarargEvent("execute", WITH_SHIFT_FIELD, WITH_ALT_FIELD, LIST_FIELD, GROUP_FIELD, EventFields.PluginInfo)
-    private val CLICK_MORE = GROUP.registerVarargEvent("click.more", LIST_FIELD, GROUP_FIELD, EventFields.PluginInfo)
+  private val GROUP = EventLogGroup("actions.runAnything", 3)
 
-    fun triggerExecCategoryStatistics(project: Project,
-                                      groups: MutableCollection<out RunAnythingGroup>,
-                                      clazz: Class<out RunAnythingSearchListModel>,
-                                      index: Int,
-                                      shiftPressed: Boolean,
-                                      altPressed: Boolean) {
-      for (i in index downTo 0) {
-        val group = RunAnythingGroup.findGroup(groups, i)
-        if (group != null) {
-          EXECUTE.log(project,
-                      LIST_FIELD.with(clazz),
-                      GROUP_FIELD.with(getGroupClass(group)),
-                      WITH_SHIFT_FIELD.with(shiftPressed),
-                      WITH_ALT_FIELD.with(altPressed))
-          break
-        }
+  private val WITH_SHIFT_FIELD = EventFields.Boolean("with_shift")
+  private val WITH_ALT_FIELD = EventFields.Boolean("with_alt")
+  private val LIST_FIELD = EventFields.Class("list")
+  private val GROUP_FIELD = EventFields.Class("group")
+  private val EXECUTE = GROUP.registerVarargEvent("execute", WITH_SHIFT_FIELD, WITH_ALT_FIELD, LIST_FIELD, GROUP_FIELD,
+                                                  EventFields.PluginInfo)
+  private val CLICK_MORE = GROUP.registerVarargEvent("click.more", LIST_FIELD, GROUP_FIELD, EventFields.PluginInfo)
+
+  @JvmStatic
+  fun triggerExecCategoryStatistics(project: Project,
+                                    groups: MutableCollection<out RunAnythingGroup>,
+                                    clazz: Class<out RunAnythingSearchListModel>,
+                                    index: Int,
+                                    shiftPressed: Boolean,
+                                    altPressed: Boolean) {
+    for (i in index downTo 0) {
+      val group = RunAnythingGroup.findGroup(groups, i)
+      if (group != null) {
+        EXECUTE.log(project,
+                    LIST_FIELD.with(clazz),
+                    GROUP_FIELD.with(getGroupClass(group)),
+                    WITH_SHIFT_FIELD.with(shiftPressed),
+                    WITH_ALT_FIELD.with(altPressed))
+        break
       }
-    }
-
-    fun triggerMoreStatistics(project: Project,
-                              group: RunAnythingGroup,
-                              clazz: Class<out RunAnythingSearchListModel>) {
-      CLICK_MORE.log(project, LIST_FIELD.with(clazz), GROUP_FIELD.with(getGroupClass(group)))
-    }
-
-    private fun getGroupClass(group: RunAnythingGroup): Class<*> {
-      return if (group is RunAnythingCompletionGroup<*, *>) group.provider.javaClass
-      else group.javaClass
     }
   }
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
+  @JvmStatic
+  fun triggerMoreStatistics(project: Project,
+                            group: RunAnythingGroup,
+                            clazz: Class<out RunAnythingSearchListModel>) {
+    CLICK_MORE.log(project, LIST_FIELD.with(clazz), GROUP_FIELD.with(getGroupClass(group)))
+  }
+
+  private fun getGroupClass(group: RunAnythingGroup): Class<*> {
+    return if (group is RunAnythingCompletionGroup<*, *>) group.provider.javaClass
+    else group.javaClass
   }
 }

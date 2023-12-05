@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  *
  * @see TypingEvent
  * @see InlineCompletionProvider.overtyper
+ * @see InlineCompletionElementManipulator
  */
 interface InlineCompletionOvertyper {
 
@@ -44,11 +45,11 @@ interface InlineCompletionOvertyper {
    * @param overtypedLength represents a number of symbols that were over typed during this update.
    * This number is for logs only, it does not influence on the execution.
    */
-  data class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
+  class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
 
 
   abstract class Adapter : InlineCompletionOvertyper {
-    final override fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
+    override fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
       return when (typing) {
         is TypingEvent.OneSymbol -> onOneSymbol(context, typing)
         is TypingEvent.NewLine -> onNewLine(context, typing)
@@ -90,10 +91,10 @@ interface InlineCompletionOvertyper {
  * @see InlineCompletionElementManipulator
  */
 open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
-  final override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
+  override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
     val fragment = typing.typed
     check(fragment.length == 1)
-    if (!context.textToInsert().startsWith(fragment) || context.textToInsert() == fragment) {
+    if (!context.textToInsert().startsWith(fragment)) {
       return null
     }
     return truncateFirstSymbol(context.state.elements.map { it.element })?.let { UpdatedElements(it, 1) }

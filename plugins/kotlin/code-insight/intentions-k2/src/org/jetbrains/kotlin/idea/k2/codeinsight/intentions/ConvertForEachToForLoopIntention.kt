@@ -65,6 +65,9 @@ internal class ConvertForEachToForLoopIntention
         val isForEachIndexed = referencedName == FOR_EACH_INDEXED_NAME.asString()
         if (!isForEach && !isForEachIndexed) return false
 
+        val qualified = element.getQualifiedExpressionForSelector()
+        if (qualified is KtSafeQualifiedExpression && qualified.receiverExpression !is KtNameReferenceExpression) return false
+
         val lambdaArgument = element.getSingleLambdaArgument() ?: return false
         val valueParameterSize = lambdaArgument.valueParameters.size
         if (isForEach && valueParameterSize > 1 || isForEachIndexed && valueParameterSize != 2) return false

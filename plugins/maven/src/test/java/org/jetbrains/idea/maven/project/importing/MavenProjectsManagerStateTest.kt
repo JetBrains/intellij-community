@@ -7,13 +7,10 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManagerState
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.utils.MavenUtil
-import org.junit.Assume
 import org.junit.Test
 
 class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)
@@ -70,7 +67,7 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
 
     state = projectsManager.getState()
     assertUnorderedPathsAreEqual(state!!.originalFiles, listOf(p1.getPath(), p2.getPath()))
-    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two")
+    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).state.realSettings.enabledProfiles, "one", "two")
     assertUnorderedPathsAreEqual(state.ignoredFiles, listOf(p1.getPath()))
     assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx")
 

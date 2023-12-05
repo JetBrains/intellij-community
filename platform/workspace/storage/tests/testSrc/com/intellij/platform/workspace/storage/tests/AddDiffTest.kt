@@ -754,6 +754,30 @@ class AddDiffTest {
   }
 
   @RepeatedTest(10)
+  fun `replace child by modification second child untouched`() {
+    val parentEntity = target addEntity OoParentEntity("Parent2", MySource) {
+      this.anotherChild = OoChildWithNullableParentEntity(MySource)
+      this.child = OoChildEntity("", MySource)
+    }
+
+    val source = createBuilderFrom(target)
+    source.modifyEntity(parentEntity.from(source)) {
+      this.anotherChild = OoChildWithNullableParentEntity(AnotherSource)
+    }
+
+    // The previous child was not removed because it has optional parent
+    assertEquals(2, source.entities(OoChildWithNullableParentEntity::class.java).toList().size)
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    assertEquals(AnotherSource, target.entities(OoParentEntity::class.java).single().anotherChild!!.entitySource)
+    assertEquals("", target.entities(OoParentEntity::class.java).single().child!!.childProperty)
+    assertEquals(2, target.entities(OoChildWithNullableParentEntity::class.java).toList().size)
+  }
+
+  @RepeatedTest(10)
   fun `add child with parallel update`() {
     val parentEntity = target addEntity OoParentEntity("Parent2", MySource)
 
@@ -787,5 +811,75 @@ class AddDiffTest {
     target.assertConsistency()
 
     assertTrue(target.referrers(NameId("id"), WithSoftLinkEntity::class.java).toList().isEmpty())
+  }
+
+  @RepeatedTest(10)
+  fun `the order of children is not changed in abstract entities`() {
+    val source = createBuilderFrom(target)
+    source addEntity RightEntity(MySource) {
+      this.children = listOf(
+        LeftEntity(MySource),
+        LeftEntity(AnotherSource),
+      )
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val children = target.entities(RightEntity::class.java).single().children
+    assertEquals(2, children.size)
+    assertEquals(MySource, children.first().entitySource)
+    assertEquals(AnotherSource, children.last().entitySource)
+  }
+
+  @RepeatedTest(10)
+  fun `the order of children is not changed`() {
+    val source = createBuilderFrom(target)
+    source addEntity ParentMultipleEntity("", MySource) {
+      this.children = listOf(
+        ChildMultipleEntity("data1", MySource),
+        ChildMultipleEntity("data2", AnotherSource),
+      )
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val children = target.entities(ParentMultipleEntity::class.java).single().children
+    assertEquals(2, children.size)
+    assertEquals(MySource, children.first().entitySource)
+    assertEquals(AnotherSource, children.last().entitySource)
+  }
+
+  @RepeatedTest(10)
+  fun `the orde2r of children is not changed`() {
+    val parent = target addEntity ParentMultipleEntity("info", MySource) {
+      this.children = listOf(
+        ChildMultipleEntity("data1", MySource),
+        ChildMultipleEntity("data2", MySource),
+        ChildMultipleEntity("data3", MySource),
+      )
+    }
+    val source = createBuilderFrom(target)
+    source.entities(ChildMultipleEntity::class.java).forEach { source.removeEntity(it) }
+    source.modifyEntity(parent.from(source)) {
+      this.children = listOf(
+        ChildMultipleEntity("data11", MySource),
+        ChildMultipleEntity("data21", MySource),
+        ChildMultipleEntity("data31", MySource),
+      )
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val children = target.entities(ParentMultipleEntity::class.java).single().children
+    assertEquals(3, children.size)
+    assertEquals("data11", children.get(0).childData)
+    assertEquals("data21", children.get(1).childData)
+    assertEquals("data31", children.get(2).childData)
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiElement;
@@ -13,9 +14,10 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubInconsistencyReporter.EnforcedInconsistencyType;
+import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,8 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull StubIdList value,
                                                              @NotNull Processor<? super Psi> processor,
                                                              @Nullable GlobalSearchScope scope,
-                                                             @NotNull Class<Psi> requiredClass) {
+                                                             @NotNull Class<Psi> requiredClass,
+                                                             @NotNull Computable<String> debugOperationName) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
       LOG.error("Stub index points to a file without PSI: " +
@@ -46,7 +49,7 @@ public abstract class StubProcessingHelperBase {
 
     if (value.size() == 1 && value.get(0) == 0) {
       //noinspection unchecked
-      return !checkType(requiredClass, psiFile, psiFile) || processor.process((Psi)psiFile);
+      return !checkType(requiredClass, psiFile, psiFile, debugOperationName, value) || processor.process((Psi)psiFile);
     }
 
     List<StubbedSpine> spines = getAllSpines(psiFile);
@@ -56,7 +59,7 @@ public abstract class StubProcessingHelperBase {
 
     for (int i = 0, size = value.size(); i < size; i++) {
       PsiElement psi = getStubPsi(spines, value.get(i));
-      if (!checkType(requiredClass, psiFile, psi)) break;
+      if (!checkType(requiredClass, psiFile, psi, debugOperationName, value)) break;
       //noinspection unchecked
       if (!processor.process((Psi)psi)) return false;
     }
@@ -71,13 +74,16 @@ public abstract class StubProcessingHelperBase {
     return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider()), t -> ((PsiFileImpl)t.second).getStubbedSpine());
   }
 
-  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement) {
+  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement,
+                                                     @NotNull Computable<String> debugOperationName, @NotNull StubIdList debugStubIdList) {
     if (requiredClass.isInstance(psiElement)) return true;
 
     String extraMessage = "psiElement is not instance of requiredClass.\n" +
                           "psiElement=" + psiElement +
                           (psiElement != null ? ", psiElement.class=" + psiElement.getClass() : "") +
                           ", requiredClass=" + requiredClass +
+                          ", operation=" + debugOperationName.get() +
+                          ", stubIdList=" + debugStubIdList +
                           ".\nref: 50cf572587cf";
 
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
@@ -118,7 +124,7 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
 
-    ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
+    ObjectStubTree<?> objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
     if (objectStubTree == null) {
       LOG.error("Stub index points to a file without indexed stubs: " + getFileTypeInfo(file, psiFile.getProject()));
       onInternalError(file);
@@ -142,12 +148,13 @@ public abstract class StubProcessingHelperBase {
     return processor.process((Psi)psiFile);
   }
 
-  private void inconsistencyDetected(@Nullable ObjectStubTree stubTree,
+  private void inconsistencyDetected(@Nullable ObjectStubTree<?> stubTree,
                                      @NotNull PsiFileWithStubSupport psiFile,
                                      @NotNull String extraMessage) {
     try {
-      IndexStatisticGroup.reportStubIndexInconsistencyRegistered(psiFile.getProject());
-      StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+      StubTextInconsistencyException.checkStubTextConsistency(psiFile,
+                                                              SourceOfCheck.WrongTypePsiInStubHelper,
+                                                              EnforcedInconsistencyType.PsiOfUnexpectedClass);
       LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
     finally {

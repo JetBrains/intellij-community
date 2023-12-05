@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -33,7 +33,7 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
     myTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(getModule().getProject());
+        final TreeFileChooserFactory factory = TreeFileChooserFactory.getInstance(getModule().getProject());
         PsiFile iconFile = null;
         if (myValue != null) {
           VirtualFile iconVFile = ResourceFileUtil.findResourceFileInScope(myValue.getIconPath(), getModule().getProject(),

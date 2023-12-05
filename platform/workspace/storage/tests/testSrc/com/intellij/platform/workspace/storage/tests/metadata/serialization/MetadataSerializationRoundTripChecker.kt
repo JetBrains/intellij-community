@@ -3,7 +3,10 @@ package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityTypesResolver
-import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.tests.BaseSerializationChecker
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager

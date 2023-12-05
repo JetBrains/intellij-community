@@ -35,11 +35,11 @@ public final class Difference {
     return myIsFile;
   }
 
-  public Entry getLeft() {
+  public @Nullable Entry getLeft() {
     return myLeft;
   }
 
-  public Entry getRight() {
+  public @Nullable Entry getRight() {
     return myRight;
   }
 

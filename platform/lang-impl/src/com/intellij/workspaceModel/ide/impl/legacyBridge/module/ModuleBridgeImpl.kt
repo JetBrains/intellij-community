@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.RenameableStateStorageManager
@@ -18,8 +18,8 @@ import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -87,7 +87,7 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
+    moduleBridgeBeforeChangedTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
@@ -129,7 +129,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun initFacets() {
-    facetsInitializationTimeMs.addMeasuredTimeMs {
+    facetsInitializationTimeMs.addMeasuredTimeMillis {
       FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
     }
   }
@@ -139,7 +139,10 @@ internal class ModuleBridgeImpl(
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    super.registerComponents(modules = modules,
+                             app = app,
+                             precomputedExtensionModel = precomputedExtensionModel,
+                             listenerCallbacks = listenerCallbacks)
     if (corePlugin == null) {
       return
     }
@@ -204,7 +207,7 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    updateOptionTimeMs.addElapsedTimeMs(start)
+    updateOptionTimeMs.addElapsedTimeMillis(start)
     return
   }
 

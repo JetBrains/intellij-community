@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree import exceptions as exceptions
@@ -8,4 +9,4 @@ class ClientTokenGateway:
     gateway: Any
     config: Any
     def __init__(self, gateway) -> None: ...
-    def generate(self, params: Any | None = ...): ...
+    def generate(self, params: Incomplete | None = None): ...

@@ -308,7 +308,10 @@ open class CachedImageIcon private constructor(
   }
 
   val url: URL?
-    get() = resolver?.url
+    get() {
+      checkPathTransform()
+      return this.resolver?.url
+    }
 
   internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()

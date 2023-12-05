@@ -36,52 +36,50 @@ import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JTree
 
-class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
-  companion object {
-    val GROUP = EventLogGroup("commit.interactions", 4)
+internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
+  val GROUP = EventLogGroup("commit.interactions", 4)
 
-    val FILES_TOTAL = EventFields.RoundedInt("files_total")
-    val FILES_INCLUDED = EventFields.RoundedInt("files_included")
-    val UNVERSIONED_TOTAL = EventFields.RoundedInt("unversioned_total")
-    val UNVERSIONED_INCLUDED = EventFields.RoundedInt("unversioned_included")
-    val COMMIT_CHECK_CLASS = EventFields.Class("commit_check_class")
-    private val COMMIT_PROBLEM_CLASS = EventFields.Class("commit_problem_class")
-    val EXECUTION_ORDER = EventFields.Enum("execution_order", CommitCheck.ExecutionOrder::class.java)
-    private val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
-    private val COMMIT_PROBLEM_PLACE = EventFields.Enum("commit_problem_place", CommitProblemPlace::class.java)
-    private val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
-    val IS_SUCCESS = EventFields.Boolean("is_success")
-    private val WARNINGS_COUNT = EventFields.RoundedInt("warnings_count")
-    private val ERRORS_COUNT = EventFields.RoundedInt("errors_count")
+  val FILES_TOTAL = EventFields.RoundedInt("files_total")
+  val FILES_INCLUDED = EventFields.RoundedInt("files_included")
+  val UNVERSIONED_TOTAL = EventFields.RoundedInt("unversioned_total")
+  val UNVERSIONED_INCLUDED = EventFields.RoundedInt("unversioned_included")
+  val COMMIT_CHECK_CLASS = EventFields.Class("commit_check_class")
+  private val COMMIT_PROBLEM_CLASS = EventFields.Class("commit_problem_class")
+  val EXECUTION_ORDER = EventFields.Enum("execution_order", CommitCheck.ExecutionOrder::class.java)
+  private val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
+  private val COMMIT_PROBLEM_PLACE = EventFields.Enum("commit_problem_place", CommitProblemPlace::class.java)
+  private val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
+  val IS_SUCCESS = EventFields.Boolean("is_success")
+  private val WARNINGS_COUNT = EventFields.RoundedInt("warnings_count")
+  private val ERRORS_COUNT = EventFields.RoundedInt("errors_count")
 
-    val SESSION = GROUP.registerIdeActivity("session",
-                                            startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
-                                                                                 UNVERSIONED_TOTAL, UNVERSIONED_INCLUDED),
-                                            finishEventAdditionalFields = arrayOf())
+  val SESSION = GROUP.registerIdeActivity("session",
+                                          startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
+                                                                               UNVERSIONED_TOTAL, UNVERSIONED_INCLUDED),
+                                          finishEventAdditionalFields = arrayOf())
 
-    val COMMIT_CHECK_SESSION = GROUP.registerIdeActivity("commit_check_session",
-                                                         startEventAdditionalFields = arrayOf(COMMIT_CHECK_CLASS, EXECUTION_ORDER),
-                                                         finishEventAdditionalFields = arrayOf(IS_SUCCESS))
+  val COMMIT_CHECK_SESSION = GROUP.registerIdeActivity("commit_check_session",
+                                                       startEventAdditionalFields = arrayOf(COMMIT_CHECK_CLASS, EXECUTION_ORDER),
+                                                       finishEventAdditionalFields = arrayOf(IS_SUCCESS))
 
-    val EXCLUDE_FILE = GROUP.registerEvent("exclude.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
-    val INCLUDE_FILE = GROUP.registerEvent("include.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
-    val SELECT_FILE = GROUP.registerEvent("select.item", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
-    val SHOW_DIFF = GROUP.registerEvent("show.diff")
-    val CLOSE_DIFF = GROUP.registerEvent("close.diff")
-    val JUMP_TO_SOURCE = GROUP.registerEvent("jump.to.source", EventFields.InputEventByAnAction)
-    val COMMIT = GROUP.registerEvent("commit", FILES_INCLUDED, UNVERSIONED_INCLUDED)
-    val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
-    val TOGGLE_COMMIT_CHECK = GROUP.registerEvent("toggle.commit.check", COMMIT_CHECK_CLASS, IS_FROM_SETTINGS, EventFields.Enabled)
-    val TOGGLE_COMMIT_OPTION = GROUP.registerEvent("toggle.commit.option", COMMIT_OPTION, EventFields.Enabled)
-    val VIEW_COMMIT_PROBLEM = GROUP.registerEvent("view.commit.problem", COMMIT_PROBLEM_CLASS, COMMIT_PROBLEM_PLACE)
-    val CODE_ANALYSIS_WARNING = GROUP.registerEvent("code.analysis.warning", WARNINGS_COUNT, ERRORS_COUNT)
-  }
-
-  enum class CommitOption { SIGN_OFF, RUN_HOOKS, AMEND }
-  enum class CommitProblemPlace { NOTIFICATION, COMMIT_TOOLWINDOW, PUSH_DIALOG }
+  val EXCLUDE_FILE = GROUP.registerEvent("exclude.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
+  val INCLUDE_FILE = GROUP.registerEvent("include.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
+  val SELECT_FILE = GROUP.registerEvent("select.item", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
+  val SHOW_DIFF = GROUP.registerEvent("show.diff")
+  val CLOSE_DIFF = GROUP.registerEvent("close.diff")
+  val JUMP_TO_SOURCE = GROUP.registerEvent("jump.to.source", EventFields.InputEventByAnAction)
+  val COMMIT = GROUP.registerEvent("commit", FILES_INCLUDED, UNVERSIONED_INCLUDED)
+  val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
+  val TOGGLE_COMMIT_CHECK = GROUP.registerEvent("toggle.commit.check", COMMIT_CHECK_CLASS, IS_FROM_SETTINGS, EventFields.Enabled)
+  val TOGGLE_COMMIT_OPTION = GROUP.registerEvent("toggle.commit.option", COMMIT_OPTION, EventFields.Enabled)
+  val VIEW_COMMIT_PROBLEM = GROUP.registerEvent("view.commit.problem", COMMIT_PROBLEM_CLASS, COMMIT_PROBLEM_PLACE)
+  val CODE_ANALYSIS_WARNING = GROUP.registerEvent("code.analysis.warning", WARNINGS_COUNT, ERRORS_COUNT)
 
   override fun getGroup(): EventLogGroup = GROUP
 }
+
+enum class CommitOption { SIGN_OFF, RUN_HOOKS, AMEND }
+enum class CommitProblemPlace { NOTIFICATION, COMMIT_TOOLWINDOW, PUSH_DIALOG }
 
 @Service(Service.Level.PROJECT)
 class CommitSessionCollector(val project: Project) {
@@ -184,7 +182,7 @@ class CommitSessionCollector(val project: Project) {
     CommitSessionCounterUsagesCollector.TOGGLE_COMMIT_CHECK.log(checkinHandler.javaClass, isSettings, value)
   }
 
-  fun logCommitOptionToggled(option: CommitSessionCounterUsagesCollector.CommitOption, value: Boolean) {
+  fun logCommitOptionToggled(option: CommitOption, value: Boolean) {
     CommitSessionCounterUsagesCollector.TOGGLE_COMMIT_OPTION.log(option, value)
   }
 
@@ -192,7 +190,7 @@ class CommitSessionCollector(val project: Project) {
     CommitSessionCounterUsagesCollector.CODE_ANALYSIS_WARNING.log(warnings, errors)
   }
 
-  fun logCommitProblemViewed(commitProblem: CommitProblem, place: CommitSessionCounterUsagesCollector.CommitProblemPlace) {
+  fun logCommitProblemViewed(commitProblem: CommitProblem, place: CommitProblemPlace) {
     CommitSessionCounterUsagesCollector.VIEW_COMMIT_PROBLEM.log(commitProblem.javaClass, place)
   }
 

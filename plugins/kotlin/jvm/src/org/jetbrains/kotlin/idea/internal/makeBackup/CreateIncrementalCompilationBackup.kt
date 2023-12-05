@@ -82,7 +82,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
             val patchesDir = File(backupDir, "patches")
             patchesDir.mkdirs()
 
-            val revisions = revisionsCollector.result!!
+            val revisions = revisionsCollector.result
             for (rev in revisions) {
                 val label = rev.label
                 if (label != null && label.startsWith(HISTORY_LABEL_PREFIX)) {

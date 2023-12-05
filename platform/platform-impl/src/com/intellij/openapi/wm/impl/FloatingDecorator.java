@@ -27,7 +27,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 @ApiStatus.Internal
-public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker, ToolWindowExternalDecorator {
+public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker, ToolWindowExternalDecorator, DisposableWindow {
   private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);
 
   static final int DIVIDER_WIDTH = 3;
@@ -46,6 +46,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   private final @NotNull ToolWindowExternalDecoratorBoundsHelper myBoundsHelper = new ToolWindowExternalDecoratorBoundsHelper(this);
 
   private final Disposable myDisposable = Disposer.newDisposable();
+  private boolean myDisposed = false;
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
@@ -77,7 +78,6 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       // The problem is that Window.setLocation() doesn't work properly wjen the dialod is displayable.
       // Therefore we use native WM decoration.
       contentPane.add(decorator, BorderLayout.CENTER);
-      getRootPane().putClientProperty("Window.style", "small");
     }
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -171,6 +171,12 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     }
 
     super.dispose();
+    myDisposed = true;
+  }
+
+  @Override
+  public boolean isWindowDisposed() {
+    return myDisposed;
   }
 
   @NotNull

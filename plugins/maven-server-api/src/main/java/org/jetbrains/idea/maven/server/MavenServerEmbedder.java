@@ -23,7 +23,9 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
@@ -31,19 +33,19 @@ public interface MavenServerEmbedder extends Remote {
   String MAVEN_EXT_CLASS_PATH = "maven.ext.class.path";
 
   @NotNull
-  ArrayList<MavenServerExecutionResult> resolveProjects(
+  MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(
     @NotNull String longRunningTaskId,
     @NotNull ProjectResolutionRequest request,
     MavenToken token) throws RemoteException;
 
-  ArrayList<PluginResolutionResponse> resolvePlugins(
+  MavenServerResponse<ArrayList<PluginResolutionResponse>> resolvePlugins(
     @NotNull String longRunningTaskId,
     @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
     boolean forceUpdateSnapshots,
     MavenToken token) throws RemoteException;
 
   @NotNull
-  ArrayList<MavenArtifact> resolveArtifacts(
+  MavenServerResponse<ArrayList<MavenArtifact>> resolveArtifacts(
     @NotNull String longRunningTaskId,
     @NotNull ArrayList<MavenArtifactResolutionRequest> requests,
     MavenToken token) throws RemoteException;
@@ -64,7 +66,7 @@ public interface MavenServerEmbedder extends Remote {
     MavenToken token) throws RemoteException;
 
   @NotNull
-  ArrayList<MavenGoalExecutionResult> executeGoal(
+  MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(
     @NotNull String longRunningTaskId,
     @NotNull ArrayList<MavenGoalExecutionRequest> requests,
     @NotNull String goal,

@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -145,8 +145,8 @@ class RepairUtilityBuilder {
     }
 
     private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
-      return spanBuilder("build repair-utility").useWithScope2 {
-        val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
+      return spanBuilder("build repair-utility").useWithScope {
+        val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope emptyMap()
         try {
           val baseUrl = context.productProperties.baseDownloadUrl?.removeSuffix("/") 
                         ?: error("'baseDownloadUrl' is not specified in ${context.productProperties.javaClass.name}")
@@ -172,7 +172,7 @@ class RepairUtilityBuilder {
           if (TeamCityHelper.isUnderTeamCity) {
             throw e
           }
-          return@useWithScope2 emptyMap<Binary, Path>()
+          return@useWithScope emptyMap<Binary, Path>()
         }
 
         val binaries = BINARIES.associateWith { projectHome.resolve(it.relativeSourcePath) }

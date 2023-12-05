@@ -94,7 +94,7 @@ public final class GitPushRepoResult {
     return myUpdateResult;
   }
 
-  int getNumberOfPushedCommits() {
+  public int getNumberOfPushedCommits() {
     return myCommits;
   }
 

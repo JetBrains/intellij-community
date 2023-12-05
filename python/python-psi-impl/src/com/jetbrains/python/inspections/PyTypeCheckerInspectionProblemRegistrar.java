@@ -136,7 +136,7 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     }
 
     @Nullable PyType expectedTypeAfterSubstitution = argumentResult.getExpectedTypeAfterSubstitution();
-    String expectedTypeName = PythonDocumentationProvider.getTypeName(expectedType, context);
+    String expectedTypeName = PythonDocumentationProvider.getVerboseTypeName(expectedType, context);
     String expectedSubstitutedName = expectedTypeAfterSubstitution != null && !expectedTypeAfterSubstitution.equals(expectedType)
                                      ? PythonDocumentationProvider.getTypeName(expectedTypeAfterSubstitution, context)
                                      : null;

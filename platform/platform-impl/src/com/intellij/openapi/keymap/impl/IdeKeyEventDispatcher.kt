@@ -786,7 +786,7 @@ private fun hasMnemonicInBalloons(container: Container?, code: Int): Boolean {
   return false
 }
 
-private data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
+data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
 
 private suspend fun doUpdateActionsInner(actions: List<AnAction>,
                                          updater: suspend (AnAction) -> Presentation,

@@ -5,4 +5,4 @@ import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
-internal class KotlinOverrideUsageInfo(overrider: KtCallableDeclaration, val baseMethod: PsiElement) : UsageInfo(overrider)
+internal class KotlinOverrideUsageInfo(overrider: KtCallableDeclaration, val baseMethod: PsiElement, val isCaller: Boolean) : UsageInfo(overrider)

@@ -2,6 +2,7 @@
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
@@ -63,7 +64,8 @@ final class GitPushResultNotification extends Notification {
                                                    @NotNull GitPushResult pushResult,
                                                    @Nullable GitPushOperation pushOperation,
                                                    boolean multiRepoProject,
-                                                   @Nullable GitUpdateInfoAsLog.NotificationData notificationData) {
+                                                   @Nullable GitUpdateInfoAsLog.NotificationData notificationData,
+                                                   @NotNull Map<String, VcsPushOptionValue> customParams) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;
@@ -171,7 +173,7 @@ final class GitPushResultNotification extends Notification {
         }
       });
       if (pushOperation != null) {
-        notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected));
+        notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected, customParams));
       }
     }
 
@@ -294,14 +296,17 @@ final class GitPushResultNotification extends Notification {
     private final @NotNull Project myProject;
     private final @NotNull GitPushOperation myOperation;
     private final @NotNull List<GitRepository> myRepositories;
+    private final @NotNull  Map<String, VcsPushOptionValue> customParams;
 
     private ForcePushNotificationAction(@NotNull Project project,
                                         @NotNull GitPushOperation pushOperation,
-                                        @NotNull List<GitRepository> repositories) {
+                                        @NotNull List<GitRepository> repositories,
+                                        @NotNull Map<String, VcsPushOptionValue> params) {
       super(GitBundle.message("push.notification.force.push.anyway.action"));
       myProject = project;
       myOperation = pushOperation;
       myRepositories = repositories;
+      customParams = params;
     }
 
     @Override
@@ -313,7 +318,7 @@ final class GitPushResultNotification extends Notification {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitPushOperation forcePushOperation = myOperation.deriveForceWithoutLease(myRepositories);
-          GitPusher.pushAndNotify(project, forcePushOperation);
+          GitPusher.pushAndNotify(project, forcePushOperation, customParams);
         }
       }.queue();
     }

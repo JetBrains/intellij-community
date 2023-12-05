@@ -52,7 +52,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
   "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
-  "intellij.platform.elevation",
+  "intellij.execution.process.elevation",
   "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.inspect",
   // lvcs.xml - convert into product module
@@ -98,6 +98,8 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
 
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
+
+  "intellij.platform.ae.database"
 )
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(

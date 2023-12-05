@@ -41,9 +41,9 @@ import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgMergeCommand {
 
-  @NotNull private final Project project;
-  @NotNull private final HgRepository repo;
-  @Nullable private String revision;
+  private final @NotNull Project project;
+  private final @NotNull HgRepository repo;
+  private @Nullable String revision;
 
   public HgMergeCommand(@NotNull Project project, @NotNull HgRepository repo) {
     this.project = project;
@@ -54,8 +54,7 @@ public class HgMergeCommand {
     this.revision = revision;
   }
 
-  @Nullable
-  private HgCommandResult executeInCurrentThread() {
+  private @Nullable HgCommandResult executeInCurrentThread() {
     HgPromptCommandExecutor commandExecutor = new HgPromptCommandExecutor(project);
     commandExecutor.setShowOutput(true);
     List<String> arguments = new LinkedList<>();
@@ -70,22 +69,21 @@ public class HgMergeCommand {
     }
   }
 
-  @Nullable
-  public HgCommandResult mergeSynchronously() throws VcsException {
+  public @Nullable HgCommandResult mergeSynchronously() throws VcsException {
     HgCommandResult commandResult = ensureSuccess(executeInCurrentThread());
     HgUtil.markDirectoryDirty(project, repo.getRoot());
     return commandResult;
   }
 
-  public static void mergeWith(@NotNull final HgRepository repository,
-                               @NotNull final @NonNls String branchName,
-                               @NotNull final UpdatedFiles updatedFiles) {
+  public static void mergeWith(final @NotNull HgRepository repository,
+                               final @NotNull @NonNls String branchName,
+                               final @NotNull UpdatedFiles updatedFiles) {
     mergeWith(repository, branchName, updatedFiles, null);
   }
 
-  public static void mergeWith(@NotNull final HgRepository repository,
-                               @NotNull final @NonNls String branchName,
-                               @NotNull final UpdatedFiles updatedFiles, @Nullable final Runnable onSuccessHandler) {
+  public static void mergeWith(final @NotNull HgRepository repository,
+                               final @NotNull @NonNls String branchName,
+                               final @NotNull UpdatedFiles updatedFiles, final @Nullable Runnable onSuccessHandler) {
     final Project project = repository.getProject();
     final VirtualFile repositoryRoot = repository.getRoot();
     final HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repository);

@@ -204,7 +204,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         }
 
         //exclude interfaces, non-java classes etc
-        for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensions()) {
+        for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensionList()) {
             if (!filter.canGenerateToString(clazz)) return null;
         }
         return clazz;

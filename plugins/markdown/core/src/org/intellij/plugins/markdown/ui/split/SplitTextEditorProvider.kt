@@ -9,12 +9,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.application
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 private const val FIRST_EDITOR = "first_editor"
 private const val SECOND_EDITOR = "second_editor"
 private const val SPLIT_LAYOUT = "split_layout"
 
+@ApiStatus.Internal
 abstract class SplitTextEditorProvider(
   private val firstProvider: FileEditorProvider,
   private val secondProvider: FileEditorProvider
@@ -71,13 +74,6 @@ abstract class SplitTextEditorProvider(
     return sourceElement.getAttribute(SPLIT_LAYOUT)?.value
   }
 
-  override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
-    val firstState = readFirstProviderState(sourceElement, project, file)
-    val secondState = readSecondProviderState(sourceElement, project, file)
-    val layoutName = readSplitLayoutState(sourceElement, project, file)
-    return SplitFileEditor.MyFileEditorState(/* splitLayout = */ layoutName, /* firstState = */ firstState, /* secondState = */ secondState)
-  }
-
   protected fun writeFirstProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
     val child = Element(FIRST_EDITOR)
     if (state != null) {
@@ -100,15 +96,6 @@ abstract class SplitTextEditorProvider(
     }
   }
 
-  override fun writeState(state: FileEditorState, project: Project, targetElement: Element) {
-    if (state !is SplitFileEditor.MyFileEditorState) {
-      return
-    }
-    writeFirstProviderState(state = state.firstState, project = project, targetElement = targetElement)
-    writeSecondProviderState(state = state.secondState, project = project, targetElement = targetElement)
-    writeSplitLayoutState(splitLayout = state.splitLayout, targetElement = targetElement)
-  }
-
   protected abstract fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor
 
   override fun getPolicy(): FileEditorPolicy {
@@ -124,7 +111,7 @@ private fun createEditorBuilder(
 ): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
     if (application.isDispatchThread) {
-      return runWithModalProgressBlocking(project, title = "Creating Markdown Editor") {
+      return runWithModalProgressBlocking(project, title = MarkdownBundle.message("markdown.split.editor.creating.progress.text")) {
         provider.createEditorBuilder(project = project, file = file, document = document)
       }
     }

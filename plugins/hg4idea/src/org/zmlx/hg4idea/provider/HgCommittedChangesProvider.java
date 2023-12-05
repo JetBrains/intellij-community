@@ -57,15 +57,13 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     myVcs = vcs;
   }
 
-  @NotNull
   @Override
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
+  public @NotNull ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new HgVersionFilterComponent(showDateFilter);
   }
 
   @Override
-  @Nullable
-  public RepositoryLocation getLocationFor(@NotNull FilePath filePath) {
+  public @Nullable RepositoryLocation getLocationFor(@NotNull FilePath filePath) {
     VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
     if (repo == null) {
       return null;
@@ -89,11 +87,10 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     }
   }
 
-  @NotNull
   @Override
-  public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-                                                       @NotNull RepositoryLocation repositoryLocation,
-                                                       int maxCount) {
+  public @NotNull List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
+                                                                @NotNull RepositoryLocation repositoryLocation,
+                                                                int maxCount) {
     VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
 
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
@@ -161,8 +158,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   }
 
   @Override
-  @NotNull
-  public VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
+  public @NotNull VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
     AnAction copyHashAction = new DumbAwareAction(
       HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.text.copy.hash"),
       HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.description.copy.hash.to.clipboard"),
@@ -185,9 +181,8 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return -1;
   }
 
-  @Nullable
   @Override
-  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, @NotNull VcsRevisionNumber number) {
+  public @Nullable Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, @NotNull VcsRevisionNumber number) {
     final ChangeBrowserSettings settings = createDefaultSettings();
     settings.USE_CHANGE_AFTER_FILTER = true;
     settings.USE_CHANGE_BEFORE_FILTER = true;
@@ -211,8 +206,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return false;
   }
 
-  @Nullable
-  public CommittedChangeList getCommittedChangesForRevision(@Nullable RepositoryLocation repositoryLocation, String revision) {
+  public @Nullable CommittedChangeList getCommittedChangesForRevision(@Nullable RepositoryLocation repositoryLocation, String revision) {
     if (repositoryLocation == null) {
       return null;
     }
@@ -266,16 +260,15 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       return branch.isEmpty() ? "default" : branch;
     }
 
-    @NotNull
     @Override
-    public Comparator<HgCommittedChangeList> getComparator() {
+    public @NotNull Comparator<HgCommittedChangeList> getComparator() {
       return BRANCH_COLUMN_COMPARATOR;
     }
   };
 
   private static class HgLogArgsBuilder {
 
-    @NotNull private final ChangeBrowserSettings myBrowserSettings;
+    private final @NotNull ChangeBrowserSettings myBrowserSettings;
 
     HgLogArgsBuilder(@NotNull ChangeBrowserSettings browserSettings) {
       myBrowserSettings = browserSettings;

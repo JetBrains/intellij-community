@@ -559,7 +559,7 @@ private class IdePaneLoadingLayer(pane: JComponent,
   }
 }
 
-interface FrameLoadingState {
+internal interface FrameLoadingState {
   val done: Job
 }
 

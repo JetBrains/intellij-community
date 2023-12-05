@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.containers.CollectionFactory
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import java.util.*
 
 internal class MavenProjectResolutionUtil {
   companion object {
@@ -27,8 +28,7 @@ internal class MavenProjectResolutionUtil {
                            explicitProfiles: MavenExplicitProfiles,
                            locator: MavenProjectReaderProjectLocator?,
                            progressReporter: RawProgressReporter,
-                           syncConsole: MavenSyncConsole?,
-                           console: MavenConsole?,
+                           eventHandler: MavenEventHandler,
                            workspaceMap: MavenWorkspaceMap?,
                            updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
       return runBlockingMaybeCancellable {
@@ -40,10 +40,10 @@ internal class MavenProjectResolutionUtil {
           explicitProfiles,
           locator,
           progressReporter,
-          syncConsole,
-          console,
+          eventHandler,
           workspaceMap,
-          updateSnapshots)
+          updateSnapshots,
+          Properties())
       }
     }
 
@@ -56,12 +56,13 @@ internal class MavenProjectResolutionUtil {
                                explicitProfiles: MavenExplicitProfiles,
                                locator: MavenProjectReaderProjectLocator?,
                                progressReporter: RawProgressReporter,
-                               syncConsole: MavenSyncConsole?,
-                               console: MavenConsole?,
+                               eventHandler: MavenEventHandler,
                                workspaceMap: MavenWorkspaceMap?,
-                               updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
+                               updateSnapshots: Boolean,
+                               userProperties: Properties): Collection<MavenProjectReaderResult> {
       return try {
-        val executionResults = embedder.resolveProject(files, explicitProfiles, progressReporter, syncConsole, console, workspaceMap, updateSnapshots)
+        val executionResults = embedder.resolveProject(
+          files, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
         val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
         filesMap.putAll(files.associateBy { it.path })
         val readerResults: MutableCollection<MavenProjectReaderResult> = ArrayList()

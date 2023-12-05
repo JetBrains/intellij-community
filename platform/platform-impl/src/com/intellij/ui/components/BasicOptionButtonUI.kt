@@ -356,12 +356,13 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun minimumLayoutSize(parent: Container): Dimension = parent.minimumSize
   }
 
-  open inner class OptionButtonPopup(step: ActionPopupStep,
+  inner class OptionButtonPopup(step: ActionPopupStep,
                                      dataContext: DataContext,
                                      private val ensureSelection: Boolean)
     : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, -1) {
     init {
       list.background = background
+      registerShortcuts()
     }
 
     override fun afterShow() {

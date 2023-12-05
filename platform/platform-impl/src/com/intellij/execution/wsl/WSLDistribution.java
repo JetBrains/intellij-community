@@ -28,10 +28,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -39,6 +36,7 @@ import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
@@ -82,6 +80,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
+  private static final Key<Boolean> NEVER_RUN_TTY_FIX = Key.create("Never run ttyfix");
 
   /**
    * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
@@ -227,18 +226,19 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
-    if (WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe()) {
+    if (mustRunCommandLineWithIjent(options)) {
+      commandLine.withEscapingForLocalRun(false);
       if (commandLine instanceof PtyCommandLine) {
         commandLine.setProcessCreator((processBuilder) -> {
           var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
           var ijentPty = new IjentApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
 
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, ijentPty);
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, ijentPty, options.isSudo());
         });
       }
       else {
         commandLine.setProcessCreator((processBuilder) -> {
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, null);
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, null, options.isSudo());
         });
       }
     }
@@ -247,6 +247,11 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
 
     return commandLine;
+  }
+
+  @VisibleForTesting
+  public static boolean mustRunCommandLineWithIjent(@NotNull WSLCommandLineOptions options) {
+    return WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe();
   }
 
   final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
@@ -333,10 +338,13 @@ public class WSLDistribution implements AbstractWslDistribution {
         }
 
         if (options.isExecuteCommandInDefaultShell()) {
+          fixTTYSize(commandLine);
           commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters(EXEC_PARAMETER, getShellPath());
+          commandLine.addParameter(EXEC_PARAMETER);
+          fixTTYSize(commandLine);
+          commandLine.addParameter(getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -365,6 +373,31 @@ public class WSLDistribution implements AbstractWslDistribution {
 
     logCommandLineAfter(commandLine);
     return commandLine;
+  }
+
+
+  /***
+   * Never run {@link #fixTTYSize(GeneralCommandLine)}
+   */
+  @NotNull
+  public static GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
+    commandLine.putUserData(NEVER_RUN_TTY_FIX, true);
+    return commandLine;
+  }
+
+  /**
+   * Workaround for <a href="https://github.com/microsoft/WSL/issues/10701">wrong tty size WSL problem</a>
+   */
+  private void fixTTYSize(@NotNull GeneralCommandLine cmd) {
+    if (!WslDistributionDescriptor.isCalculatingMountRootCommand(cmd)
+        && cmd.getUserData(NEVER_RUN_TTY_FIX) == null // ttyfix not disabled explicitly
+        // Even though mount root is calculated with `options.isExecuteCommandInShell()=false`,
+        // let's protect from possible infinite recursion.
+        && !(cmd instanceof PtyCommandLine)  // PTY command line has correct tty size
+        && Registry.is("wsl.fix.initial.tty.size.when.running.without.tty", true)) {
+      var ttyfix = AbstractWslDistributionKt.getToolLinuxPath(this, "ttyfix");
+      cmd.addParameter(ttyfix);
+    }
   }
 
   private void logCommandLineBefore(@NotNull GeneralCommandLine commandLine, @NotNull WSLCommandLineOptions options) {
@@ -530,9 +563,23 @@ public class WSLDistribution implements AbstractWslDistribution {
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #getWslPath(Path)}
+   */
+  @Deprecated
+  public final @Nullable String getWslPath(@NotNull @NlsSafe String windowsPath) {
+    try {
+      return getWslPath(Path.of(windowsPath));
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("Failed to convert '" + windowsPath + "' to wsl path", e);
+      return null;
+    }
+  }
+
   @Override
-  public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
-    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath);
+  public @Nullable @NlsSafe String getWslPath(@NotNull Path windowsPath) {
+    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath.toString());
     if (wslPath != null) {
       if (wslPath.getDistributionId().equalsIgnoreCase(myDescriptor.getMsId())) {
         return wslPath.getLinuxPath();
@@ -542,8 +589,8 @@ public class WSLDistribution implements AbstractWslDistribution {
                                          ", but context distribution is " + myDescriptor.getMsId());
     }
 
-    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return getMntRoot() + convertWindowsPath(windowsPath);
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath.toString())) { // absolute windows path => /mnt/disk_letter/path
+      return getMntRoot() + convertWindowsPath(windowsPath.toString());
     }
     return null;
   }
@@ -634,7 +681,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   public final @NotNull InetAddress getWslIpAddress() {
     if (Registry.is("wsl.proxy.connect.localhost")) {
-      return InetAddress.getLoopbackAddress();
+      return InetAddresses.forString(DEFAULT_WSL_IP);
     }
     return InetAddresses.forString(coalesce(getValueWithLogging(myLazyWslIp, "WSL IP"), DEFAULT_WSL_IP));
   }
@@ -728,10 +775,15 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
+    if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
+      Map<String, String> map = WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
+      return map.get(name);
+    }
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
       .setExecuteCommandInLoginShell(true);
-    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
+    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name),
+                                                              options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
                                                               true);
   }
 

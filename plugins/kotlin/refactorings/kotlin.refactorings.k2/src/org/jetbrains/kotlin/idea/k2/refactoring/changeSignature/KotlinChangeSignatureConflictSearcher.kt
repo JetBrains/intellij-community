@@ -12,14 +12,23 @@ import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinChangeSignatureConflictingUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
+import org.jetbrains.kotlin.idea.refactoring.conflicts.areSameSignatures
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkDeclarationNewNameConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -33,10 +42,14 @@ class KotlinChangeSignatureConflictSearcher(
 
     fun findConflicts(): MultiMap<PsiElement, String> {
         val function = originalInfo.method
-        val kind = originalInfo.methodDescriptor.kind
-        if (kind == Kind.FUNCTION && (originalInfo.isNameChanged || originalInfo.isParameterSetOrOrderChanged || originalInfo.isParameterTypesChanged)) {
+        if (function !is KtCallableDeclaration) return result
+        if (originalInfo.isNameChanged || originalInfo.isParameterSetOrOrderChanged || originalInfo.isParameterTypesChanged) {
             val unresolvableCollisions = mutableListOf<UsageInfo>()
-            checkRedeclarationConflicts(function, originalInfo.newName, unresolvableCollisions)//todo changed type info
+            analyze(function) {
+                checkDeclarationNewNameConflicts(function, Name.identifier(originalInfo.newName), unresolvableCollisions) {
+                    filterCandidates(function, it)
+                }
+            }
             for (info in unresolvableCollisions) {
                 when (info) {
                     is BasicUnresolvableCollisionUsageInfo -> {
@@ -68,7 +81,11 @@ class KotlinChangeSignatureConflictSearcher(
         val newReceiverInfo = originalInfo.receiverParameterInfo
         val originalReceiverInfo = originalInfo.methodDescriptor.receiver
         if (newReceiverInfo != originalReceiverInfo) {
-            //todo new receiver conflict
+            if (function.receiverTypeReference == null && newReceiverInfo != null && newReceiverInfo.isNewParameter) {
+                val usages = mutableListOf<UsageInfo>()
+                KotlinChangeSignatureUsageSearcher.findReceiverReferences(function, usages, originalInfo)
+                usages.filterIsInstance<KotlinChangeSignatureConflictingUsageInfo>().forEach { result.putValue(it.element, it.conflictMessage) }
+            }
             findInternalExplicitReceiverConflicts(function, refUsages.get(), originalReceiverInfo)
             findReceiverToParameterInSafeCallsConflicts(refUsages.get())
         }
@@ -97,6 +114,32 @@ class KotlinChangeSignatureConflictSearcher(
         return result
     }
 
+    context(KtAnalysisSession)
+    private fun KtPsiFactory.createContextType(text: String, context: KtElement): KtType? {
+        return createExpressionCodeFragment("p as $text", context).getContentElement()?.getKtType()
+    }
+    context(KtAnalysisSession)
+    private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KtDeclarationSymbol): Boolean {
+        val factory = KtPsiFactory(function.project)
+        val newReceiverType = originalInfo.receiverParameterInfo?.currentType?.text?.let {
+            factory.createContextType(it, function)
+        }
+        val newParameterTypes = originalInfo.getNonReceiverParameters().mapNotNull {
+            it.currentType.text?.let {
+                factory.createContextType(it, function)
+            }
+        }
+        return candidateSymbol is KtFunctionLikeSymbol &&
+                areSameSignatures(
+                    newReceiverType,
+                    candidateSymbol.receiverType,
+                    newParameterTypes,
+                    candidateSymbol.valueParameters.map { it.returnType }, //todo currently context receiver can't be changed
+                    (function.getSymbol() as? KtFunctionLikeSymbol)?.contextReceivers ?: emptyList(),
+                    candidateSymbol.contextReceivers
+                )
+    }
+
     private fun checkParametersToDelete(
         callableDeclaration: KtCallableDeclaration,
         toRemove: BooleanArray,
@@ -105,7 +148,14 @@ class KotlinChangeSignatureConflictSearcher(
         val valueParameters = callableDeclaration.valueParameters
         val hasReceiver = callableDeclaration.receiverTypeReference != null
         if (hasReceiver && toRemove[0]) {
-            findReceiverUsages(callableDeclaration)
+            val usages = mutableListOf<UsageInfo>()
+            KotlinChangeSignatureUsageSearcher.findReceiverReferences(callableDeclaration, usages, originalInfo)
+            if (usages.isNotEmpty()) {
+                result.putValue(
+                    callableDeclaration.receiverTypeReference,
+                    KotlinBundle.message("parameter.used.in.declaration.body.warning", KotlinBundle.message("text.receiver")),
+                )
+            }
         }
 
         for ((i, parameter) in valueParameters.withIndex()) {
@@ -166,19 +216,6 @@ class KotlinChangeSignatureConflictSearcher(
                     )
                 )
             }
-        }
-    }
-
-    private fun findReceiverUsages(
-        callableDeclaration: KtCallableDeclaration,
-    ) {
-        val usages = mutableListOf<UsageInfo>()
-        KotlinChangeSignatureUsageSearcher.findReceiverReferences(callableDeclaration, usages, originalInfo)
-        if (!usages.isEmpty()) {
-            result.putValue(
-                callableDeclaration.receiverTypeReference,
-                KotlinBundle.message("parameter.used.in.declaration.body.warning", KotlinBundle.message("text.receiver")),
-            )
         }
     }
 

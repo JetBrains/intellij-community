@@ -1,20 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performance.performancePlugin.commands
 
-import com.intellij.ide.actions.CreateFileFromTemplateAction
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.findDirectory
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.file.PsiDirectoryImpl
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.utils.VcsTestUtil
 import io.opentelemetry.context.Context
+import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplateForTest
 
 /**
  * Command to add Kotlin file to project
@@ -42,7 +43,7 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
     override suspend fun doExecute(context: PlaybackContext) {
         val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).replace("\\s","").split(",")
         val directory = PsiDirectoryImpl(
-            PsiManagerImpl(context.project),
+            PsiManager.getInstance(context.project) as PsiManagerImpl,
             (context.project.guessProjectDir() ?: throw RuntimeException("Root of the project was not found "))
                 .findDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
         )
@@ -55,9 +56,8 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
         VcsTestUtil.provisionVcsAddFileConfirmation(context.project, VcsTestUtil.VcsAddFileConfirmation.DO_NOTHING)
 
         ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
-            PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
-                val createdFile = CreateFileFromTemplateAction
-                    .createFileFromTemplate(fileName, template, directory, null, true)
+            PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScopeBlocking {
+                val createdFile = createKotlinFileFromTemplateForTest(fileName, template, directory)
                 createdFile?.let {
                     LOG.info("Created kotlin file\n${createdFile.text}")
                 }

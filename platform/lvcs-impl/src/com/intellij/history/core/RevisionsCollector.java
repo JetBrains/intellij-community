@@ -44,7 +44,7 @@ public final class RevisionsCollector extends ChangeSetsProcessor {
     myPattern = pattern;
   }
 
-  public List<Revision> getResult() {
+  public @NotNull List<Revision> getResult() {
     process();
     return myResult;
   }

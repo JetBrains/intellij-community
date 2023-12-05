@@ -212,13 +212,15 @@ abstract class BaseCompletionGolfFileReportGenerator(
       }
     }
 
-    div("line-stats") {
-      i {
-        style = "display: flex;"
-        pre("no-select") { +"    #  " }
-        pre("stats-value") {
-          style = "padding-inline: 4px;"
-          +getLineStats(session).joinToString(separator = "\t", prefix = "", postfix = "\t")
+    if (session.lookups.isNotEmpty()) {
+      div("line-stats") {
+        i {
+          style = "display: flex;"
+          pre("no-select") { +"    #  " }
+          pre("stats-value") {
+            style = "padding-inline: 4px;"
+            +getLineStats(session).joinToString(separator = "\t", prefix = "", postfix = "\t")
+          }
         }
       }
     }

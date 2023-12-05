@@ -34,7 +34,7 @@ public final class FieldNameConstantsPredefinedInnerClassFieldProcessor extends 
         if (super.validate(psiAnnotation, parentClass, problemBuilder)) {
           final String typeName = FieldNameConstantsHandler.getTypeName(parentClass, psiAnnotation);
           if (typeName.equals(psiClass.getName())
-            && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
+            && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
             && validate(psiAnnotation, parentClass, problemBuilder)) {
 
             List<? super PsiElement> result = new ArrayList<>();
@@ -62,7 +62,8 @@ public final class FieldNameConstantsPredefinedInnerClassFieldProcessor extends 
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     //do nothing
   }
 

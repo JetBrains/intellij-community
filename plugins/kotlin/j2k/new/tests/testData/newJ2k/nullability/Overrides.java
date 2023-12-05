@@ -1,5 +1,4 @@
 //file
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class Base {
@@ -18,7 +17,7 @@ class Base {
 interface I {
     @Nullable String zoo(@Nullable Object o);
 
-    public String nya(String s) { return ""; }
+    public String nya(String s);
 }
 
 class C extends Base implements I {

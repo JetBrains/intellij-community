@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
-import com.intellij.util.text.JBDateFormat;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +37,15 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
   @Override
   default String getDisplayText() {
     if (getBefore() != null && getAfter() != null) {
-      String after = JBDateFormat.getFormatter().formatDate(getAfter());
-      String before = JBDateFormat.getFormatter().formatDate(getBefore());
+      String after = DateFormatUtil.formatDate(getAfter());
+      String before = DateFormatUtil.formatDate(getBefore());
       return VcsLogBundle.message("vcs.log.filter.date.display.name.between", after, before);
     }
     else if (getAfter() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.display.name.after", JBDateFormat.getFormatter().formatDate(getAfter()));
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.after", DateFormatUtil.formatDate(getAfter()));
     }
     else if (getBefore() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.display.name.before", JBDateFormat.getFormatter().formatDate(getBefore()));
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.before", DateFormatUtil.formatDate(getBefore()));
     }
     return "";
   }
@@ -53,17 +53,17 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
   @NotNull
   default String getDisplayTextWithPrefix() {
     if (getBefore() != null && getAfter() != null) {
-      String after = JBDateFormat.getFormatter().formatDate(getAfter());
-      String before = JBDateFormat.getFormatter().formatDate(getBefore());
+      String after = DateFormatUtil.formatDate(getAfter());
+      String before = DateFormatUtil.formatDate(getBefore());
       return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.between", after, before);
     }
     else if (getAfter() != null) {
       return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.after",
-                                  JBDateFormat.getFormatter().formatDate(getAfter()));
+                                  DateFormatUtil.formatDate(getAfter()));
     }
     else if (getBefore() != null) {
       return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.before",
-                                  JBDateFormat.getFormatter().formatDate(getBefore()));
+                                  DateFormatUtil.formatDate(getBefore()));
     }
     return "";
   }

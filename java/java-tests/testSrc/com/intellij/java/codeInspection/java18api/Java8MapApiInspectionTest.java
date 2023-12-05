@@ -5,29 +5,13 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.java18api.Java8MapApiInspection;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
 
-@RunWith(Enclosed.class)
 public class Java8MapApiInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     Java8MapApiInspection inspection = new Java8MapApiInspection();
     inspection.myTreatGetNullAsContainsKey = true;
     return new LocalInspectionTool[]{inspection};
-  }
-
-  public static class ImplTest {
-    @Test
-    public void testNameCandidate() {
-      assertEquals("e", Java8MapApiInspection.getNameCandidate("element"));
-      assertEquals("t", Java8MapApiInspection.getNameCandidate("accessToken"));
-      assertEquals("s", Java8MapApiInspection.getNameCandidate("SQL"));
-      assertEquals("n", Java8MapApiInspection.getNameCandidate("myUserName"));
-      assertEquals("v", Java8MapApiInspection.getNameCandidate("___VAR"));
-      assertEquals("k", Java8MapApiInspection.getNameCandidate("_1"));
-    }
   }
 
   @Override

@@ -29,7 +29,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.*
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
@@ -40,7 +40,7 @@ import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.serviceContainer.precomputeExtensionModel
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.graph.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
@@ -139,10 +139,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
-      val precomputedExtensionModel = precomputeExtensionModel()
-
       LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
+      val precomputedExtensionModel = precomputeModuleLevelExtensionModel()
       val result = loadedEntities.map { moduleEntity ->
         async {
           runCatching {
@@ -199,7 +198,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       }
     }
 
-    loadAllModulesTimeMs.addElapsedTimeMs(start)
+    loadAllModulesTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun unloadNewlyAddedModulesIfPossible(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {
@@ -225,7 +224,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val module = modifiableModel.newModule(filePath, moduleTypeId)
     modifiableModel.commit()
 
-    newModuleTimeMs.addElapsedTimeMs(start)
+    newModuleTimeMs.addElapsedTimeMillis(start)
     return module
   }
 
@@ -237,7 +236,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val module = modifiableModel.newNonPersistentModule(moduleName, id)
     modifiableModel.commit()
 
-    newNonPersistentModuleTimeMs.addElapsedTimeMs(start)
+    newNonPersistentModuleTimeMs.addElapsedTimeMillis(start)
     return module
   }
 
@@ -263,7 +262,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val model = getModifiableModel()
     val module = model.loadModule(file)
     model.commit()
-    loadModuleTimeMs.addElapsedTimeMs(start)
+    loadModuleTimeMs.addElapsedTimeMillis(start)
     return module
   }
 
@@ -273,7 +272,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val model = getModifiableModel()
     val module = model.loadModule(filePath)
     model.commit()
-    loadModuleTimeMs.addElapsedTimeMs(start)
+    loadModuleTimeMs.addElapsedTimeMillis(start)
     return module
   }
 
@@ -363,7 +362,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       }
     }
 
-    setUnloadedModulesTimeMs.addElapsedTimeMs(start)
+    setUnloadedModulesTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun addAndRemoveModules(builder: MutableEntityStorage,
@@ -468,7 +467,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
                                                                plugins = plugins,
                                                                corePlugin = corePlugin)
     module.callCreateComponents()
-    createModuleInstanceTimeMs.addElapsedTimeMs(start)
+    createModuleInstanceTimeMs.addElapsedTimeMillis(start)
     return module
   }
 
@@ -626,7 +625,7 @@ private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Gra
     }
   }))
 
-  buildModuleGraphTimeMs.addElapsedTimeMs(start)
+  buildModuleGraphTimeMs.addElapsedTimeMillis(start)
   return moduleGraph
 }
 
@@ -635,7 +634,7 @@ private fun modules(storage: EntityStorage): Sequence<ModuleBridge> {
   val moduleMap = storage.moduleMap
   val modules = storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
 
-  getModulesTimeMs.addElapsedTimeMs(start)
+  getModulesTimeMs.addElapsedTimeMillis(start)
   return modules
 }
 

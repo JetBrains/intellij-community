@@ -23,6 +23,9 @@ public interface MessageReportBuilder {
   @NotNull MessageReportBuilder withException(Exception e);
 
   @CheckReturnValue
+  @NotNull MessageReportBuilder withStackTrace();
+
+  @CheckReturnValue
   @NotNull MessageReportBuilder withLocation(String filePath, int line, int column);
 
   void reportMessage(@NotNull Project project);

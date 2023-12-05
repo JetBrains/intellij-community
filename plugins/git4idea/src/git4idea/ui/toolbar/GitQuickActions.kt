@@ -4,10 +4,11 @@ package git4idea.ui.toolbar
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.customization.GroupEnd
 import com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo
+import com.intellij.openapi.actionSystem.IdeActions
 import git4idea.i18n.GitBundle
 
 private val insertStrategy = GroupEnd("MainToolbarNewUI", "MainToolbarVCSGroup")
-  .orElse(GroupEnd("MainToolbarNewUI", "MainToolbarLeft"))
+  .orElse(GroupEnd("MainToolbarNewUI", IdeActions.GROUP_MAIN_TOOLBAR_LEFT))
 
 class UpdateQuickAction: ToolbarAddQuickActionInfo(listOf("Vcs.UpdateProject"), GitBundle.message("MainToolbarQuickActions.Git.Update.text"), AllIcons.Actions.CheckOut, insertStrategy)
 class CommitQuickAction: ToolbarAddQuickActionInfo(listOf("CheckinProject"), GitBundle.message("MainToolbarQuickActions.Git.Commit.text"), AllIcons.Actions.Commit, insertStrategy)

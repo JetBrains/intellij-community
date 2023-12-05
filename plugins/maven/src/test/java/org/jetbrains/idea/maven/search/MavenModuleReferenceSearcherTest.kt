@@ -9,6 +9,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   private fun renameDirectory(directory: PsiDirectory, newName: String) {
     val renameDialog = RenameDialog(myProject, directory, directory, null)
     renameDialog.performRename(newName)

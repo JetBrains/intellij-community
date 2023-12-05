@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -47,6 +48,14 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
   public static ProjectDataManagerImpl getInstance() {
     return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
+  }
+
+  @NotNull
+  public List<WorkspaceDataService<?>> findWorkspaceService(@NotNull Key<?> key) {
+    List<WorkspaceDataService<?>> result = new ArrayList<>(
+      WorkspaceDataService.EP_NAME.getByGroupingKey(key, ProjectDataManagerImpl.class, WorkspaceDataService::getTargetDataKey));
+    ExternalSystemApiUtil.orderAwareSort(result);
+    return result;
   }
 
   @Override
@@ -279,7 +288,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     ensureTheDataIsReadyToUse(toImport);
 
     @NotNull List<ProjectDataService<?, ?>> services = findService(key);
-    if (services.isEmpty()) {
+    @NotNull List<WorkspaceDataService<?>> workspaceServices = findWorkspaceService(key);
+    if (services.isEmpty() && workspaceServices.isEmpty()) {
       LOG.debug(String.format("No data service is registered for %s", key));
     }
     else {
@@ -301,6 +311,21 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
             final long removeTimeInMs = (System.currentTimeMillis() - removeStartTime);
             LOG.debug(String.format("Service %s computed and removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
           }
+        }
+      }
+
+      for (WorkspaceDataService<?> service : workspaceServices) {
+        final long importStartTime = System.currentTimeMillis();
+        if (modifiableModelsProvider instanceof IdeModifiableModelsProviderImpl) {
+          MutableEntityStorage mutableStorage = ((IdeModifiableModelsProviderImpl)modifiableModelsProvider).getActualStorageBuilder();
+          ((WorkspaceDataService)service).importData(toImport, projectData, project, mutableStorage);
+        }
+        else {
+          LOG.warn(String.format("MutableEntityStorage missing, models provider is %s", modifiableModelsProvider.getClass().getName()));
+        }
+        if (LOG.isDebugEnabled()) {
+          final long importTimeInMs = (System.currentTimeMillis() - importStartTime);
+          LOG.debug(String.format("Workspace service %s imported data in %d ms", service.getClass().getSimpleName(), importTimeInMs));
         }
       }
     }

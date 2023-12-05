@@ -7,7 +7,7 @@ import com.intellij.collaboration.util.selectedChange
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +45,7 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
   private val diffBridge = GitLabMergeRequestDiffBridge()
 
   val detailsVm: GitLabMergeRequestDetailsViewModel by lazy {
-    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest).also {
+    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, projectVm.avatarIconProvider).also {
       setupDetailsVm(it)
     }
   }
@@ -65,7 +65,7 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
   }
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(cs, projectData.projectMapping, currentUser, mergeRequest, diffBridge,
+    GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest, diffBridge,
                                             projectVm, discussionsVms, projectVm.avatarIconProvider)
   }
 

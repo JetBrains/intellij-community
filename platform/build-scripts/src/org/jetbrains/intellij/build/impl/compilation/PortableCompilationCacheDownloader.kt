@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Decompressor
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager
@@ -47,7 +47,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private fun downloadToFile(url: String, file: Path, spanName: String) {
-    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScope {
+    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScopeBlocking {
       Files.createDirectories(file.parent)
       retryWithExponentialBackOff {
         if (url.isS3()) {

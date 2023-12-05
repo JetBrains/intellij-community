@@ -140,7 +140,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           final String anno = annotated.isDeclaredNotNull ? manager.getDefaultNotNull() : manager.getDefaultNullable();
           final List<String> annoToRemove = annotated.isDeclaredNotNull ? nullables : notNulls;
 
-          if (!checkNonStandardAnnotations(field, annotated, manager, anno, holder)) return;
+          if (!checkNonStandardAnnotations(field, annotated, anno, holder)) return;
 
           checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
@@ -508,7 +508,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static boolean checkNonStandardAnnotations(PsiField field,
                                                      Annotated annotated,
-                                                     NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
+                                                     String anno, @NotNull ProblemsHolder holder) {
     if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
       PsiAnnotation annotation = Objects.requireNonNull(annotated.isDeclaredNullable ? annotated.nullable : annotated.notNull);
       String message = JavaAnalysisBundle.message("inspection.message.code.generation.different.nullability.annotation.will.be.used",
@@ -517,7 +517,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                              message,
                              ProblemHighlightType.WEAK_WARNING,
-                             new ChangeNullableDefaultsFix(annotated.notNull, annotated.nullable, manager));
+                             new ChangeNullableDefaultsFix(annotated.notNull, annotated.nullable));
       return false;
     }
     return true;
@@ -715,12 +715,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                               @Nullable PsiModifierListOwner listOwner,
                                               @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey,
                                               @NotNull LocalQuickFix @NotNull ... additionalFixes) {
-    RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner) {
-      @Override
-      protected boolean shouldRemoveInheritors() {
-        return true;
-      }
-    };
+    RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner, true);
     reportProblem(holder, !annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
                   ArrayUtil.append(additionalFixes, fix), messageKey);
   }
@@ -1069,7 +1064,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (resolveResult.getElement() != null &&
             resolveResult.isValidResult() &&
             !nullableManager.getDefaultNotNull().equals(annotation.getQualifiedName())) {
-          return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+          return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null);
         }
       }
     }

@@ -1029,11 +1029,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyEquivalenceRelation(RelationType type, DfaValue dfaLeft, DfaValue dfaRight) {
-    RelationType currentRelation = getRelation(dfaLeft, dfaRight);
-    if (currentRelation != null) {
-      // Eq: NE & GE => GT
-      type = type.meet(currentRelation);
-      if (type == null) return false;
+    if (!dfaLeft.getDfType().hasNonStandardEquivalence() && !dfaRight.getDfType().hasNonStandardEquivalence()) {
+      RelationType currentRelation = getRelation(dfaLeft, dfaRight);
+      if (currentRelation != null) {
+        // Eq: NE & GE => GT
+        type = type.meet(currentRelation);
+        if (type == null) return false;
+      }
     }
     boolean isNegated = type == RelationType.NE || type == RelationType.GT || type == RelationType.LT;
     if (!isNegated && type != RelationType.EQ) {
@@ -1276,7 +1278,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       type = type.fromRelation(RelationType.EQ);
       for (DfaVariableValue value : eqClass.asList()) {
         if (value != dfaVar) {
-          recordVariableType(value, type);
+          recordVariableType(value, type.meet(value.getInherentType()));
           if (!updateQualifierOnEquality(value, value)) return false;
         }
       }

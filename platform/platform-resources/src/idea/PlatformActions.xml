@@ -251,7 +251,7 @@
       <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
       <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>
       <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
-      <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.editor.actions.AddOrRemoveCaretDummyAction"/>
+      <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="EditorCreateRectangularSelection" class="com.intellij.openapi.editor.actions.CreateRectangularSelectionAction"/>
       <action id="EditorAddRectangularSelectionOnMouseDrag"
               class="com.intellij.openapi.editor.actions.AddRectangularSelectionOnMouseDragAction"/>
@@ -414,8 +414,6 @@
         <action id="Diff.CompareWithBase.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
                 icon="AllIcons.Diff.Compare4RightBottom"/>
       </group>
-
-      <action id="CompareDirs" class="com.intellij.diff.actions.CompareFilesAction" use-shortcut-of="CompareTwoFiles"/>
 
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
@@ -745,6 +743,7 @@
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
         <separator/>
         <group id="OtherMenu"/>
+        <group id="ToolsMenu.Services" popup="true"/>
       </group>
 
       <group id="WindowMenu" popup="true">
@@ -1202,6 +1201,7 @@
     <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
     <action id="CreateAllServicesAndExtensions" internal="true" class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
+    <action id="ShowTrustProjectDialog" class="com.intellij.ide.impl.ShowTrustProjectDialogAction"/>
 
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">
@@ -1281,7 +1281,6 @@
           <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.uiDslTestAction.UiDslTestAction"/>
           <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
         </group>
-        <action id="TransferSettingsDemoAction" class="com.intellij.ide.customize.transferSettings.TransferSettingsDemoAction"/>
         <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>
@@ -1457,7 +1456,7 @@
       <synonym key="action.SelectOpenedFileInProjectView.text"/>
     </action>
 
-    <action id="ClearAllNotifications" class="com.intellij.notification.impl.ClearAllNotificationsAction"/>
+    <action id="ClearAllNotifications" class="com.intellij.notification.impl.ClearAllNotificationsAction" icon="AllIcons.Actions.GC"/>
 
     <group id="ProjectViewToolbar">
       <reference ref="SelectInProjectView"/>
@@ -1648,5 +1647,7 @@
       <reference id="WelcomeScreen.ChangeProjectIcon"/>
       <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
     </group>
+
+    <action id="RemoveMainToolbarActionsAction" class="com.intellij.openapi.wm.impl.headertoolbar.RemoveMainToolbarActionsAction" internal="true"/>
   </actions>
 </idea-plugin>

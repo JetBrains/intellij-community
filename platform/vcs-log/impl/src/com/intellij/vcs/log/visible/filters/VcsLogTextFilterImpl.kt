@@ -5,6 +5,9 @@ import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import org.jetbrains.annotations.NonNls
 
+/**
+ * @see VcsLogFilterObject.fromPattern
+ */
 internal data class VcsLogTextFilterImpl(private val text: String,
                                          private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
 

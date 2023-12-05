@@ -7,50 +7,70 @@ object Observation {
 
   /**
    * Suspends until configuration processes in the IDE are completed.
+   * The awaited configuration processes are those that use [ActivityTracker] or [ActivityKey]
    */
   suspend fun awaitConfiguration(project: Project, messageCallback: ((String) -> Unit)? = null) {
+    // we perform several phases of awaiting here,
+    // because we need to be prepared for idempotent side effects from trackers
     while (true) {
-      val wasModified = doAwaitConfigurationPredicates(project, messageCallback)
+      val wasModified = awaitConfigurationPhase(project, messageCallback)
       if (wasModified) {
-        messageCallback?.invoke(
-          "Configuration session is completed. Initiating another session to cover possible side effects...") // NON-NLS
+        messageCallback?.invoke("Configuration phase is completed. Initiating another phase to cover possible side effects...") // NON-NLS
       }
       else {
-        messageCallback?.invoke("The project is configured completely.") // NON-NLS
+        messageCallback?.invoke("All configuration phases are completed.") // NON-NLS
         break
       }
     }
   }
 
-  private suspend fun doAwaitConfigurationPredicates(project: Project, messageCallback: ((String) -> Unit)?): Boolean {
+  private suspend fun awaitConfigurationPhase(project: Project, messageCallback: ((String) -> Unit)?): Boolean {
     var isModificationOccurred = false
-    witnessLoop@ while (true) {
-      for (processBusyWitness in ActivityInProgressWitness.EP_NAME.extensionList) {
-        val localModificationDetected = awaitSubsystemConfiguration(project, processBusyWitness, messageCallback)
-        if (localModificationDetected) {
-          isModificationOccurred = true
-          continue@witnessLoop
+    val extensionTrackers = collectTrackersFromExtensions(project)
+    outer@ while (true) {
+      // we need to reassemble all available trackers on each iteration of the outer loop,
+      // since any change in the state of the system may result in a new set of available trackers
+      val keyTrackers = collectTrackersFromKeys(project)
+      inner@ for (tracker in keyTrackers + extensionTrackers) {
+        val isInProgress = tracker.isInProgress()
+        if (!isInProgress) {
+          continue@inner
         }
+        messageCallback?.invoke("'${tracker.name}' is in progress...")
+        tracker.awaitConfiguration()
+        messageCallback?.invoke("'${tracker.name}' is completed.")
+        isModificationOccurred = true
+        continue@outer
       }
       break
     }
-
-    messageCallback?.invoke("Configuration processes are completed.") // NON-NLS
-
     return isModificationOccurred
   }
 
-  private suspend fun awaitSubsystemConfiguration(project: Project,
-                                                  witness: ActivityInProgressWitness,
-                                                  messageCallback: ((String) -> Unit)?): Boolean {
-    val isInProgress = witness.isInProgress(project)
-    if (!isInProgress) {
-      return false
-    }
-    messageCallback?.invoke("'${witness.presentableName}' is in progress...")
-    witness.awaitConfiguration(project)
-    messageCallback?.invoke("'${witness.presentableName}' is completed.")
-    return true
+  private interface GenericActivityTracker {
+    val name: String
+    suspend fun isInProgress(): Boolean
+    suspend fun awaitConfiguration()
   }
 
+  private suspend fun collectTrackersFromKeys(project: Project): List<GenericActivityTracker> {
+    val service = PlatformActivityTrackerService.getInstanceAsync(project)
+    return service.getAllKeys().map {
+      object : GenericActivityTracker {
+        override val name: String = it.presentableName
+        override suspend fun isInProgress(): Boolean = service.isInProgress(it)
+        override suspend fun awaitConfiguration() = service.awaitConfiguration(it)
+      }
+    }
+  }
+
+  private suspend fun collectTrackersFromExtensions(project: Project): List<GenericActivityTracker> {
+    return ActivityTracker.EP_NAME.extensionList.map {
+      object : GenericActivityTracker {
+        override val name: String = it.presentableName
+        override suspend fun isInProgress(): Boolean = it.isInProgress(project)
+        override suspend fun awaitConfiguration() = it.awaitConfiguration(project)
+      }
+    }
+  }
 }

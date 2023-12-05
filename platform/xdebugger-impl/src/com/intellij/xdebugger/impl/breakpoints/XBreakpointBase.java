@@ -453,13 +453,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   protected final Icon calculateSpecialIcon() {
     XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (!isEnabled()) {
-      // disabled icon takes precedence to other to visually distinguish it and provide feedback then it is enabled/disabled
-      // (e.g. in case of mute-mode we would like to differentiate muted but enabled breakpoints from simply disabled ones)
-      if (session == null || !session.areBreakpointsMuted()) {
-        return getType().getDisabledIcon();
+      if (session != null && session.areBreakpointsMuted()) {
+        return getType().getMutedDisabledIcon();
       }
       else {
-        return getType().getMutedDisabledIcon();
+        return getType().getDisabledIcon();
       }
     }
 
@@ -631,11 +629,20 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       assert breakpoints.size() >= 2;
     }
 
+    private boolean areAllDisabled() {
+      return ContainerUtil.and(breakpoints, b -> !b.isEnabled());
+    }
+
     @Override
     public @NotNull Icon getIcon() {
-      // FIXME[inline-bp]: what about muted breakpoints?
-      // FIXME[inline-bp]: what about disabled breakpoints?
-      return AllIcons.Debugger.MultipleBreakpoints;
+      var session = breakpoints.get(0).getBreakpointManager().getDebuggerManager().getCurrentSession();
+      if (session != null && session.areBreakpointsMuted()) {
+        return AllIcons.Debugger.MultipleBreakpointsMuted;
+      } else if (areAllDisabled()) {
+        return AllIcons.Debugger.MultipleBreakpointsDisabled;
+      } else {
+        return AllIcons.Debugger.MultipleBreakpoints;
+      }
     }
 
     @NotNull
@@ -648,8 +655,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     private AnAction createToggleAction() {
       // This gutter's actions are not collected to any menu, so we use SimpleAction.
       return DumbAwareAction.create(e -> {
+        // Semantics:
+        // - disable all if any is enabled,
+        // - enable all if all are disabled.
+        var newEnabledValue = areAllDisabled();
         for (var b : breakpoints) {
-          b.setEnabled(!b.isEnabled());
+          b.setEnabled(newEnabledValue);
         }
       });
     }

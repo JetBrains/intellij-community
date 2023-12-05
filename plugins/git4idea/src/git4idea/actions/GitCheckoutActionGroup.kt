@@ -2,6 +2,7 @@
 package git4idea.actions
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions.ActionText
@@ -39,8 +40,7 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.mes
     else {
       GitBundle.message("git.log.action.checkout.revision.full.text", hashString)
     }
-    val checkoutRevision = ActionManager.getInstance().getAction("Git.CheckoutRevision")
-    return EmptyAction.wrap(checkoutRevision).also { it.templatePresentation.text = checkoutRevisionText }
+    return ActionUtil.wrap("Git.CheckoutRevision").also { it.templatePresentation.text = checkoutRevisionText }
   }
 
   private fun getRefNames(e: AnActionEvent, repository: GitRepository): List<String> {

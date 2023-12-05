@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
-import com.intellij.util.text.JBDateFormat
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.graph.DefaultColorGenerator
@@ -144,7 +143,7 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
     val properties = model.properties
     val preferCommitDate = properties.exists(CommonUiProperties.PREFER_COMMIT_DATE) && properties.get(CommonUiProperties.PREFER_COMMIT_DATE)
     val timeStamp = if (preferCommitDate) commit.commitTime else commit.authorTime
-    return if (timeStamp < 0) "" else JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp)
+    return if (timeStamp < 0) "" else DateFormatUtil.formatPrettyDateTime(timeStamp)
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
@@ -161,7 +160,7 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
           null
         }
         else {
-          JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime())
+          DateFormatUtil.formatDateTime(DateFormatUtil.getSampleDateTime())
         }
       }
     )

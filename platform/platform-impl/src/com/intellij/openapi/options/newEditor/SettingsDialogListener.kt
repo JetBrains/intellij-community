@@ -4,9 +4,14 @@ package com.intellij.openapi.options.newEditor
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Allows listening for interaction with buttons in the Settings Dialog.
+ * Events for other buttons can be added later.
+ */
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface SettingsDialogListener {
+  /** Fired on 'Apply' button click, but after changed settings are applied */
   fun afterApply(settingsEditor: AbstractEditor) {}
 
   companion object {

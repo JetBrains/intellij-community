@@ -64,7 +64,7 @@ class GitFileHistory internal constructor(private val project: Project,
     val logParser = createLogParser(project)
 
     val visitedCommits = mutableSetOf<String>()
-    val starts = ContainerUtil.newLinkedList(Pair(startingRevision.asString(), path))
+    val starts = ContainerUtil.newLinkedList(FileHistoryStart(startingRevision.asString(), path))
     while (starts.isNotEmpty()) {
       val (startRevision, startPath) = starts.removeFirst()
 
@@ -108,7 +108,7 @@ class GitFileHistory internal constructor(private val project: Project,
    * Returns a list of pairs consisting of the older file path, which file was renamed from and a parent commit hash as a string.
    */
   @Throws(VcsException::class)
-  private fun getParentsAndPathsIfRename(commit: @NonNls String, filePath: FilePath): List<Pair<String, FilePath>> {
+  private fun getParentsAndPathsIfRename(commit: @NonNls String, filePath: FilePath): List<FileHistoryStart> {
     val requirements = GitCommitRequirements(diffRenames = GitCommitRequirements.DiffRenames.Limit.Default,
                                              diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS)
     val h = GitLineHandler(project, root, GitCommand.SHOW, requirements.configParameters())
@@ -129,7 +129,7 @@ class GitFileHistory internal constructor(private val project: Project,
         (change.isMoved || change.isRenamed) && filePath == change.afterRevision!!.file
       }?.let { change ->
         val parents = record.parentsHashes
-        if (parents.isNotEmpty()) Pair(parents[i], change.beforeRevision!!.file) else null
+        if (parents.isNotEmpty()) FileHistoryStart(parents[i], change.beforeRevision!!.file) else null
       }
     }
   }
@@ -153,6 +153,8 @@ class GitFileHistory internal constructor(private val project: Project,
   }
 
   companion object {
+    private data class FileHistoryStart(val revision: String, val path: FilePath)
+
     private fun GitLogFullRecord.filePath(root: VirtualFile): FilePath? {
       val statusInfo = statusInfos.firstOrNull() ?: return null
       return VcsUtil.getFilePath(root.path + "/" + (statusInfo.secondPath ?: statusInfo.firstPath), false)

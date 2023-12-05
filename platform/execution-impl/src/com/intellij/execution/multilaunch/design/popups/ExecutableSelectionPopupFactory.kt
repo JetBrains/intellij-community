@@ -26,7 +26,7 @@ class ExecutableSelectionPopupFactory(private val project: Project) {
     val runConfigs = RunConfigurationExecutableManager.getInstance(project).listExecutables(configuration)
       .filter { it !in existingExecutables }
 
-    val tasks = TaskExecutableTemplate.EP_NAME.getExtensionList(project)
+    val tasks = TaskExecutableTemplate.EP_NAME.extensionList
       .mapNotNull { ExecutableFactory.getInstance(project).create(configuration, it) }
 
     return JBPopupFactory

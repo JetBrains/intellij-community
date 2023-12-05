@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.tree.IElementType
+import java.util.*
 
 data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
 
@@ -17,7 +18,21 @@ class TerminalTextHighlighter private constructor(private val getHighlightings: 
   constructor(highlightings: List<HighlightingInfo>) : this({ highlightings })
 
   override fun createIterator(startOffset: Int): HighlighterIterator {
-    return MyHighlighterIterator(editor?.document, getHighlightings())
+    val highlightings = getHighlightings()
+    val curInd = findOffsetIndex(highlightings, startOffset)
+    return MyHighlighterIterator(editor?.document, highlightings, curInd)
+  }
+
+  private fun findOffsetIndex(highlightings: List<HighlightingInfo>, offset: Int): Int {
+    if (offset < 0) return 0
+    val binarySearchInd = Collections.binarySearch(highlightings, HighlightingInfo(offset, offset, TextAttributes.ERASE_MARKER)) { a, b ->
+      a.startOffset.compareTo(b.startOffset)
+    }
+    return if (binarySearchInd >= 0) binarySearchInd
+    else {
+      val insertionIndex = -binarySearchInd - 1
+      (insertionIndex - 1).coerceAtLeast(0)
+    }
   }
 
   override fun setEditor(editor: HighlighterClient) {
@@ -25,8 +40,8 @@ class TerminalTextHighlighter private constructor(private val getHighlightings: 
   }
 
   private class MyHighlighterIterator(private val document: Document?,
-                                      private val highlightings: List<HighlightingInfo>) : HighlighterIterator {
-    private var curInd = 0
+                                      private val highlightings: List<HighlightingInfo>,
+                                      private var curInd: Int) : HighlighterIterator {
 
     override fun getStart(): Int = highlightings[curInd].startOffset
 

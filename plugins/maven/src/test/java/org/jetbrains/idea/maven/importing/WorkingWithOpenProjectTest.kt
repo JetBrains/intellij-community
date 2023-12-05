@@ -11,8 +11,6 @@ import org.junit.Test
 import java.io.File
 
 class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
 
@@ -63,8 +61,6 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
                                 </dependencies>
                                 """.trimIndent()))
     }
-
-    resolveDependenciesAndImport()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0")
   }

@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -228,7 +228,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
       prop.set(!prop.get())
       val storage = InlayHintsSettings.instance()
       storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
-      InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
     }
 
   }

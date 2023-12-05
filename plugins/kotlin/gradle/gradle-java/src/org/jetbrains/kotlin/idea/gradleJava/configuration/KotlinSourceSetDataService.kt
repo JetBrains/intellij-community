@@ -286,10 +286,12 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 }
 
                 if (kotlinSourceSet.isTestModule) {
-                    testOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
+                    testOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputDir
+                        ?: (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
                     productionOutputPath = null
                 } else {
-                    productionOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
+                    productionOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputDir
+                        ?: (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
                     testOutputPath = null
                 }
             }

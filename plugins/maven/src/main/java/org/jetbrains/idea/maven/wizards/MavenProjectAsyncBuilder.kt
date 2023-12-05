@@ -37,7 +37,7 @@ import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperD
 import org.jetbrains.idea.maven.utils.*
 import java.nio.file.Path
 
-internal class MavenProjectAsyncBuilder {
+class MavenProjectAsyncBuilder {
   fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     if (ApplicationManager.getApplication().isDispatchThread) {
       return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
@@ -51,9 +51,13 @@ internal class MavenProjectAsyncBuilder {
     }
   }
 
+  suspend fun commit(project: Project, projectFile: VirtualFile) {
+    commit(project, projectFile, null)
+  }
+
   suspend fun commit(project: Project,
                      projectFile: VirtualFile,
-                     modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.trackActivity(MavenInProgressWitness::class) {
+                     modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.trackActivity(MavenActivityKey) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
@@ -79,7 +83,7 @@ internal class MavenProjectAsyncBuilder {
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
       cs.launch {
-        project.trackActivity(MavenInProgressWitness::class) {
+        project.trackActivity(MavenActivityKey) {
           doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
         }
       }

@@ -12,8 +12,8 @@ object KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
 
     private val GROUP = EventLogGroup("kotlin.ide.migrationTool", 3)
 
-    private val oldLanguageVersion = EventFields.StringValidatedByRegexp("old_language_version", "version_lang_api")
-    private val oldApiVersion = EventFields.StringValidatedByRegexp("old_api_version", "version_lang_api")
+    private val oldLanguageVersion = EventFields.StringValidatedByRegexpReference("old_language_version", "version_lang_api")
+    private val oldApiVersion = EventFields.StringValidatedByRegexpReference("old_api_version", "version_lang_api")
     private val pluginInfo = EventFields.PluginInfo
 
     private val notificationEvent = GROUP.registerVarargEvent(

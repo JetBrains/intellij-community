@@ -98,8 +98,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     private RawCommandLineEditor additionalArgsOptionsField;
     private JLabel additionalArgsLabel;
     private ThreeStateCheckBox generateSourceMapsCheckBox;
-    private TextFieldWithBrowseButton outputPrefixFile;
-    private TextFieldWithBrowseButton outputPostfixFile;
     private JLabel labelForOutputDirectory;
     private TextFieldWithBrowseButton outputDirectory;
     private ThreeStateCheckBox copyRuntimeFilesCheckBox;
@@ -119,8 +117,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     private JComboBox<VersionView> languageVersionComboBox;
     private JComboBox<VersionView> apiVersionComboBox;
     private JPanel scriptPanel;
-    private JLabel labelForOutputPrefixFile;
-    private JLabel labelForOutputPostfixFile;
     private JLabel warningLabel;
     private JTextField sourceMapPrefix;
     private JComboBox<String> sourceMapEmbedSources;
@@ -202,12 +198,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     }
 
     private void initializeNonCidrSettings(boolean isMultiEditor) {
-        setupFileChooser(labelForOutputPrefixFile, outputPrefixFile,
-                         KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.kotlin.compiler.js.option.output.prefix.browse.title"),
-                         true);
-        setupFileChooser(labelForOutputPostfixFile, outputPostfixFile,
-                         KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.kotlin.compiler.js.option.output.postfix.browse.title"),
-                         true);
         setupFileChooser(labelForOutputDirectory, outputDirectory,
                          KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.choose.output.directory"),
                          false);
@@ -573,8 +563,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                  isCheckboxModified(keepAliveCheckBox, compilerWorkspaceSettings.getEnableDaemon()))) ||
 
                isCheckboxModified(generateSourceMapsCheckBox, k2jsCompilerArguments.getSourceMap()) ||
-               isBrowseFieldModifiedWithNullize(outputPrefixFile, k2jsCompilerArguments.getOutputPrefix()) ||
-               isBrowseFieldModifiedWithNullize(outputPostfixFile, k2jsCompilerArguments.getOutputPostfix()) ||
                !getSelectedModuleKind().equals(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind())) ||
                isFieldModified(sourceMapPrefix, StringUtil.notNullize(k2jsCompilerArguments.getSourceMapPrefix())) ||
                !getSelectedSourceMapSourceEmbedding().equals(
@@ -670,8 +658,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         }
 
         k2jsCompilerArguments.setSourceMap(generateSourceMapsCheckBox.isSelected());
-        k2jsCompilerArguments.setOutputPrefix(StringUtil.nullize(outputPrefixFile.getText(), true));
-        k2jsCompilerArguments.setOutputPostfix(StringUtil.nullize(outputPostfixFile.getText(), true));
         k2jsCompilerArguments.setModuleKind(getSelectedModuleKind());
 
         k2jsCompilerArguments.setSourceMapPrefix(sourceMapPrefix.getText());
@@ -727,8 +713,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         }
 
         generateSourceMapsCheckBox.setSelected(k2jsCompilerArguments.getSourceMap());
-        outputPrefixFile.setText(k2jsCompilerArguments.getOutputPrefix());
-        outputPostfixFile.setText(k2jsCompilerArguments.getOutputPostfix());
 
         moduleKindComboBox.setSelectedItem(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind()));
         sourceMapPrefix.setText(k2jsCompilerArguments.getSourceMapPrefix());
@@ -785,14 +769,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
     public ThreeStateCheckBox getGenerateSourceMapsCheckBox() {
         return generateSourceMapsCheckBox;
-    }
-
-    public TextFieldWithBrowseButton getOutputPrefixFile() {
-        return outputPrefixFile;
-    }
-
-    public TextFieldWithBrowseButton getOutputPostfixFile() {
-        return outputPostfixFile;
     }
 
     public TextFieldWithBrowseButton getOutputDirectory() {

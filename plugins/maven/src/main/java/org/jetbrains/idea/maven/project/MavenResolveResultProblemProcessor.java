@@ -29,14 +29,14 @@ public final class MavenResolveResultProblemProcessor {
     for (MavenProjectProblem projectProblem : problem.repositoryBlockedProblems) {
       if (projectProblem.getDescription() == null) continue;
       BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, projectProblem.getDescription());
-      syncConsole.getListener(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
-        .showBuildIssue(buildIssue.getTitle(), buildIssue);
+      syncConsole.showBuildIssue(buildIssue);
     }
 
     for (MavenProjectProblem projectProblem : problem.unresolvedArtifactProblems) {
       if (projectProblem.getMavenArtifact() == null || projectProblem.getDescription() == null) continue;
-      syncConsole.getListener(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
-        .showArtifactBuildIssue(projectProblem.getMavenArtifact().getMavenId().getKey(), projectProblem.getDescription());
+      syncConsole.showArtifactBuildIssue(MavenServerConsoleIndicator.ResolveType.DEPENDENCY,
+                                         projectProblem.getMavenArtifact().getMavenId().getKey(),
+                                         projectProblem.getDescription());
     }
   }
 
@@ -47,16 +47,15 @@ public final class MavenResolveResultProblemProcessor {
 
     if (message.contains(BLOCKED_MIRROR_FOR_REPOSITORIES)) {
       BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, problem.getDescription());
-      syncConsole.getListener(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
-        .showBuildIssue(buildIssue.getTitle(), buildIssue);
+      syncConsole.showBuildIssue(buildIssue);
     } else if (problem.getMavenArtifact() == null) {
       MavenProjectsManager.getInstance(project).getSyncConsole()
         .addWarning(SyncBundle.message("maven.sync.annotation.processor.problem"), message);
     }
 
     if (problem.getMavenArtifact() != null) {
-      syncConsole.getListener(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
-        .showArtifactBuildIssue(problem.getMavenArtifact().getMavenId().getKey(), message);
+      syncConsole.showArtifactBuildIssue(MavenServerConsoleIndicator.ResolveType.DEPENDENCY,
+                                         problem.getMavenArtifact().getMavenId().getKey(), message);
     }
   }
 

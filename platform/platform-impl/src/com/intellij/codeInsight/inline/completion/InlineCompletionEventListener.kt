@@ -6,16 +6,18 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import java.util.*
 
 sealed class InlineCompletionEventType {
-  data class Request(val lastInvocation: Long,
-                     val request: InlineCompletionRequest,
-                     val provider: Class<out InlineCompletionProvider>) : InlineCompletionEventType()
+  class Request(
+    val lastInvocation: Long,
+    val request: InlineCompletionRequest,
+    val provider: Class<out InlineCompletionProvider>
+  ) : InlineCompletionEventType()
 
-  data class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
-  data class Change(val overtypedLength: Int) : InlineCompletionEventType()
+  class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
+  class Change(val overtypedLength: Int) : InlineCompletionEventType()
   data object Empty : InlineCompletionEventType()
-  data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
+  class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
   data object Insert : InlineCompletionEventType()
-  open class Hide(val finishType: FinishType) : InlineCompletionEventType()
+  class Hide(val finishType: FinishType, val isCurrentlyDisplaying: Boolean) : InlineCompletionEventType()
 }
 
 interface InlineCompletionEventListener : EventListener {

@@ -1,4 +1,4 @@
-from setuptools.command.setopt import option_base
+from .setopt import option_base
 
 class saveopts(option_base):
     description: str

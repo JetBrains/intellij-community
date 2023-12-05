@@ -13,9 +13,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
@@ -25,13 +24,14 @@ import com.intellij.remoteDev.tests.modelGenerated.RdProductType
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.WinFocusStealer
+import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
-import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
 import com.jetbrains.rd.util.threading.asRdScheduler
+import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -66,11 +66,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
 
-  private val projectOrNull: Project?
-    get() = ProjectManagerEx.getOpenProjects().singleOrNull()
-  val project: Project
-    get() = projectOrNull!!
-
   init {
     val hostAddress =
       System.getProperty(AgentConstants.protocolHostPropertyName)?.let {
@@ -97,7 +92,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private fun createProtocol(hostAddress: InetAddress, port: Int) {
     LOG.info("Creating protocol...")
     enableCoroutineDump()
@@ -150,15 +144,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             val action = queue.remove()
             val actionTitle = action.title
             val timeout = action.timeout
-            val requestFocus = action.fromEdt
+            val syncBeforeStart = action.syncBeforeStart
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
 
               LOG.info("'$actionTitle': received action execution request")
 
-              val dispatcher = if (action.fromEdt) Dispatchers.EDT else Dispatchers.Default
-              return@setSuspendPreserveClientId withContext(dispatcher) {
-                if (action.fromEdt) {
+              return@setSuspendPreserveClientId withContext(action.coroutineContext) {
+                if (syncBeforeStart) {
                   // Sync state across all IDE agents to maintain proper order in protocol events
                   // we don't wat to sync state in case of bg task, as it may be launched with blocked UI thread
                   runLogged("'$actionTitle': Sync protocol events before execution") {
@@ -168,7 +161,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                   }
                 }
 
-                if (!app.isHeadlessEnvironment && isNotRdHost && requestFocus) {
+                if (isCurrentThreadEdt() && !app.isHeadlessEnvironment && isNotRdHost) {
                   requestFocus(actionTitle)
                 }
 
@@ -207,20 +200,19 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           runLogged("Close project if it is opened") {
-            projectOrNull?.let {
+            ProjectManagerEx.getOpenProjects().forEach {
               withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
-                ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+                ProjectManagerEx.getInstanceEx().forceCloseProject(it)
               }
-            } ?: true
+            }
+            true
           }
         }
 
         session.shutdown.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
-          runBlockingCancellable {
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
-              LOG.info("Shutting down the application...")
-              app.exit(true, true, false)
-            }
+          lifetime.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
+            LOG.info("Shutting down the application...")
+            app.exit(true, true, false)
           }
         }
 
@@ -254,17 +246,24 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
 
   private fun requestFocus(actionTitle: String): Boolean {
-    val currentProject = projectOrNull
+    val projects = ProjectManagerEx.getOpenProjects()
+
+    if (projects.size > 1) {
+      LOG.info("'$actionTitle': Can't choose a project to focus. All projects: ${projects.joinToString(", ")}")
+      return false
+    }
+
+    val currentProject = projects.singleOrNull()
 
     val windowToFocus =
       if (currentProject != null) {
-        val ideFrame = WindowManager.getInstance().getFrame(currentProject)
-        if (ideFrame == null) {
+        val projectIdeFrame = WindowManager.getInstance().getFrame(currentProject)
+        if (projectIdeFrame == null) {
           LOG.info("'$actionTitle': No frame yet, nothing to focus")
           return false
         }
         else {
-          ideFrame
+          projectIdeFrame
         }
       }
       else {
@@ -285,7 +284,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
     else {
       LOG.info("'$actionTitle': Requesting project focus for '$windowString'")
-      ProjectUtil.focusProjectWindow(projectOrNull, true)
+      ProjectUtil.focusProjectWindow(currentProject, true)
       if (!windowToFocus.isFocusAncestor()) {
         LOG.error("Failed to request the focus.")
         return false
@@ -295,7 +294,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
-    var fileName = getArtifactsFileName(actionName, suffix, "png", timeStamp)
+    val fileName = getArtifactsFileName(actionName, suffix, "png", timeStamp)
 
     return File(PathManager.getLogPath()).resolve(fileName)
   }

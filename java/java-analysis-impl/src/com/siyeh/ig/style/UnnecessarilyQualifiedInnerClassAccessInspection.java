@@ -167,6 +167,9 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (parent instanceof PsiJavaFile) {
         return true;
       }
+      if (!(parent instanceof PsiClass)) {
+        return false;
+      }
       aClass = (PsiClass)parent;
     }
   }

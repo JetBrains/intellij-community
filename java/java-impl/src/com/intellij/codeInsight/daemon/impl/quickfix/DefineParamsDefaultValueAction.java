@@ -74,9 +74,9 @@ public class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<Psi
     PsiParameter selectedParam = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
     int idx = selectedParam != null ? ArrayUtil.find(parameters, selectedParam) : -1;
     List<ParameterClassMember> defaultSelection = idx >= 0 ? List.of(members.get(idx)) : members;
-    return new ModChooseMember(
+    return ModCommand.chooseMultipleMembers(
       QuickFixBundle.message("choose.default.value.parameters.popup.title"),
-      members, defaultSelection, ModChooseMember.SelectionMode.MULTIPLE,
+      members, defaultSelection, 
       sel -> ModCommand.psiUpdate(context, updater -> {
         invoke(context.project(), updater.getWritable(element), updater,
                ContainerUtil.map2Array(sel, PsiParameter.EMPTY_ARRAY,

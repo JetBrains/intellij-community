@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 import org.jetbrains.idea.devkit.inspections.ErrorMessageProvider
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 
-private class ExtensionClassShouldNotBeOpenErrorMessageProvider : ErrorMessageProvider {
+internal class ExtensionClassShouldNotBeOpenErrorMessageProvider : ErrorMessageProvider {
   override fun provideErrorMessage(): String {
     return DevKitKotlinBundle.message("inspection.extension.class.should.not.be.open.text")
   }

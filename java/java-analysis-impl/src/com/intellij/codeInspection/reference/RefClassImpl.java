@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -624,11 +624,15 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   @Override
   public @NotNull RefElement getContainingEntry() {
     RefElement defaultConstructor = getDefaultConstructor();
-    if (defaultConstructor != null) return defaultConstructor;
-    return super.getContainingEntry();
+    return defaultConstructor == null ? super.getContainingEntry() : defaultConstructor;
   }
 
   private static boolean isKindOfJvmLanguage(@NotNull Language language) {
-    return ContainerUtil.exists(Language.findInstance(JvmMetaLanguage.class).getMatchingLanguages(), language::is);
+    for (Language t : Language.findInstance(JvmMetaLanguage.class).getMatchingLanguages()) {
+      if (language.is(t)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

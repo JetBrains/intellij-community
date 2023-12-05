@@ -15,6 +15,9 @@
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalWorkspaceDataService"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.modifiableModelsProvider"
                     interface="com.intellij.openapi.externalSystem.service.project.ModifiableModelsProviderExtension"
                     dynamic="true"/>

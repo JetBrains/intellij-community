@@ -7,11 +7,14 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.application
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
@@ -40,7 +43,6 @@ internal class InlineCompletionInvocationTracker(
     requestId,
     provider,
     invocationTime,
-    InlineContextFeatures.getEventPair(contextFeatures),
     language,
     fileLanguage,
   )
@@ -51,10 +53,13 @@ internal class InlineCompletionInvocationTracker(
     fileLanguage = psiFile.language
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
-    val time = measureNanoTime {
-      InlineContextFeatures.capture(editor, offset, contextFeatures)
+    if (application.isEAP) {
+      val computationTime = measureNanoTime {
+        InlineContextFeatures.capture(psiFile, editor, offset, contextFeatures)
+        request.putUserData(InlineContextFeatures.KEY, contextFeatures)
+      }
+      data.add(InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME.with(computationTime))
     }
-    LOG.info("Context features computation time is $time ns")
     assert(!finished)
   }
 
@@ -83,6 +88,22 @@ internal class InlineCompletionInvocationTracker(
       error("Already finished")
     }
     finished = true
+
+    buildList {
+      val descriptor = InlineCompletionProviderSpecificUsageData.InvocationDescriptor(request.editor, request.file)
+      InlineCompletionProviderSpecificUsageData.EP_NAME.forEachExtensionSafe {
+        if (getPluginInfo(it.javaClass).isSafeToReport()) {
+          addAll(it.getAdditionalInvocationUsageData(descriptor))
+        }
+      }
+    }.takeIf { it.isNotEmpty() }?.let {
+      data.add(InvokedEvents.ADDITIONAL.with(ObjectEventData(it)))
+    }
+
+    if (application.isEAP && contextFeatures.isNotEmpty()) {
+      data.add(InvokedEvents.CONTEXT_FEATURES.with(ObjectEventData(contextFeatures)))
+    }
+
     InlineCompletionUsageTracker.INVOKED_EVENT.log(listOf(
       InvokedEvents.REQUEST_ID.with(requestId),
       *data.toTypedArray(),

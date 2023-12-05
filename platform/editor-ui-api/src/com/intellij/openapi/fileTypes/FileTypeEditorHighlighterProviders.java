@@ -8,9 +8,10 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.KeyedLazyInstance;
-import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
@@ -25,8 +26,8 @@ public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<
   }
 
   @Override
-  protected @NotNull PersistentList<EditorHighlighterProvider> buildExtensions(@NotNull String stringKey, final @NotNull FileType key) {
-    PersistentList<EditorHighlighterProvider> fromEP = super.buildExtensions(stringKey, key);
+  protected @NotNull List<EditorHighlighterProvider> buildExtensions(@NotNull String stringKey, final @NotNull FileType key) {
+    List<EditorHighlighterProvider> fromEP = super.buildExtensions(stringKey, key);
     if (fromEP.isEmpty()) {
       checkAddEPListener();
       EditorHighlighterProvider defaultProvider = new EditorHighlighterProvider() {

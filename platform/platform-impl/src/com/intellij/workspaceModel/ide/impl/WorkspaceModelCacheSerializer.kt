@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
@@ -60,7 +60,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
       }
       .getOrNull()
 
-    loadCacheFromFileTimeMs.addElapsedTimeMs(start)
+    loadCacheFromFileTimeMs.addElapsedTimeMillis(start)
     return cache
   }
 
@@ -76,7 +76,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     try {
       val serializationResult = serializer.serializeCache(tmpFile, if (userPreProcessor) cachePreProcess(storage) else storage)
       when (serializationResult) {
-        is SerializationResult.Fail<*> -> LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
+        is SerializationResult.Fail -> LOG.warn("Workspace model cache was not serialized", serializationResult.problem)
         is SerializationResult.Success -> cacheSize = serializationResult.size
       }
 
@@ -91,7 +91,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     finally {
       Files.deleteIfExists(tmpFile)
     }
-    saveCacheToFileTimeMs.addElapsedTimeMs(start)
+    saveCacheToFileTimeMs.addElapsedTimeMillis(start)
     return SaveInfo(System.currentTimeMillis() - start, cacheSize)
   }
 

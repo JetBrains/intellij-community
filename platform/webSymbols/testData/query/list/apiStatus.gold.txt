@@ -29,7 +29,7 @@
   matchedName: "html/elements/deprecatedWithMessage",
   origin: "basic@1.0 (<none>)",
   complete: true,
-  apiStatus: deprecated in 2023.4.1 (<p><b>don't</b> use this</p>),
+  apiStatus: deprecated in 2023.4.1 (<p><b>don't</b> use this),
   priority: NORMAL,
   segments: [
    {
@@ -55,7 +55,7 @@
   matchedName: "html/elements/experimentalWithMessage",
   origin: "basic@1.0 (<none>)",
   complete: true,
-  apiStatus: experimental (<p><b>let's</b> see if this works</p>),
+  apiStatus: experimental (<p><b>let's</b> see if this works),
   priority: NORMAL,
   segments: [
    {

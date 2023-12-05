@@ -193,7 +193,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
 
       if (group != null) {
         myCurrentWorker.doWhenProcessed(() -> {
-          RunAnythingUsageCollector.Companion.triggerMoreStatistics(myProject, group, model.getClass());
+          RunAnythingUsageCollector.triggerMoreStatistics(myProject, group, model.getClass());
           RunAnythingSearchListModel listModel = (RunAnythingSearchListModel)myResultsList.getModel();
           myCurrentWorker = insert(group, listModel, getDataContext(), getSearchPattern(), index, -1);
           myCurrentWorker.doWhenProcessed(() -> {
@@ -207,7 +207,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     }
 
     if (model != null) {
-      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(myProject, model.getGroups(), model.getClass(), index,
+      RunAnythingUsageCollector.triggerExecCategoryStatistics(myProject, model.getGroups(), model.getClass(), index,
                                                                         myShiftIsPressed, myAltIsPressed);
     }
     RunAnythingUtil.executeMatched(getDataContext(), pattern);

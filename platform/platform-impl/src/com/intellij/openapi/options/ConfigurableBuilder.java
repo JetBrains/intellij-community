@@ -21,8 +21,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * See also {@link UiDslUnnamedConfigurable.Simple} for more flexible alternative.
+ * @deprecated Use identical {@link BeanConfigurable} for replacement
  */
+@Deprecated(forRemoval = true)
 public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
   implements UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private @NlsContexts.BorderTitle String myTitle;

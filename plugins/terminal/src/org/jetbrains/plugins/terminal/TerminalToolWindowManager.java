@@ -97,9 +97,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public TerminalToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myTerminalRunner = ApplicationManager.getApplication()
-      .getService(DefaultTerminalRunnerFactory.class)
-      .create(project);
+    myTerminalRunner = DefaultTerminalRunnerFactory.getInstance().create(project);
   }
 
   @Override
@@ -187,25 +185,44 @@ public final class TerminalToolWindowManager implements Disposable {
     return createNewSession(myTerminalRunner, null, true, true);
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
-    return createLocalShellWidget(workingDirectory, tabName, true, true);
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, true, true));
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus) {
-    return createLocalShellWidget(workingDirectory, tabName, requestFocus, true);
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, requestFocus, true));
   }
 
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus,
                                                              boolean deferSessionStartUntilUiShown) {
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+      createShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown));
+  }
+
+  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
+                                                   @Nullable @Nls String tabName,
+                                                   boolean requestFocus,
+                                                   boolean deferSessionStartUntilUiShown) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
-    TerminalWidget widget = createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
-    return (ShellTerminalWidget)Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
+    return createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
   }
 
   private void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,

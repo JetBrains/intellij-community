@@ -67,7 +67,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
                     PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinVersion + ".jar",
                     PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinVersion + ".jar",
                     PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinVersion + ".jar",
-                    "kotlin-stdlib-common-" + kotlinVersion + ".jar",
                     "annotations-13.0.jar"
             );
 
@@ -76,7 +75,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
                     PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinVersion + "-sources.jar",
                     PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinVersion + "-sources.jar",
                     PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinVersion + "-sources.jar",
-                    "kotlin-stdlib-common-" + kotlinVersion + "-sources.jar",
                     "annotations-13.0-sources.jar"
             );
 

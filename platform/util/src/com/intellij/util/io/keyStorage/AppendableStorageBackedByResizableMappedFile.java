@@ -51,6 +51,7 @@ public final class AppendableStorageBackedByResizableMappedFile<Data> implements
     fileLength = Math.toIntExact(storage.length());
   }
 
+  //requires storage.lockWrite()
   private void flushAppendBuffer() throws IOException {
     if (AppendMemoryBuffer.hasChanges(appendBuffer)) {
       int bufferPosition = appendBuffer.getBufferPosition();
@@ -94,28 +95,30 @@ public final class AppendableStorageBackedByResizableMappedFile<Data> implements
 
   @Override
   public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
-    //TODO RC: processAll requires storage to by flushed first -- but in multithreaded environment it is
-    //         impossible to satisfy this requirement without excessive locking: one needs writeLock to
-    //         do flush, and also at least a readLock for .processAll(). But there shouldn't be any
-    //         locking gap between flush() and.processAll(), which is impossible with regular ReadWriteLock
-    //         (readLock can't be upgraded to writeLock), hence exclusive lock needed for the whole
-    //         (flush+processAll) call.
-    //         Hence right now it is easier to relax the semantics of processAll so that it doesn't guarantee
-    //         strict consistency -- items added after last flush but before .processAll() could be not listed
-    //
-    //if (isDirty()) {
-    //  //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
-    //  //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
-    //  //    lock to the write one. So the responsibility was put on a caller.
-    //  throw new IllegalStateException("Must be .force()-ed first");
-    //}
-    if (fileLength == 0) {
-      return true;
+    //ensure no deadlocks on attempt to escalate read->write lock:
+    storage.getStorageLockContext().checkReadLockNotHeld();
+
+    int fileLengthLocal;
+    lockWrite();
+    try {
+      force();
+
+      fileLengthLocal = fileLength;
+      if (fileLengthLocal == 0) {
+        return true;
+      }
     }
+    finally {
+      unlockWrite();
+    }
+
+    //Since it is append-only storage => already-written records never modified => could be read without locking:
+    //Newer records appended after unlockWrite() -- will not be read, which is expectable
+
     IOCancellationCallbackHolder.checkCancelled();
     return storage.readInputStream(is -> {
       // calculation may restart few times, so it's expected that processor processes duplicates
-      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLength) {
+      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLengthLocal) {
         @Override
         public int available() {
           return remainingLimit();
@@ -195,6 +198,7 @@ public final class AppendableStorageBackedByResizableMappedFile<Data> implements
     return AppendMemoryBuffer.hasChanges(appendBuffer) || storage.isDirty();
   }
 
+  //requires storage.lockWrite()
   @Override
   public void force() throws IOException {
     flushAppendBuffer();

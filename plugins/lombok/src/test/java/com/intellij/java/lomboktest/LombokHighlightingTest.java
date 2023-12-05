@@ -52,6 +52,15 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testBuilderJacksonized() {
+    // shouldn't throw any exceptions (like StackOverflowError)
+    doTest();
+  }
+
+  public void testBuilderWithPredefinedBuilderClassMethods() {
+    doTest();
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

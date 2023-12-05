@@ -8,6 +8,8 @@ import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspecti
 import org.junit.Test
 
 class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testAutomaticParentVersionResolutionForMaven4() = runBlocking {
     assumeVersionAtLeast("4.0.0-alpha-2")

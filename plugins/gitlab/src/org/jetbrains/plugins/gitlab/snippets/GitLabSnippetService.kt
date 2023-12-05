@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.readAction
@@ -15,7 +16,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
@@ -146,13 +148,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
               ?: reattemptLogin(apiManager, accountManager, result)
               ?: return null
 
-    // If token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
-    try {
-      api.graphQL.getCurrentUser() ?: error("No current user")
-    } catch (e: Exception) {
-      if (e is CancellationException) throw e
-
-      return reattemptLogin(apiManager, accountManager, result)
+    // If a token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
+    runCatchingUser { api.graphQL.getCurrentUser() }.onFailure {
+      when {
+        isAuthorizationException(it) -> return reattemptLogin(apiManager, accountManager, result)
+        else -> throw it
+      }
     }
 
     return api
@@ -202,11 +203,13 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
 
     logSnippetActionExecuted(project, CREATE_CREATED)
 
+    if (data.isOpenInBrowser) return
+
     VcsNotifier.getInstance(project)
       .notifyMinorInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
                        message("snippet.create.action.success.title"),
                        HtmlChunk.link(url, message("snippet.create.action.success.description")).toString())
-      .setListener(NotificationListener.URL_OPENING_LISTENER)
+      .setListener(NotificationListener.UrlOpeningListener(false))
   }
 
   /**
@@ -236,7 +239,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                                  files: List<VirtualFile>): GitLabCreateSnippetResult? =
     coroutineScope {
       val availablePathHandlingModes =
-        PathHandlingMode.values().filter {
+        PathHandlingMode.entries.filter {
           val extractor = getFileNameExtractor(project, files, it)
           files.map { file -> extractor(file) }.toSet().size == files.size // Check that there are no duplicates when mapped
         }
@@ -307,7 +310,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * @return `true` if the limit is reached, `false`, if not.
    */
   private fun VirtualFile.collectNonBinaryFilesImpl(collection: MutableSet<VirtualFile>): Boolean {
-    if (isFile && fileType.isBinary || collection.size > GL_SNIPPET_FILES_LIMIT || isRecursiveOrCircularSymlink) {
+    val fileType = runCatching {
+      this.fileType
+    }
+
+    if (fileType.isFailure || (isFile && fileType.getOrNull()?.isBinary == true)
+        || collection.size > GL_SNIPPET_FILES_LIMIT || isRecursiveOrCircularSymlink) {
       return collection.size > GL_SNIPPET_FILES_LIMIT
     }
 

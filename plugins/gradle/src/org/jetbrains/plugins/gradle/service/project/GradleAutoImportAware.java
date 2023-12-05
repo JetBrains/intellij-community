@@ -16,10 +16,10 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
+import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -119,7 +119,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
       String gradleUserHome = ObjectUtils.chooseNotNull(
         GradleSettings.getInstance(project).getServiceDirectoryPath(),
-        new BuildLayoutParameters().getGradleUserHomeDir().getPath()
+        GradleUserHomeUtil.gradleUserHomeDir().getPath()
       );
       String externalProjectPath = projectSettings.getExternalProjectPath();
 

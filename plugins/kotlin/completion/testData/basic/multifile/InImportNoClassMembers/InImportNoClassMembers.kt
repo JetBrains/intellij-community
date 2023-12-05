@@ -4,3 +4,4 @@ package first
 import second.One.<caret>
 
 // NUMBER: 0
+// IGNORE_K2

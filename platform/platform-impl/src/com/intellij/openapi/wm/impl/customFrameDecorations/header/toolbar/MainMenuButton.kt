@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
@@ -22,11 +23,18 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.platform.ide.menu.collectGlobalMenu
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -35,7 +43,7 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 
 @ApiStatus.Internal
-class MainMenuButton {
+class MainMenuButton(coroutineScope: CoroutineScope) {
 
   internal var expandableMenu: ExpandableMenu? = null
     set(value) {
@@ -55,7 +63,7 @@ class MainMenuButton {
       if (field !== value) {
         uninstall()
         field = value
-        if (button.isShowing) {
+        if (button.isShowing && value != null) {
           install()
         }
       }
@@ -63,6 +71,8 @@ class MainMenuButton {
 
   init {
     button.addHierarchyListener { e ->
+      // The root pane might have been replaced/removed (this happens when a frame is reused to open another project).
+      rootPane = (ComponentUtil.getWindow(button) as? IdeFrameImpl?)?.rootPane
       if (e!!.changeFlags.toInt() and HierarchyEvent.SHOWING_CHANGED != 0) {
         if (button.isShowing) {
           install()
@@ -71,6 +81,17 @@ class MainMenuButton {
           uninstall()
         }
       }
+    }
+    coroutineScope.launch(Dispatchers.EDT) {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        uninstall()
+      }
+    }
+    collectGlobalMenu(coroutineScope) { globalMenuPresent ->
+      button.isVisible = !globalMenuPresent
     }
   }
 

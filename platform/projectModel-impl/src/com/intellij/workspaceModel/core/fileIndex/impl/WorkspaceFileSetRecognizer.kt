@@ -44,12 +44,12 @@ object WorkspaceFileSetRecognizer {
     if (globalLibraryId != null) {
       return globalLibraryId
     }
-    val projectLibraryId = LibraryRootFileIndexContributor.getProjectLibraryId(fileSetImpl.data)
+    val projectLibraryId = LibraryRootFileIndexContributor.Util.getProjectLibraryId(fileSetImpl.data)
     if (projectLibraryId != null) {
       return projectLibraryId
     }
 
-    val moduleLibraryId = LibraryRootFileIndexContributor.getModuleLibraryId(fileSetImpl, storage)
+    val moduleLibraryId = LibraryRootFileIndexContributor.Util.getModuleLibraryId(fileSetImpl, storage)
     thisLogger().assertTrue(moduleLibraryId != null) {
       "Failed to find libraryId for $fileSet"
     }

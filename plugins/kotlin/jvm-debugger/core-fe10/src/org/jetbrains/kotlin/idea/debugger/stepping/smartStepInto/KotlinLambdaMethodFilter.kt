@@ -68,8 +68,7 @@ class KotlinLambdaMethodFilter(
         }
     }
 
-    override fun getCallingExpressionLines() =
-        if (lambdaInfo.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
+    override fun getCallingExpressionLines() = callingExpressionLines
 
     fun isTargetLambdaName(name: String): Boolean {
         val actualName = name.trimIfMangledInBytecode(lambdaInfo.isNameMangledInBytecode)

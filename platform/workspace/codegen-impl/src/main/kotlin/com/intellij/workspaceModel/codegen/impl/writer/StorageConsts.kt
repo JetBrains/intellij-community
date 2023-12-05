@@ -88,12 +88,19 @@ internal object EntityInformation {
 //Storage metamodel classes
 internal object MetadataStorage {
   private const val BASE_NAME = "MetadataStorageBase"
+  private const val BRIDGE_NAME = "MetadataStorageBridge"
   internal const val IMPL_NAME = "MetadataStorageImpl"
 
   internal val base = fqn(workspaceStorageMetadataImplPackageName, BASE_NAME)
+  internal val bridge = fqn(workspaceStorageMetadataPackageName, BRIDGE_NAME)
 
-  internal val addMetadata = "addMetadata"
-  internal val getMetadataByTypeFqn = "getMetadataByTypeFqn"
+  internal const val addMetadata = "addMetadata"
+  internal const val addMetadataHash = "addMetadataHash"
+  internal const val getMetadataByTypeFqn = "getMetadataByTypeFqn"
+
+  override fun toString(): String {
+    return fqn(workspaceStorageMetadataPackageName, "MetadataStorage").toString()
+  }
 }
 
 internal val EntityMetadata = fqn(workspaceStorageMetamodelPackageName, "EntityMetadata")
@@ -116,6 +123,8 @@ internal val EntityReference = fqn(workspaceStorageMetamodelPackageName, "ValueT
 // Entity
 internal val LibraryEntity = fqn(workspaceEntitiesPackageName, "LibraryEntity")
 internal val LibraryRoot = fqn(workspaceEntitiesPackageName, "LibraryRoot")
+internal val SdkEntity = fqn(workspaceEntitiesPackageName, "SdkEntity")
+internal val SdkRoot = fqn(workspaceEntitiesPackageName, "SdkRoot")
 
 
 // Annotations

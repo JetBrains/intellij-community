@@ -108,9 +108,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
       boolean needShowOnHover = psiFile != null && WebBrowserXmlService.getInstance().isXmlLanguage(psiFile.getViewProvider().getBaseLanguage())
               ? browserManager.isShowBrowserHoverXml()
               : browserManager.isShowBrowserHover();
-      e.getPresentation().setVisible(needShowOnHover &&
-                                     (!browserManager.getActiveBrowsers().isEmpty() || OpenInBrowserBaseGroupAction.hasLocalBrowser())
-                                     && editor != null && !DiffUtil.isDiffEditor(editor));
+      boolean enabled = needShowOnHover &&
+                        (!browserManager.getActiveBrowsers().isEmpty() || OpenInBrowserBaseGroupAction.hasLocalBrowser())
+                        && editor != null && !DiffUtil.isDiffEditor(editor);
+      e.getPresentation().setEnabledAndVisible(enabled);
     }
   }
 }

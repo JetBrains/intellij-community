@@ -27,11 +27,9 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -154,9 +152,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    var renderer = Registry.is("ide.goto.target.new.renderer")
-                   ? new GotoTargetRendererNew(o -> ((ItemWithPresentation)o).getPresentation())
-                   : new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).getPresentation()));
+    var renderer = new GotoTargetRendererNew(o -> ((ItemWithPresentation)o).getPresentation());
     builder.setRenderer(renderer).
       setItemsChosenCallback(selectedElements -> {
         for (ItemWithPresentation element : selectedElements) {

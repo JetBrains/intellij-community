@@ -39,7 +39,10 @@ public class SingleClassesTest {
     fixture.setUp(Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
                          IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
                          IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1"));
+                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
+                         IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "1",
+                         IFernflowerPreferences.CONVERT_RECORD_PATTERN, "1"
+    ));
   }
 
   @After
@@ -146,6 +149,21 @@ public class SingleClassesTest {
   @Test public void testSwitchOnStringsJavac() { doTest("pkg/TestSwitchOnStringsJavac"); }
   @Test public void testSwitchOnStringsEcj() { doTest("pkg/TestSwitchOnStringsEcj"); }
   @Test public void testSwitchRules() { doTest("pkg/TestSwitchRules"); }
+  @Test public void testSwitchSimpleReferencesJavac() { doTest("pkg/TestSwitchSimpleReferencesJavac"); }
+  @Test public void testSwitchClassReferencesJavac() { doTest("pkg/TestSwitchClassReferencesJavac"); }
+  @Test public void testSwitchClassReferencesEcj() { doTest("pkg/TestSwitchClassReferencesEcj"); }
+  @Test public void testSwitchClassReferencesFastExitJavac() { doTest("pkg/TestSwitchClassReferencesFastExitJavac"); }
+  @Test public void testSwitchClassReferencesFastExitEcj() { doTest("pkg/TestSwitchClassReferencesFastExitEcj"); }
+  @Test public void testSwitchGuardedJavac() { doTest("pkg/TestSwitchGuardedJavac"); }
+  @Test public void testSwitchGuarded2Javac() { doTest("pkg/TestSwitchGuarded2Javac"); }
+  @Test public void testSwitchGuardedEcj() { doTest("pkg/TestSwitchGuardedEcj"); }
+
+  //ecj doesn't support here, because it produces code with unnecessary assignments,
+  //which can confuse decompiler with ordinary ones
+  @Test public void testSimpleInstanceOfRecordPatternJavac() { doTest("pkg/TestSimpleInstanceOfRecordPatternJavac"); }
+  @Test public void testComplexInstanceOfRecordPatternJavac() { doTest("pkg/TestComplexInstanceOfRecordPatternJavac"); }
+  @Test public void testSwitchWithDeconstructionsWithoutNestedJavac() { doTest("pkg/TestSwitchWithDeconstructionsWithoutNestedJavac"); }
+  @Test public void testSwitchNestedDeconstructionJavac() { doTest("pkg/TestSwitchNestedDeconstructionsJavac"); }
 
   // TODO: fix all below
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }

@@ -10,78 +10,77 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.BasicLiteralUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.impl.source.BasicElementTypes;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-
-import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_STRING_LITERALS;
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EXPRESSION;
 
 public class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    PsiElement parent = e.getParent();
-    return isStringLiteral(e) || isStringLiteral(parent);
-  }
-
-  private static boolean isStringLiteral(PsiElement element) {
-    return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(element), BASIC_STRING_LITERALS)
-           && element.getText().startsWith("\"")
-           && element.getText().endsWith("\"");
+    IElementType type = e.getNode().getElementType();
+    return BasicElementTypes.BASIC_STRING_LITERALS.contains(type) ||
+           BasicElementTypes.BASIC_STRING_TEMPLATE_FRAGMENTS.contains(type);
   }
 
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
-    if (result == null) {
-      return null;
+    if (result == null) return null;
+
+    ASTNode node = e.getNode();
+    StringLiteralLexer lexer = new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, node.getElementType(), true, "s{");
+    SelectWordUtil.addWordHonoringEscapeSequences(editorText, node.getTextRange(), cursorOffset, lexer, result);
+    result.add(getContentRange(node, editorText));
+    return result;
+  }
+
+  private static TextRange getContentRange(ASTNode node, @NotNull CharSequence text) {
+    final IElementType tokenType = node.getElementType();
+    final TextRange range = node.getTextRange();
+
+    if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_MID ||
+        tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) {
+      return new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 2);
     }
-    ASTNode node = BasicJavaAstTreeUtil.toNode(e);
-    if (node == null) {
-      return null;
+    else if (tokenType == JavaTokenType.STRING_TEMPLATE_END || tokenType == JavaTokenType.STRING_LITERAL) {
+      int end = text.charAt(range.getEndOffset() - 1) == '"'
+                      ? range.getEndOffset() - 1
+                      : range.getEndOffset();
+      return new TextRange(range.getStartOffset() + 1, end);
     }
-    TextRange range = node.getTextRange();
-    SelectWordUtil.addWordHonoringEscapeSequences(editorText, range, cursorOffset,
-                                                  new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
-                                                  result);
-    ASTNode literalExpression = null;
-    if (BasicJavaAstTreeUtil.is(node, BASIC_LITERAL_EXPRESSION)) {
-      literalExpression = node;
-    }
-    if (literalExpression == null) {
-      ASTNode parent = node.getTreeParent();
-      if (BasicJavaAstTreeUtil.is(parent, BASIC_LITERAL_EXPRESSION)) {
-        literalExpression = parent;
+    else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN || tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ||
+             tokenType == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      int start;
+      if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) {
+        start = range.getStartOffset() + 1;
       }
-    }
-    PsiElement literalPsiExpression = BasicJavaAstTreeUtil.toPsi(literalExpression);
-    if (literalExpression != null && literalPsiExpression != null && BasicJavaAstTreeUtil.isTextBlock(literalExpression)) {
-      int contentStart = StringUtil.indexOf(editorText, '\n', range.getStartOffset());
-      if (contentStart == -1) return result;
-      contentStart += 1;
-      int indent = BasicLiteralUtil.getTextBlockIndent(literalPsiExpression);
-      if (indent == -1) return result;
-      for (int i = 0; i < indent; i++) {
-        if (editorText.charAt(contentStart + i) == '\n') return result;
+      else {
+        start = range.getStartOffset() + 3;
+        while (BasicLiteralUtil.isTextBlockWhiteSpace(text.charAt(start))) start++;
+        if (text.charAt(start) == '\n') start++;
       }
-      int start = contentStart + indent;
-      int end = range.getEndOffset() - 4;
-      for (; end >= start; end--) {
-        char c = editorText.charAt(end);
-        if (c == '\n') break;
-        if (!Character.isWhitespace(c)) {
-          end += 1;
-          break;
+      int end;
+      if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+        end = range.getEndOffset() - 2;
+      }
+      else {
+        end = range.getEndOffset();
+        end -= StringUtil.endsWith(text, start, end, "\"\"\"") ? 4 : 1;
+        for (; end >= start; end--) {
+          char c = text.charAt(end);
+          if (c == '\n' || !Character.isWhitespace(c)) {
+            end += 1;
+            break;
+          }
         }
       }
-      if (start < end) result.add(new TextRange(start, end));
+      return new TextRange(start, end);
     }
     else {
-      result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
+      throw new IllegalArgumentException();
     }
-
-    return result;
   }
 }

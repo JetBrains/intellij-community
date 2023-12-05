@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.progress.RawProgressReporter
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
@@ -21,9 +21,8 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   @Throws(MavenProcessCanceledException::class)
   suspend fun resolvePlugins(mavenProjectsToResolvePlugins: Collection<MavenProjectWithHolder>,
                              embeddersManager: MavenEmbeddersManager,
-                             console: MavenConsole,
                              process: RawProgressReporter,
-                             syncConsole: MavenSyncConsole?,
+                             eventHandler: MavenEventHandler,
                              reportUnresolvedToSyncConsole: Boolean) {
     val mavenProjects = mavenProjectsToResolvePlugins.filter {
       !it.mavenProject.hasReadingProblems()
@@ -43,7 +42,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       val mavenPluginIds = mavenPluginIdsToResolve.map { it.first }
       MavenLog.LOG.info("maven plugin resolution started: $mavenPluginIds")
       val forceUpdate = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots
-      val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, syncConsole, forceUpdate, console)
+      val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, eventHandler, forceUpdate)
       val unresolvedPlugins = resolutionResults.filter { !it.isResolved }.map { it.mavenPluginId }
       MavenLog.LOG.info("maven plugin resolution finished, unresolved: $unresolvedPlugins")
       val artifacts = resolutionResults.flatMap { it.artifacts }
@@ -75,9 +74,8 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   private fun reportUnresolvedPlugins(unresolvedPluginIds: Set<MavenId>) {
     if (!unresolvedPluginIds.isEmpty()) {
       for (mavenPluginId in unresolvedPluginIds) {
-        MavenProjectsManager.getInstance(myProject)
-          .syncConsole.getListener(MavenServerConsoleIndicator.ResolveType.PLUGIN)
-          .showArtifactBuildIssue(mavenPluginId.key, null)
+        MavenProjectsManager.getInstance(myProject).syncConsole
+          .showArtifactBuildIssue(MavenServerConsoleIndicator.ResolveType.PLUGIN, mavenPluginId.key, null)
       }
     }
   }

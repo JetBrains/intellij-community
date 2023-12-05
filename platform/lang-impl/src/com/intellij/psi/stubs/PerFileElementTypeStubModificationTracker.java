@@ -55,6 +55,10 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         return (StubUpdatingIndexStorage)index;
       }
       catch (Exception e) { // EA-753513 Index is not created for `Stubs`
+        if (FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtension(StubUpdatingIndex.class) == null) {
+          // StubUpdatingIndex is not registered
+          return null;
+        }
         LOG.error("Couldn't get stub indexing storage. Mod counts will be incremented without a precise check", e);
         return null;
       }
@@ -212,7 +216,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private static @Nullable FileContent getTransientAwareFileContent(FileInfo info) throws IOException {
     var file = info.file;
-    var doc = FileDocumentManager.getInstance().getDocument(file);
+    var doc = FileDocumentManager.getInstance().getCachedDocument(file);
     var project = info.project;
     if (doc == null) {
       try {

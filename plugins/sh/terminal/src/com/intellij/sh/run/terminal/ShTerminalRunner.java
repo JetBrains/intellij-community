@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run.terminal;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -10,21 +9,22 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.sh.run.ShRunner;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.jediterm.terminal.ProcessTtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
+import org.jetbrains.plugins.terminal.TerminalUtil;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 
 final class ShTerminalRunner implements ShRunner {
-  private static final Logger LOG = Logger.getInstance(ShTerminalRunner.class);
 
   @Override
   public void run(@NotNull Project project,
@@ -39,22 +39,18 @@ final class ShTerminalRunner implements ShRunner {
     }
 
     ContentManager contentManager = window.getContentManager();
-    Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
-    try {
-      if (pair == null) {
-        terminalToolWindowManager.createLocalShellWidget(workingDirectory, title, activateToolWindow, activateToolWindow).executeCommand(command);
-        return;
-      }
-      if (activateToolWindow) {
-        window.activate(null);
-      }
-      pair.first.setDisplayName(title);
-      contentManager.setSelectedContent(pair.first);
-      pair.second.executeCommand(command);
+    Pair<Content, TerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
+    if (pair == null) {
+      terminalToolWindowManager.createShellWidget(workingDirectory, title, activateToolWindow, activateToolWindow)
+        .sendCommandToExecute(command);
+      return;
     }
-    catch (IOException e) {
-      LOG.warn("Cannot run command:" + command, e);
+    if (activateToolWindow) {
+      window.activate(null);
     }
+    pair.first.setDisplayName(title);
+    contentManager.setSelectedContent(pair.first);
+    pair.second.sendCommandToExecute(command);
   }
 
   @Override
@@ -63,11 +59,11 @@ final class ShTerminalRunner implements ShRunner {
     return window != null && window.isAvailable();
   }
 
-  private static @Nullable Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull ContentManager contentManager,
-                                                                                 @NotNull String workingDirectory) {
+  private static @Nullable Pair<Content, TerminalWidget> getSuitableProcess(@NotNull ContentManager contentManager,
+                                                                            @NotNull String workingDirectory) {
     Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
-      Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(selectedContent, workingDirectory);
+      Pair<Content, TerminalWidget> pair = getSuitableProcess(selectedContent, workingDirectory);
       if (pair != null) return pair;
     }
 
@@ -78,22 +74,27 @@ final class ShTerminalRunner implements ShRunner {
       .orElse(null);
   }
 
-  private static @Nullable Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull Content content,
-                                                                                 @NotNull String workingDirectory) {
-    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
-    if (!(widget instanceof ShellTerminalWidget shellTerminalWidget)) {
+  private static @Nullable Pair<Content, TerminalWidget> getSuitableProcess(@NotNull Content content,
+                                                                            @NotNull String workingDirectory) {
+    TerminalWidget widget = TerminalToolWindowManager.findWidgetByContent(content);
+    if (widget == null || (widget instanceof JBTerminalWidget && !(widget instanceof ShellTerminalWidget))) {
       return null;
     }
 
-    if (!shellTerminalWidget.getTypedShellCommand().isEmpty() || shellTerminalWidget.hasRunningCommands()) {
+    if (widget instanceof ShellTerminalWidget shellTerminalWidget && !shellTerminalWidget.getTypedShellCommand().isEmpty()) {
       return null;
     }
 
-    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget.asNewWidget());
+    ProcessTtyConnector processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
+    if (processTtyConnector == null || TerminalUtil.hasRunningCommands(processTtyConnector)) {
+      return null;
+    }
+
+    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
     if (!FileUtil.pathsEqual(workingDirectory, currentWorkingDirectory)) {
       return null;
     }
 
-    return new Pair<>(content, shellTerminalWidget);
+    return new Pair<>(content, widget);
   }
 }

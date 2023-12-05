@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl.containers
 
-import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.ints.Int2IntMaps
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.Consumer
 
 internal class ImmutableNonNegativeIntIntBiMap(
-  override val key2Value: Int2IntMap,
+  override val key2Value: Int2IntWithDefaultMap,
   override val value2Keys: ImmutableNonNegativeIntIntMultiMap.ByList
 ) : NonNegativeIntIntBiMap() {
 
@@ -15,19 +17,23 @@ internal class ImmutableNonNegativeIntIntBiMap(
 }
 
 internal class MutableNonNegativeIntIntBiMap private constructor(
-  override var key2Value: Int2IntMap,
+  override var key2Value: Int2IntWithDefaultMap,
   override var value2Keys: MutableNonNegativeIntIntMultiMap.ByList,
   private var freezed: Boolean
 ) : NonNegativeIntIntBiMap() {
 
-  constructor() : this(Int2IntOpenHashMap(), MutableNonNegativeIntIntMultiMap.ByList(), false) {
+  constructor() : this(Int2IntWithDefaultMap(), MutableNonNegativeIntIntMultiMap.ByList(), false) {
     key2Value.defaultReturnValue(DEFAULT_RETURN_VALUE)
   }
-  constructor(key2Value: Int2IntMap, value2Keys: MutableNonNegativeIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
+  constructor(key2Value: Int2IntWithDefaultMap, value2Keys: MutableNonNegativeIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
 
-  fun putAll(keys: IntArray, value: Int) {
+  /**
+   * Returns map of removed pairs
+   */
+  fun putAll(keys: IntArray, value: Int): Int2IntWithDefaultMap {
     startWrite()
 
+    val previousValues = Int2IntWithDefaultMap()
     var hasDuplicates = false
     val duplicatesFinder = IntOpenHashSet()
     keys.forEach {
@@ -40,27 +46,36 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
       }
       val oldValue = key2Value.put(it, value)
       if (oldValue != DEFAULT_RETURN_VALUE) value2Keys.remove(oldValue, it)
+      if (oldValue != value && oldValue != DEFAULT_RETURN_VALUE) previousValues.put(it, oldValue)
     }
     if (hasDuplicates) {
       value2Keys.putAll(value, duplicatesFinder.toIntArray())
     } else {
       value2Keys.putAll(value, keys)
     }
+    return previousValues
   }
 
-  fun removeKey(key: Int) {
-    if (!key2Value.containsKey(key)) return
+  /**
+   * Returns removed value if any
+   */
+  fun removeKey(key: Int): Int? {
+    if (!key2Value.containsKey(key)) return null
     startWrite()
     val removedValue = key2Value.remove(key)
     value2Keys.remove(removedValue, key)
+    return removedValue
   }
 
-  fun removeValue(value: Int) {
+  /**
+   * Returns sequence of removed keys
+   */
+  fun removeValue(value: Int): NonNegativeIntIntMultiMap.IntSequence {
     startWrite()
     value2Keys.get(value).forEach {
       key2Value.remove(it)
     }
-    value2Keys.remove(value)
+    return value2Keys.remove(value)
   }
 
   fun remove(key: Int, value: Int) {
@@ -77,7 +92,7 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
 
   private fun startWrite() {
     if (!freezed) return
-    key2Value = Int2IntOpenHashMap(key2Value)
+    key2Value = Int2IntWithDefaultMap.from(key2Value)
     key2Value.defaultReturnValue(DEFAULT_RETURN_VALUE)
     freezed = false
   }
@@ -90,14 +105,14 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
 
 internal sealed class NonNegativeIntIntBiMap {
 
-  protected abstract val key2Value: Int2IntMap
+  protected abstract val key2Value: Int2IntWithDefaultMap
   protected abstract val value2Keys: NonNegativeIntIntMultiMap
 
   val keys: IntSet
     get() = key2Value.keys
 
   inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
-    Int2IntMaps.fastForEach(`access$key2Value`, Consumer { action(it.intKey, it.intValue) })
+    Int2IntMaps.fastForEach(key2Value.backingMap, Consumer { action(it.intKey, it.intValue) })
   }
 
   fun containsKey(key: Int) = key2Value.containsKey(key)
@@ -126,10 +141,9 @@ internal sealed class NonNegativeIntIntBiMap {
     return result
   }
 
-  @Suppress("PropertyName")
-  @PublishedApi
-  internal val `access$key2Value`: Int2IntMap
-    get() = key2Value
+  internal fun assertConsistency() {
+    assert(key2Value.defaultReturnValue() == DEFAULT_RETURN_VALUE)
+  }
 
   companion object {
     internal const val DEFAULT_RETURN_VALUE = -1

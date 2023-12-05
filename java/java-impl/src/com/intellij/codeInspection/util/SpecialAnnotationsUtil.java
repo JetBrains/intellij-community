@@ -2,8 +2,6 @@
 
 package com.intellij.codeInspection.util;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
@@ -14,14 +12,11 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -29,11 +24,8 @@ import com.intellij.ui.SortedListModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -160,46 +152,5 @@ public final class SpecialAnnotationsUtil {
       .moveLabelOnTop()
       .resizeY(true)
       .createPanel();
-  }
-
-  public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final @IntentionName String text,
-                                                                                 final @IntentionFamilyName String family,
-                                                                                 final @Nls String listTitle,
-                                                                                 final List<String> targetList,
-                                                                                 final String qualifiedName) {
-    return new IntentionAction() {
-      @Override
-      @NotNull
-      public String getText() {
-        return text;
-      }
-
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return family;
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return true;
-      }
-
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        SpecialAnnotationsUtilBase.doQuickFixInternal(project, targetList, qualifiedName);
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return false;
-      }
-
-      @Override
-      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        List<@NlsSafe String> prefixes = StreamEx.of(targetList).append(qualifiedName).sorted().toList();
-        return IntentionPreviewInfo.addListOption(prefixes, qualifiedName, listTitle);
-      }
-    };
   }
 }

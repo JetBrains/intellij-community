@@ -21,8 +21,7 @@ import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalC
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
+import java.awt.event.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -34,6 +33,7 @@ class BlockTerminalView(
 ) : TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
   private val selectionController: TerminalSelectionController
+  private val focusModel: TerminalFocusModel
 
   private val outputView: TerminalOutputView = TerminalOutputView(project, session, settings)
   private val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
@@ -44,20 +44,28 @@ class BlockTerminalView(
   override val preferredFocusableComponent: JComponent
     get() = when {
       alternateBufferView != null -> alternateBufferView!!.preferredFocusableComponent
-      promptView.component.isVisible -> promptView.preferredFocusableComponent
+      controller.searchSession != null -> controller.searchSession!!.component.searchTextComponent
+      promptView.component.isVisible && selectionController.primarySelection == null -> promptView.preferredFocusableComponent
       else -> outputView.preferredFocusableComponent
     }
 
   init {
+    focusModel = TerminalFocusModel(project, this, outputView, promptView)
+    selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
+    controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
+
     Disposer.register(this, outputView)
     Disposer.register(this, promptView)
 
     promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
-        promptView.component.isVisible = visible
         component.revalidate()
         invokeLater {
-          IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
+          // do not focus the terminal if something outside the terminal is focused now
+          // it can be the case when long command is finished and prompt becomes shown
+          if (focusModel.isActive) {
+            IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
+          }
         }
       }
     })
@@ -70,13 +78,16 @@ class BlockTerminalView(
       }
     })
 
-    val focusModel = TerminalFocusModel(project, outputView, promptView)
-    selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
-    controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
-
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         updateTerminalSize()
+      }
+    })
+
+    component.addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent) {
+        // move focus to terminal if user clicked in the empty area
+        IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
       }
     })
 
@@ -99,6 +110,11 @@ class BlockTerminalView(
         outputView.removeSearchComponent(session.component)
       }
     })
+
+    // Forward key typed events from the output view to the prompt.
+    // So, user can start typing even when some block is selected.
+    // The focus and the events will just move to the prompt without an explicit focus switch.
+    installTypingEventsForwarding(outputView.preferredFocusableComponent, promptView.preferredFocusableComponent)
 
     installPromptAndOutput()
   }
@@ -124,8 +140,7 @@ class BlockTerminalView(
   }
 
   private fun installAlternateBufferPanel() {
-    val eventsHandler = TerminalEventsHandler(session, settings)
-    val view = SimpleTerminalView(project, settings, session, eventsHandler, withVerticalScroll = false)
+    val view = SimpleTerminalView(project, settings, session, withVerticalScroll = false)
     Disposer.register(this, view)
     alternateBufferView = view
 
@@ -143,6 +158,19 @@ class BlockTerminalView(
       add(promptView.component, BorderLayout.SOUTH)
       revalidate()
     }
+  }
+
+  private fun installTypingEventsForwarding(origin: JComponent, destination: JComponent) {
+    origin.addKeyListener(object : KeyAdapter() {
+      override fun keyTyped(e: KeyEvent) {
+        if (e.id == KeyEvent.KEY_TYPED && destination.isShowing) {
+          e.consume()
+          IdeFocusManager.getInstance(project).requestFocus(destination, true)
+          val newEvent = KeyEvent(destination, e.id, e.`when`, e.modifiers, e.keyCode, e.keyChar, e.keyLocation)
+          destination.dispatchEvent(newEvent)
+        }
+      }
+    })
   }
 
   override fun startCommandExecution(command: String) {
@@ -173,6 +201,10 @@ class BlockTerminalView(
     session.addTerminationCallback(onTerminated, parentDisposable)
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    controller.startCommandExecution(shellCommand)
+  }
+
   override fun dispose() {}
 
   private inner class BlockTerminalPanel : JPanel(), DataProvider {
@@ -188,6 +220,7 @@ class BlockTerminalView(
         SimpleTerminalController.KEY.name -> alternateBufferView?.controller
         BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController
+        TerminalFocusModel.KEY.name -> focusModel
         TerminalSession.DATA_KEY.name -> session
         else -> null
       }

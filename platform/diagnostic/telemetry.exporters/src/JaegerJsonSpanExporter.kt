@@ -3,61 +3,58 @@ package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.io.BufferedWriter
+import java.nio.ByteBuffer
+import java.nio.channels.Channels
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 // https://github.com/jaegertracing/jaeger-ui/issues/381
 @ApiStatus.Internal
 class JaegerJsonSpanExporter(
-  val file: Path,
+  file: Path,
   serviceName: String,
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  private val tempTelemetryPath: Path
-  private val telemetryJsonPath: Path
+  private val fileChannel: FileChannel
   private val writer: JsonGenerator
 
-  private val lock = ReentrantLock()
+  private val lock = Mutex()
 
   init {
-    // presume that telemetry stuff need to be saved in log dir
-    if (!file.isAbsolute || file.parent == null) {
-      Files.createDirectories(PathManager.getLogDir().toAbsolutePath()).apply {
-        tempTelemetryPath = this.resolve("telemetry.temp")
-        telemetryJsonPath = this.resolve(file)
-      }
-    }
-    // path is absolute and has a parent
-    else {
-      tempTelemetryPath = Files.createDirectories(file.parent.toAbsolutePath()).resolve("telemetry.temp").toAbsolutePath()
-      telemetryJsonPath = file
-    }
+    val parent = file.parent
+    Files.createDirectories(parent)
 
-    writer = JsonFactory().createGenerator(java.nio.file.Files.newBufferedWriter(tempTelemetryPath))
+    fileChannel = FileChannel.open(file, EnumSet.of(StandardOpenOption.CREATE,
+                                                    StandardOpenOption.WRITE,
+                                                    StandardOpenOption.TRUNCATE_EXISTING))
+
+    writer = JsonFactory().createGenerator(Channels.newOutputStream(fileChannel))
       .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
+      // Channels.newOutputStream doesn't implement flush, but just to be sure
+      .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
 
-    beginWriter(writer, serviceName, serviceVersion, serviceNamespace)
+    beginWriter(w = writer, serviceName = serviceName, serviceVersion = serviceVersion, serviceNamespace = serviceNamespace)
   }
 
+  @Suppress("DuplicatedCode")
   override suspend fun export(spans: Collection<SpanData>) {
-    lock.withLock {
+    lock.withReentrantLock {
       for (span in spans) {
         writer.writeStartObject()
         writer.writeStringField("traceID", span.traceId)
@@ -120,29 +117,77 @@ class JaegerJsonSpanExporter(
         }
         writer.writeEndObject()
       }
+    }
+  }
+
+  @OptIn(ExperimentalStdlibApi::class)
+  @Suppress("DuplicatedCode")
+  suspend fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
+    lock.withReentrantLock {
+      for (scopeSpan in scopeSpans) {
+        for (span in scopeSpan.spans) {
+          writer.writeStartObject()
+          val traceId = span.traceId.toHexString()
+          writer.writeStringField("traceID", traceId)
+          writer.writeStringField("spanID", span.spanId.toHexString())
+          writer.writeStringField("operationName", span.name)
+
+          writer.writeStringField("processID", "p1")
+          writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startTimeUnixNano))
+          writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endTimeUnixNano - span.startTimeUnixNano))
+
+          val attributes = span.attributes
+          if (!attributes.isEmpty()) {
+            writer.writeArrayFieldStart("tags")
+            for (k in attributes) {
+              val w = writer
+              w.writeStartObject()
+              w.writeStringField("key", k.key)
+              w.writeStringField("type", "string")
+              w.writeStringField("value", k.value.string)
+              w.writeEndObject()
+            }
+            writer.writeEndArray()
+          }
+
+          if (span.parentSpanId != null) {
+            writer.writeArrayFieldStart("references")
+            writer.writeStartObject()
+            writer.writeStringField("refType", "CHILD_OF")
+            // not an error - space trace id equals to parent, OpenTelemetry opposite to Jaeger doesn't support cross-trace parent
+            writer.writeStringField("traceID", traceId)
+            writer.writeStringField("spanID", span.parentSpanId.toHexString())
+            writer.writeEndObject()
+            writer.writeEndArray()
+          }
+          writer.writeEndObject()
+        }
+      }
       writer.flush()
     }
   }
 
-  override fun shutdown() {
-    lock.withLock {
-      closeJsonFile(writer)
-      // nothing was written to the file
-      if (Files.notExists(tempTelemetryPath)) return
-
-      Files.move(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
+  override suspend fun shutdown() {
+    lock.withReentrantLock {
+      withContext(Dispatchers.IO) {
+        fileChannel.use {
+          closeJsonFile(writer)
+        }
+      }
     }
   }
 
-  override fun forceFlush() {
-    lock.withLock {
+  override suspend fun flush() {
+    lock.withReentrantLock {
       // if shutdown was already invoked OR nothing has been written to the temp file
-      if (writer.isClosed || Files.notExists(tempTelemetryPath)) {
-        return
+      if (writer.isClosed) {
+        return@withReentrantLock
       }
 
-      Files.copy(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
-      closeJsonFile(Files.newBufferedWriter(file, StandardOpenOption.APPEND))
+      writer.flush()
+      fileChannel.write(ByteBuffer.wrap(jsonEnd))
+      fileChannel.force(false)
+      fileChannel.position(fileChannel.position() - jsonEnd.size)
     }
   }
 }
@@ -195,7 +240,7 @@ private fun writeAttributesAsJson(w: JsonGenerator, attributes: Attributes) {
   attributes.forEach { k, v ->
     w.writeStartObject()
     w.writeStringField("key", k.key)
-    w.writeStringField("type", k.type.name.lowercase(Locale.getDefault()))
+    w.writeStringField("type", k.type.name.lowercase())
     if (v is Iterable<*>) {
       w.writeArrayFieldStart("value")
       for (item in v) {
@@ -223,7 +268,4 @@ private fun closeJsonFile(jsonGenerator: JsonGenerator) {
   jsonGenerator.close()
 }
 
-private fun closeJsonFile(writer: BufferedWriter) {
-  // JsonGenerator created from scratch can't close unfinished a json object
-  writer.use { it.append("]}]}") }
-}
+private val jsonEnd = "]}]}".encodeToByteArray()

@@ -3,14 +3,14 @@ package com.intellij.platform.testFramework.treeAssertion
 
 import org.junit.jupiter.api.AssertionFailureBuilder
 
-internal class SimpleTreeAssertionImpl<T> private constructor(
-  private val expectedChildren: MutableList<SimpleTree.Node<NodeAssertionOptions<T>>>
-) : SimpleTreeAssertion.Node<T> {
+internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAssertion.Node<T> {
 
-  private var valueAssertion: (T) -> Unit = {}
+  private val expectedChildren = ArrayList<SimpleTree.Node<NodeAssertionOptions<T>>>()
+
+  private var valueAssertions = ArrayList<(T) -> Unit>()
 
   override fun assertValue(assert: (T) -> Unit) {
-    valueAssertion = assert
+    valueAssertions.add(assert)
   }
 
   // @formatter:off
@@ -25,12 +25,15 @@ internal class SimpleTreeAssertionImpl<T> private constructor(
       return
     }
     if (options.flattenIf) {
-      addAssertionNodes(expectedChildren, assert)
+      val assertion = buildTreeAssertion(assert)
+      expectedChildren.addAll(assertion.expectedChildren)
       return
     }
     val displayName = options.matcher.displayName
     val expectedChild = SimpleTree.Node(displayName, options)
-    addAssertionNodes(expectedChild.children, assert)
+    val childAssertion = buildTreeAssertion(assert)
+    expectedChild.children.addAll(childAssertion.expectedChildren)
+    expectedChild.value.valueAssertions = childAssertion.valueAssertions
     expectedChildren.add(expectedChild)
   }
 
@@ -39,7 +42,7 @@ internal class SimpleTreeAssertionImpl<T> private constructor(
     val flattenIf: Boolean,
     val skipIf: Boolean,
     val isUnordered: Boolean,
-    var valueAssertion: (T) -> Unit = {},
+    var valueAssertions: List<(T) -> Unit> = ArrayList()
   )
 
   private sealed interface NodeMatcher<T> {
@@ -76,17 +79,18 @@ internal class SimpleTreeAssertionImpl<T> private constructor(
     fun <T> assertTree(actualTree: SimpleTree<T>, isUnordered: Boolean, assert: SimpleTreeAssertion<T>.() -> Unit) {
       val actualMutableTree = actualTree.deepCopyTree()
       val expectedMutableTree = SimpleTree<NodeAssertionOptions<T>>()
-      addAssertionNodes(expectedMutableTree.roots, assert)
+      val assertion = buildTreeAssertion(assert)
+      expectedMutableTree.roots.addAll(assertion.expectedChildren)
       sortTree(expectedMutableTree, actualMutableTree, isUnordered)
       assertTree(expectedMutableTree, actualMutableTree)
     }
 
-    private fun <T> addAssertionNodes(
-      assertionNodes: MutableList<SimpleTree.Node<NodeAssertionOptions<T>>>,
+    private fun <T> buildTreeAssertion(
       assert: SimpleTreeAssertion.Node<T>.() -> Unit
-    ) {
-      val assertion = SimpleTreeAssertionImpl(assertionNodes)
+    ): SimpleTreeAssertionImpl<T> {
+      val assertion = SimpleTreeAssertionImpl<T>()
       assertion.assert()
+      return assertion
     }
 
     private fun <T> assertTree(expectedTree: SimpleTree<NodeAssertionOptions<T>>, actualTree: SimpleTree<T>) {
@@ -101,7 +105,9 @@ internal class SimpleTreeAssertionImpl<T> private constructor(
           if (!expectedNode.value.matcher.matches(actualNode)) {
             throwTreeAssertionError(expectedTree, actualTree)
           }
-          expectedNode.value.valueAssertion(actualNode.value)
+          for (valueAssertion in expectedNode.value.valueAssertions) {
+            valueAssertion.invoke(actualNode.value)
+          }
           queue.add(expectedNode.children to actualNode.children)
         }
       }

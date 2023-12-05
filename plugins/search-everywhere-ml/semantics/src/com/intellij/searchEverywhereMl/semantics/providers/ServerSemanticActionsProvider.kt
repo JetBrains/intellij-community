@@ -5,15 +5,19 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.RequestResult
 import com.intellij.searchEverywhereMl.semantics.utils.sendRequest
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 
 private val LOG = logger<ServerSemanticActionsProvider>()
 
-class ServerSemanticActionsProvider(model: GotoActionModel) : SemanticActionsProvider(model) {
+class ServerSemanticActionsProvider(model: GotoActionModel, presentationProvider: suspend (AnAction) -> Presentation) :
+  SemanticActionsProvider(model, presentationProvider) {
+
   private val mapper = jacksonObjectMapper()
 
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")

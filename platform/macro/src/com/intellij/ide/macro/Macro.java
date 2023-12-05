@@ -4,6 +4,8 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +74,33 @@ public abstract class Macro {
     catch (ExecutionCancelledException ignore) {
       return null;
     }
+  }
+
+  public @Nullable TextRange findOccurence(@NotNull CharSequence s, int offset) {
+    String prefix = "$" + getName();
+    int start = Strings.indexOf(s, prefix, offset);
+    int next = start + prefix.length();
+    if (start < 0 || next >= s.length()) return null;
+    return getRangeForSuffix(s, start, next);
+  }
+
+  @Nullable
+  protected TextRange getRangeForSuffix(@NotNull CharSequence s, int start, int next) {
+    return switch (s.charAt(next)) {
+      case '$' -> TextRange.create(start, next + 1);
+      case '(' -> {
+        int end = Strings.indexOf(s, ")$", next);
+        yield end < 0 ? null : TextRange.create(start, end + 2);
+      }
+      default -> null;
+    };
+  }
+
+  public String expandOccurence(@NotNull DataContext context, @NotNull String occurence) throws ExecutionCancelledException {
+    if (occurence.endsWith(")$")) {
+      return expand(context, occurence.substring(occurence.indexOf('(') + 1, occurence.length() - 2));
+    }
+    return expand(context);
   }
 
   @NotNull

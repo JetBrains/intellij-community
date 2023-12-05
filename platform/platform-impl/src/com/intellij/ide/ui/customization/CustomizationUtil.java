@@ -94,15 +94,15 @@ public final class CustomizationUtil {
   }
 
 
-  static AnAction[] getReordableChildren(ActionGroup group,
-                                         CustomActionsSchema schema,
+  static AnAction[] getReordableChildren(@NotNull ActionGroup group,
+                                         AnAction @NotNull[] children,
+                                         @NotNull CustomActionsSchema schema,
                                          String defaultGroupName,
-                                         String rootGroupName,
-                                         AnActionEvent e) {
+                                         String rootGroupName) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
-    ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
+    ContainerUtil.addAll(reorderedChildren, children);
     for (ActionUrl actionUrl : schema.getActions()) {
       if (actionUrl.getParentGroup() == null) continue;
       if ((actionUrl.getParentGroup().equals(text) ||

@@ -16,8 +16,6 @@
                     serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"
                     preload="notHeadless" overrides="true"/>
 
-    <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
-
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"

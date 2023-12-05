@@ -115,7 +115,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var separateMainMenu: Boolean
-    get() = (SystemInfoRt.isWindows || SystemInfoRt.isXWindow) && state.separateMainMenu
+    get() = !SystemInfoRt.isMac && state.separateMainMenu
     set(value) {
       state.separateMainMenu = value
     }
@@ -590,6 +590,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
       g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
+    }
+
+    @JvmStatic
+    fun setupFractionalMetrics(component: JComponent) {
+      component.putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
     }
 
     /**

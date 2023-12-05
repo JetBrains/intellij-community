@@ -4,10 +4,9 @@ package com.intellij.openapi.externalSystem.service.ui
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.getJavaSdkType
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import java.io.File
 import java.util.*
 
@@ -51,8 +50,10 @@ abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
    * @see com.intellij.openapi.projectRoots.JdkUtil.checkForJdk
    */
   private fun createFakeJdk(name: String, version: String): Sdk {
-    val sdk = ProjectJdkImpl(name, getJavaSdkType())
-    sdk.homePath = "$projectPath/jdk-$name"
+    val sdk = ProjectJdkTable.getInstance().createSdk(name, getJavaSdkType())
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.homePath = "$projectPath/jdk-$name"
+    sdkModificator.commitChanges()
     createProjectSubFile("jdk-$name/release")
     createProjectSubFile("jdk-$name/jre/lib/rt.jar")
     createProjectSubFile("jdk-$name/bin/javac")

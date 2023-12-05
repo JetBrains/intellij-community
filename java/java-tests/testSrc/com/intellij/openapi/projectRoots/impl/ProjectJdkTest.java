@@ -5,6 +5,7 @@ import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
@@ -12,16 +13,25 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
+import org.junit.Assume;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RunWith(JUnit4.class)
 public class ProjectJdkTest extends HeavyPlatformTestCase {
+
+  @Test
   public void testDoesntCrashOnJdkRootDisappearance() throws Exception {
+    Assume.assumeFalse("Test has to be run only for old SDK implementation", GlobalSdkTableBridge.Companion.isEnabled());
     VirtualFile nDir = getTempDir().createVirtualDir();
     String nUrl = nDir.getUrl();
     ProjectJdkImpl jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<ProjectJdkImpl, Exception>)()->{
@@ -61,16 +71,18 @@ public class ProjectJdkTest extends HeavyPlatformTestCase {
     }
   }
 
+  @Test
   public void testJdkAnnotationsAttachedAutomaticallyOnJDKCreation() throws Exception {
-    ProjectJdkImpl jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<ProjectJdkImpl, Exception>)()->
-      (ProjectJdkImpl)ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance()));
+    Sdk jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Sdk, Exception>)()->
+      ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance()));
     ((SdkType)jdk.getSdkType()).setupSdkPaths(jdk);
 
     try {
       Runnable fix = MagicConstantInspection.getAttachAnnotationsJarFix(getProject());
       assertNull(fix);
 
-      List<VirtualFile> annotations = Arrays.asList(jdk.getRoots(AnnotationOrderRootType.getInstance()));
+      VirtualFile[] virtualFiles = jdk.getRootProvider().getFiles(AnnotationOrderRootType.getInstance());
+      List<VirtualFile> annotations = Arrays.asList(virtualFiles);
 
       assertNotEmpty(annotations);
 

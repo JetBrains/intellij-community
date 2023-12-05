@@ -10,13 +10,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 
-private class SearchEverywhereSpellingCorrectorImpl(private val project: Project) : SearchEverywhereSpellingCorrector {
+private class SearchEverywhereSpellingCorrectorImpl : SearchEverywhereSpellingCorrector {
+  private val suggestionProvider = ActionsTabTypoFixSuggestionProvider()
+
   override fun isAvailableInTab(tabId: String): Boolean = tabId == ActionSearchEverywhereContributor::class.java.simpleName
 
   override fun checkSpellingOf(query: String): SearchEverywhereSpellCheckResult {
     if (query.isBlank()) return SearchEverywhereSpellCheckResult.NoCorrection
 
-    return ActionsTabTypoFixSuggestionProvider(project)
+    return suggestionProvider
              .suggestFixFor(query)
              .takeIf { it is SearchEverywhereSpellCheckResult.Correction && isAboveMinimumConfidence(it) }
            ?: SearchEverywhereSpellCheckResult.NoCorrection
@@ -36,5 +38,5 @@ private class SearchEverywhereSpellingCorrectorFactoryImpl : SearchEverywhereSpe
     return isTypoFixingEnabled
   }
 
-  override fun create(project: Project): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl(project)
+  override fun create(project: Project): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl()
 }

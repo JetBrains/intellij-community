@@ -36,9 +36,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -84,6 +81,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.*;
@@ -111,6 +109,8 @@ import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
+import static com.intellij.find.actions.ShowUsagesUtilsKt.getEditorFor;
+import static com.intellij.find.actions.ShowUsagesUtilsKt.navigateAndHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
 import static com.intellij.util.FindUsagesScopeKt.FindUsagesScope;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -665,12 +665,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               if (usage == table.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
                 String hint = UsageViewManagerImpl.outOfScopeMessage(outOfScopeUsages.get(), searchScope);
                 hint(true, hint, parameters, actionHandler);
+                cancel(popup);
               }
               else {
                 String hint = UsageViewBundle.message("show.usages.only.usage", searchScope.getDisplayName());
-                navigateAndHint(usage, hint, parameters, actionHandler);
+                navigateAndHint(project, usage, hint, parameters, actionHandler, () -> cancel(popup));
               }
-              cancel(popup);
             }
             else {
               assert usages.size() > 1 : usages;
@@ -678,7 +678,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               Usage visibleUsage = visibleUsages.iterator().next();
               if (areAllUsagesInOneLine(visibleUsage, usages)) {
                 String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScope.getDisplayName());
-                navigateAndHint(visibleUsage, hint, parameters, actionHandler);
+                navigateAndHint(project, visibleUsage, hint, parameters, actionHandler, () -> cancel(popup));
                 cancel(popup);
               }
             }
@@ -809,7 +809,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       @Override
       protected void paintHover(Graphics g) {
         if (ExperimentalUI.isNewUI()) {
-          paintHover(g, false);
+          paintHover(g, JBUI.CurrentTheme.Editor.Tooltip.ICON_HOVER_BACKGROUND);
         }
       }
     };
@@ -1066,7 +1066,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       });
     }
     else {
-      builder.setAutoselectOnMouseMove(true).setItemChosenCallback(itemChoseCallback).setCloseOnEnter(true);
+      builder.setAutoselectOnMouseMove(!ScreenReader.isActive()).setItemChosenCallback(itemChoseCallback).setCloseOnEnter(true);
     }
 
     AbstractPopup popup = (AbstractPopup)builder.createPopup();
@@ -1270,10 +1270,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static int columnMaxWidth(@NotNull JTable table, int col) {
     TableColumn column = table.getColumnModel().getColumn(col);
     int width = 0;
-    for (int row = 0; row < table.getRowCount(); row++) {
-      Component component = table.prepareRenderer(column.getCellRenderer(), row, col);
+    for (int i = 0; i < table.getRowCount(); i++) {
+      int row = i;
+      ShowUsagesTable.MyModel model = (ShowUsagesTable.MyModel)table.getModel();
+      int rendererWidth = model.getOrCalcCellWidth(i, col, () -> {
+        Component component = table.prepareRenderer(column.getCellRenderer(), row, col);
+        return component.getPreferredSize().width;
+      });
 
-      int rendererWidth = component.getPreferredSize().width;
       width = Math.max(width, rendererWidth + table.getIntercellSpacing().width);
     }
     return width;
@@ -1425,17 +1429,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
   }
 
-  private static void navigateAndHint(@NotNull Usage usage,
-                                      @Nls(capitalization = Sentence) @NotNull String hint,
-                                      @NotNull ShowUsagesParameters parameters,
-                                      @NotNull ShowUsagesActionHandler actionHandler) {
-    usage.navigate(true);
-    Editor newEditor = getEditorFor(usage);
-    if (newEditor == null) return;
-    hint(false, hint, parameters.withEditor(newEditor), actionHandler);
-  }
-
-  private static void hint(boolean isWarning,
+  public static void hint(boolean isWarning,
                            @Nls(capitalization = Sentence) @NotNull String hint,
                            @NotNull ShowUsagesParameters parameters,
                            @NotNull ShowUsagesActionHandler actionHandler) {
@@ -1498,12 +1492,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           })
       );
     }
-  }
-
-  private static @Nullable Editor getEditorFor(@NotNull Usage usage) {
-    FileEditorLocation location = usage.getLocation();
-    FileEditor newFileEditor = location == null ? null : location.getEditor();
-    return newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
   }
 
   static final class StringNode extends UsageNode {

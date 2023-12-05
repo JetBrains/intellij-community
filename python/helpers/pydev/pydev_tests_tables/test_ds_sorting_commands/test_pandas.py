@@ -26,24 +26,62 @@ def sorted_table():
     return df
 
 
-def test_commands(unsorted_table, sorted_table):
+def test_sorting_series():
     df = pd.Series([1, 3, 2])
+
     sorting_command = "df.sort_values(ascending=[True])"
-    series = eval_expression(sorting_command, {}, {"df": df})
-    new_series = pd.Series([1, 2, 3], index=[0, 2, 1])
+    actual_series = eval_expression(sorting_command, {}, {"df": df})
 
-    assert series.equals(new_series)
+    expected_series = pd.Series([1, 2, 3], index=[0, 2, 1])
 
+    assert actual_series.equals(expected_series)
+
+
+def test_sorting_df_by_several_columns(unsorted_table, sorted_table):
     df = unsorted_table
+
     sorting_command = "df.sort_values(by=[df.columns[0], df.columns[1]], ascending=[True, True])"
-    table = eval_expression(sorting_command, {}, {"df": df})
-    new_table = sorted_table
+    actual_df = eval_expression(sorting_command, {}, {"df": df})
 
-    assert table.equals(new_table)
+    expected_df = sorted_table
 
+    assert actual_df.equals(expected_df)
+
+
+def test_sorting_df_by_several_indexes(unsorted_table, sorted_table):
+    df = unsorted_table
     df.set_index(['column 0', 'column 1'], inplace=True)
-    new_table.set_index(['column 0', 'column 1'], inplace=True)
-    sorting_command = "df.sort_index(level=[0,1], ascending=[True,True])"
-    table = eval_expression(sorting_command, {}, {"df": df})
 
-    assert table.equals(new_table)
+    expected_df = sorted_table
+    expected_df.set_index(['column 0', 'column 1'], inplace=True)
+
+    sorting_command = "df.sort_index(level=[0,1], ascending=[True,True])"
+    actual_df = eval_expression(sorting_command, {}, {"df": df})
+
+    assert actual_df.equals(expected_df)
+
+
+def test_sorting_indexes_range_type():
+    df = pd.DataFrame({'A': [1, 2, 3, 4]},
+                      index=pd.RangeIndex(start=0, stop=4, step=1))
+    expected_df = pd.DataFrame({'A': [4, 3, 2, 1]},
+                             index=pd.RangeIndex(start=3, stop=-1, step=-1))
+
+    sorting_command = "df.sort_index(ascending=False)"
+    actual_df = eval_expression(sorting_command, {}, {"df": df})
+
+    assert actual_df.equals(expected_df)
+
+
+def test_sorting_multi_index_with_range_index():
+    arrays = [pd.RangeIndex(start=0, stop=3, step=1), ['A', 'B', 'B']]
+    multi_index = pd.MultiIndex.from_arrays(arrays, names=('Range', 'Letter'))
+    df = pd.DataFrame({'Values': [10, 20, 30]}, index=multi_index)
+
+    sorted_indexes = [[1, 2, 0], ['B', 'B', 'A']]
+    expected_df = pd.DataFrame({'Values': [20, 30, 10]}, index=sorted_indexes)
+
+    sorting_command = "df.sort_index(level=[1,0], ascending=[False, True])"
+    actual_df = eval_expression(sorting_command, {}, {"df": df})
+
+    assert actual_df.equals(expected_df)

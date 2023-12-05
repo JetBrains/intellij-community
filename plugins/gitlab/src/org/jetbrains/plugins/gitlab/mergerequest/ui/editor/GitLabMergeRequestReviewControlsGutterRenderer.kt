@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
+import com.intellij.codeInsight.documentation.render.DocRenderer
 import com.intellij.collaboration.async.launchNow
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.LogicalPosition
@@ -117,16 +119,13 @@ private constructor(cs: CoroutineScope,
       lineData.hasComments && lineData.commentable -> {
         val hoveredIconIdx = getHoveredIconSlotIndex(lineData.yRangeWithInlays, e.y)
         when (hoveredIconIdx) {
-          0 -> toggleDiscussions(lineData.discussionRenderers)
-          1 -> requestNewDiscussion(lineData.logicalLine)
+          0 -> unfoldOrToggle(lineData)
+          1 -> unfoldOrRequestNewDiscussion(lineData)
           else -> return
         }
       }
-      lineData.hasComments -> {
-        val foldedRegion = lineData.foldedRegion
-        if (foldedRegion != null) foldedRegion.isExpanded = true else toggleDiscussions(lineData.discussionRenderers)
-      }
-      lineData.commentable -> requestNewDiscussion(lineData.logicalLine)
+      lineData.hasComments -> unfoldOrToggle(lineData)
+      lineData.commentable -> unfoldOrRequestNewDiscussion(lineData)
       else -> return
     }
     e.consume()
@@ -142,6 +141,31 @@ private constructor(cs: CoroutineScope,
       }
     }
     return idx
+  }
+
+  private fun unfoldOrRequestNewDiscussion(lineData: LogicalLineData) {
+    val foldedRegion = lineData.foldedRegion
+    if (foldedRegion != null) foldedRegion.unfold() else requestNewDiscussion(lineData.logicalLine)
+  }
+
+  private fun unfoldOrToggle(lineData: LogicalLineData) {
+    val foldedRegion = lineData.foldedRegion
+    if (foldedRegion != null) foldedRegion.unfold() else toggleDiscussions(lineData.discussionRenderers)
+  }
+
+  private fun FoldRegion.unfold() {
+    if (this is CustomFoldRegion) {
+      val renderer = renderer
+      if (renderer is DocRenderer) {
+        renderer.item.toggle()
+        return
+      }
+    }
+    else {
+      editor.foldingModel.runBatchFoldingOperation {
+        isExpanded = true
+      }
+    }
   }
 
   private fun toggleDiscussions(renderers: List<GitLabMergeRequestDiscussionInlayRenderer>) {
@@ -173,7 +197,7 @@ private constructor(cs: CoroutineScope,
       }
 
       val foldedRegion: FoldRegion? by lazy {
-        editor.foldingModel.getCollapsedRegionAtOffset(lineStartOffset)
+        editor.foldingModel.getCollapsedRegionAtOffset(lineEndOffset)
       }
 
       val yRangeWithInlays: IntRange by lazy {
@@ -186,7 +210,8 @@ private constructor(cs: CoroutineScope,
       }
 
       val discussionRenderers: List<GitLabMergeRequestDiscussionInlayRenderer> by lazy {
-        editor.inlayModel.getBlockElementsInRange(lineStartOffset, lineEndOffset).mapNotNull {
+        val rangeEnd = foldedRegion?.endOffset ?: lineEndOffset
+        editor.inlayModel.getBlockElementsInRange(lineStartOffset, rangeEnd).mapNotNull {
           it.renderer as? GitLabMergeRequestDiscussionInlayRenderer
         }
       }
@@ -195,7 +220,7 @@ private constructor(cs: CoroutineScope,
 
       val commentable: Boolean by lazy {
         val inCommentableRange = nonCommentableRanges.none { logicalLine in it.start until it.end }
-        inCommentableRange && foldedRegion == null
+        inCommentableRange
       }
     }
 
@@ -214,7 +239,7 @@ private constructor(cs: CoroutineScope,
       }
 
       fun calcHoveredLineData(): LogicalLineData? {
-        val logicalLine = hoveredLogicalLine ?: return null
+        val logicalLine = hoveredLogicalLine?.takeIf { it in 0 until editor.document.lineCount } ?: return null
         return LogicalLineData(editor, nonCommentableRanges, logicalLine, columnHovered)
       }
 

@@ -4,16 +4,15 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
+import com.intellij.refactoring.changeSignature.JavaChangeInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinConstructorDelegationCallUsage
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.psi.*
@@ -38,7 +37,7 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
         if (kotlinChangeInfoBase != null) {
             KotlinChangeSignatureUsageSearcher.findInternalUsages(unwrapped, kotlinChangeInfoBase, result)
         }
-        return KotlinOverrideUsageInfo(unwrapped, baseMethod)
+        return KotlinOverrideUsageInfo(unwrapped, baseMethod, isCaller(changeInfo, unwrapped))
     }
 
     override fun createUsageInfo(
@@ -65,23 +64,46 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                         last = KtCallElement::class
                     )
                 when {
-                    callElementParent != null ->
+                    callElementParent != null -> {
+                        isCaller(changeInfo, reference.resolve())
+                        val callers = (changeInfo as? JavaChangeInfo)?.methodsToPropagateParameters
+                        if (callers != null && callers.isNotEmpty()) {
+                            val targets = reference.resolve()?.toLightMethods()
+                            if (targets != null && targets.any { child -> callers.any { child == it || PsiSuperMethodUtil.isSuperMethod(child, it) } } ) {
+                                return KotlinCallerCallUsage(callElementParent)
+                            }
+                        }
                         return KotlinFunctionCallUsage(callElementParent, method)
+                    }
                     parent is KtConstructorDelegationCall ->
                         return KotlinConstructorDelegationCallUsage(parent, method)
                     element is KtSimpleNameExpression && (method is KtProperty || method is KtParameter) ->
                         return KotlinPropertyCallUsage(element, changeInfo as KotlinChangeInfoBase)
                     element is KtSuperTypeCallEntry ->
                         return KotlinFunctionCallUsage(element, method)
-                    else ->
+                    else -> {
                         //skip imports for now, they are removed by optimize imports
                         if (PsiTreeUtil.getParentOfType(element, KtImportDirective::class.java, true, KtDeclaration::class.java) != null) {
                             return null
                         }
+
+                        if (PsiTreeUtil.getParentOfType(element, KtTypeReference::class.java, true, KtDeclaration::class.java) != null) {
+                            return null
+                        }
+                    }
                 }
                 LOG.error("Unsupported element: ${element.javaClass}")
             }
         }
         return null
+    }
+
+    private fun isCaller(changeInfo: ChangeInfo, element: PsiElement?): Boolean {
+        val callers = (changeInfo as? JavaChangeInfo)?.methodsToPropagateParameters
+        if (callers != null && callers.isNotEmpty()) {
+            val targets = element?.toLightMethods()
+            return targets != null && targets.any { child -> callers.any { child == it || PsiSuperMethodUtil.isSuperMethod(child, it) } }
+        }
+        return false
     }
 }

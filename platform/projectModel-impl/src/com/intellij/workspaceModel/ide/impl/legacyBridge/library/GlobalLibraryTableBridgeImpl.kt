@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.BridgeInitializer
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -54,7 +54,7 @@ class GlobalLibraryTableBridgeInitializer : BridgeInitializer {
         )
       }
     }
-    initializeLibraryBridgesTimeMs.addElapsedTimeMs(start)
+    initializeLibraryBridgesTimeMs.addElapsedTimeMillis(start)
   }
 }
 
@@ -82,7 +82,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         )
       }
     }
-    initializeLibraryBridgesTimeMs.addElapsedTimeMs(start)
+    initializeLibraryBridgesTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun initializeLibraryBridgesAfterLoading(mutableStorage: MutableEntityStorage,
@@ -131,7 +131,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       }
     }
 
-    initializeLibraryBridgesAfterLoadingTimeMs.addElapsedTimeMs(start)
+    initializeLibraryBridgesAfterLoadingTimeMs.addElapsedTimeMillis(start)
     return action
   }
 
@@ -149,7 +149,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         dispatcher.multicaster.beforeLibraryRemoved(library)
       }
     }
-    handleBeforeChangeEventsTimeMs.addElapsedTimeMs(start)
+    handleBeforeChangeEventsTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun handleChangedEvents(event: VersionedStorageChange) {
@@ -197,7 +197,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       }
     }
 
-    handleChangedEventsTimeMs.addElapsedTimeMs(start)
+    handleChangedEventsTimeMs.addElapsedTimeMillis(start)
   }
 
   fun fireRootSetChanged(libraryEntity: LibraryEntity, entityStorage: EntityStorage) {
@@ -215,7 +215,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       .mapNotNull { storage.libraryMap.getDataByEntity(it) }
       .toList().toTypedArray()
 
-    getLibrariesTimeMs.addElapsedTimeMs(start)
+    getLibrariesTimeMs.addElapsedTimeMillis(start)
     return libs
   }
 
@@ -241,7 +241,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       error("Library $name was not created")
     }
 
-    createLibraryTimeMs.addElapsedTimeMs(start)
+    createLibraryTimeMs.addElapsedTimeMillis(start)
     return newLibrary
   }
 
@@ -264,7 +264,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       entityStorage.current.libraryMap.getDataByEntity(entity)
     }
 
-    getLibraryByNameTimeMs.addElapsedTimeMs(start)
+    getLibraryByNameTimeMs.addElapsedTimeMillis(start)
     return library
   }
 

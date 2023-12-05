@@ -9,6 +9,12 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
@@ -20,6 +26,8 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.io.path.deleteIfExists
 
@@ -33,6 +41,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     private const val CLASS_FROM_DEPENDENCY = "junit.framework.Test"
     private const val DEPENDENCY_SOURCES_JAR_CACHE_PATH = "caches/modules-2/files-2.1/junit/junit/4.12/" +
                                                           "a6c32b40bf3d76eca54e3c601e5d1470c86fcdfa/$DEPENDENCY_SOURCES_JAR"
+    private const val DEFAULT_ATTACH_SOURCE_DEADLINE_MS = 5000L
   }
 
   override fun setUp() {
@@ -79,7 +88,9 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       addTestImplementationDependency(DEPENDENCY)
     }
     assertModules("project", "project.main", "project.test")
-    assertSourcesDownloadedAndAttached(targetModule = "project.test")
+    // Running Gradle with configuration cache for the first time lead to the task graph calculation.
+    // Because of that, action execution would be much slower.
+    assertSourcesDownloadedAndAttached(targetModule = "project.test", actionExecutionDeadlineMs = TimeUnit.SECONDS.toMillis(30))
   }
 
   @Test
@@ -122,7 +133,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       "project.projectA", "project.projectA.main", "project.projectA.test",
       "project.projectB", "project.projectB.main", "project.projectB.test",
     )
-    assertSourcesDownloadedAndAttached(targetModule = "project.projectA.test")
+    assertSourcesDownloadedAndAttached(targetModule = "project.projectA.test", actionExecutionDeadlineMs = TimeUnit.SECONDS.toMillis(30))
     assertThat(getModuleLibDeps("project.projectB.test", DEPENDENCY_NAME)).isEmpty()
   }
 
@@ -135,6 +146,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
                                                  dependencyJar: String = DEPENDENCY_JAR,
                                                  dependencySourcesJar: String = DEPENDENCY_SOURCES_JAR,
                                                  classFromDependency: String = CLASS_FROM_DEPENDENCY,
+                                                 actionExecutionDeadlineMs: Long = DEFAULT_ATTACH_SOURCE_DEADLINE_MS,
                                                  targetModule: String
   ) {
     val library: LibraryOrderEntry = getModuleLibDeps(targetModule, dependencyName).single()
@@ -152,18 +164,19 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
         output += text
       }
     }
-    try {
-      ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener)
-      val callback = GradleAttachSourcesProvider().getActions(mutableListOf(library), psiFile)
-        .single()
-        .perform(mutableListOf(library))
-        .apply { waitFor(5000) }
-      assertNull(callback.error)
+    waitUntilSourcesAttached {
+      try {
+        ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener)
+        val callback = GradleAttachSourcesProvider().getActions(mutableListOf(library), psiFile)
+          .single()
+          .perform(mutableListOf(library))
+          .apply { waitFor(actionExecutionDeadlineMs) }
+        assertNull(callback.error)
+      }
+      finally {
+        ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener)
+      }
     }
-    finally {
-      ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener)
-    }
-
     assertThat(output)
       .filteredOn { it.startsWith("Sources were downloaded to") }
       .hasSize(1)
@@ -176,5 +189,26 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   private fun removeCachedLibrary(cachePath: String = DEPENDENCY_SOURCES_JAR_CACHE_PATH) = gradleUserHome.resolve(cachePath).run {
     deleteIfExists()
+  }
+
+  private fun waitUntilSourcesAttached(libraryName: String = DEPENDENCY_NAME, action: () -> Unit) {
+    val latch = CountDownLatch(1)
+    myProject.messageBus.connect(testRootDisposable)
+      .subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          for (change in event.getAllChanges()) {
+            if (change is EntityChange.Replaced && change.component2() is LibraryEntity) {
+              val modifiedComponent = change.component2() as LibraryEntity
+              if (modifiedComponent.name == libraryName && modifiedComponent.roots.any { it.type === LibraryRootTypeId.SOURCES }) {
+                latch.countDown()
+              }
+            }
+          }
+        }
+      })
+    action.invoke()
+    if (!latch.await(10, TimeUnit.SECONDS)) {
+      LOG.error("A timeout has been reached while waiting for the library sources")
+    }
   }
 }

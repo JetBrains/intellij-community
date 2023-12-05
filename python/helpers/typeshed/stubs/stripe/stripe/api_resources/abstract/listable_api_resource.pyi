@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from collections.abc import Iterator
 from typing import Any
 
@@ -10,5 +11,9 @@ class ListableAPIResource(APIResource):
     def auto_paging_iter(cls, *args, **params) -> Iterator[Any]: ...
     @classmethod
     def list(
-        cls, api_key: Any | None = ..., stripe_version: Any | None = ..., stripe_account: Any | None = ..., **params
+        cls,
+        api_key: Incomplete | None = None,
+        stripe_version: Incomplete | None = None,
+        stripe_account: Incomplete | None = None,
+        **params,
     ) -> ListObject: ...

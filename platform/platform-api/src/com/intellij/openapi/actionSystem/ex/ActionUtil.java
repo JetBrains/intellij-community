@@ -572,6 +572,27 @@ public final class ActionUtil {
     };
   }
 
+  /**
+   * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) must not be used,
+   * because it erases shortcuts assigned to this action in keymap.
+   * <p>
+   * see {@link #wrap(AnAction)}
+   */
+  public static @NotNull AnAction wrap(@NotNull String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) throw new IllegalArgumentException("No action found with id='" + actionId + "'");
+    return action instanceof ActionGroup ? new ActionGroupWrapper((ActionGroup)action) :
+           new AnActionWrapper(action);
+  }
+
+  /**
+   * Wrapping allows altering template presentation and shortcut set without affecting the original action.
+   */
+  public static @NotNull AnAction wrap(@NotNull AnAction action) {
+    return action instanceof ActionGroup ? new ActionGroupWrapper((ActionGroup)action) :
+           new AnActionWrapper(action);
+  }
+
   public static @Nullable ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
     return KeymapUtil.getShortcutsForMnemonicCode(action.getTemplatePresentation().getMnemonic());
   }

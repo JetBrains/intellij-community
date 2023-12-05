@@ -11,9 +11,11 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.childScope
 import git4idea.remote.hosting.changesSignalFlow
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -41,6 +43,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsList
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 private val LOG = logger<GitLabToolWindowProjectViewModel>()
 
@@ -61,11 +64,11 @@ private constructor(parentCs: CoroutineScope,
   private val mergeRequestsVms = Caffeine.newBuilder().build<String, SharedFlow<Result<GitLabMergeRequestViewModels>>> { iid ->
     val projectData = connection.projectData
     projectData.mergeRequests.getShared(iid)
-      .throwFailure()
-      .mapScoped {
-        GitLabMergeRequestViewModels(project, this, projectData, it, this@GitLabToolWindowProjectViewModel, connection.currentUser)
+      .transformConsecutiveSuccesses {
+        mapScoped {
+          GitLabMergeRequestViewModels(project, this, projectData, it, this@GitLabToolWindowProjectViewModel, connection.currentUser)
+        }
       }
-      .asResultFlow()
       .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
   }
 
@@ -103,7 +106,7 @@ private constructor(parentCs: CoroutineScope,
 
   private val tabsGuard = Mutex()
 
-  fun showTab(tab: GitLabReviewTab) {
+  fun showTab(tab: GitLabReviewTab, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
     cs.launch {
       tabsGuard.withLock {
         val current = _tabs.value
@@ -111,6 +114,7 @@ private constructor(parentCs: CoroutineScope,
         if (currentVm == null || !tab.reuseTabOnRequest) {
           currentVm?.destroy()
           val tabVm = createVm(tab)
+          GitLabStatistics.logTwTabOpened(project, tab.toStatistics(), place)
           _tabs.value = current.copy(current.tabs + (tab to tabVm), tab)
         }
         else {
@@ -127,7 +131,12 @@ private constructor(parentCs: CoroutineScope,
       project, cs, projectsManager, connection.projectData, avatarIconProvider,
       openReviewTabAction = { mrIid ->
         closeTabAsync(GitLabReviewTab.NewMergeRequest)
-        showTab(GitLabReviewTab.ReviewSelected(mrIid))
+        showTab(GitLabReviewTab.ReviewSelected(mrIid), GitLabStatistics.ToolWindowOpenTabActionPlace.CREATION)
+      },
+      onReviewCreated = {
+        cs.launchNow {
+          mergeRequestCreatedSignal.emit(Unit)
+        }
       }
     )
   }
@@ -145,6 +154,7 @@ private constructor(parentCs: CoroutineScope,
   override fun closeTab(tab: GitLabReviewTab) {
     cs.launch {
       closeTabAsync(tab)
+      GitLabStatistics.logTwTabClosed(project, tab.toStatistics())
     }
   }
 
@@ -159,28 +169,27 @@ private constructor(parentCs: CoroutineScope,
     }
   }
 
-  fun createMergeRequest() {
+  fun showCreationTab(place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
     cs.launch {
-      showTab(GitLabReviewTab.NewMergeRequest)
+      showTab(GitLabReviewTab.NewMergeRequest, place)
     }
   }
+
+  private val mergeRequestCreatedSignal: MutableSharedFlow<Unit> = MutableSharedFlow()
 
   val mergeRequestOnCurrentBranch: Flow<String?> = run {
     val projectMapping = connection.repo
     val remote = projectMapping.remote.remote
     val gitRepo = projectMapping.remote.repository
     val targetProjectPath = projectMapping.repository.projectPath.fullPath()
-    gitRepo.changesSignalFlow().withInitial(Unit).map {
-      val currentBranch = gitRepo.currentBranch ?: return@map null
-      gitRepo.branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
-        ?.remoteBranch?.nameForRemoteOperations
-    }.distinctUntilChanged().mapNullableLatest { currentRemoteBranch ->
-      connection.projectData.mergeRequests.findByBranches(currentRemoteBranch).find {
-        it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath
-      }?.iid
-    }.catch {
-      LOG.warn("Could not lookup a merge request for current branch", it)
-    }
+
+    val currentRemoteBranchFlow = gitRepo.changesSignalFlow().withInitial(Unit)
+      .map { findCurrentRemoteBranch(gitRepo, remote) }
+      .distinctUntilChanged()
+
+    combineFirst(currentRemoteBranchFlow, mergeRequestCreatedSignal.withInitial(Unit))
+      .mapNullableLatest { currentRemoteBranch -> findReviewIdByBranch(connection, currentRemoteBranch, targetProjectPath) }
+      .catch { LOG.warn("Could not lookup a merge request for current branch", it) }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -212,5 +221,32 @@ private constructor(parentCs: CoroutineScope,
                                                                  connection: GitLabProjectConnection,
                                                                  twVm: GitLabToolWindowViewModel) =
       GitLabToolWindowProjectViewModel(this, project, accountManager, projectsManager, connection, twVm)
+
+    private fun GitLabReviewTab.toStatistics(): GitLabStatistics.ToolWindowTabType {
+      return when (this) {
+        GitLabReviewTab.NewMergeRequest -> GitLabStatistics.ToolWindowTabType.CREATION
+        is GitLabReviewTab.ReviewSelected -> GitLabStatistics.ToolWindowTabType.DETAILS
+      }
+    }
   }
+}
+
+private fun findCurrentRemoteBranch(gitRepo: GitRepository, remote: GitRemote): String? {
+  val currentBranch = gitRepo.currentBranch ?: return null
+  return gitRepo.branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
+    ?.remoteBranch?.nameForRemoteOperations
+}
+
+private suspend fun findReviewIdByBranch(
+  connection: GitLabProjectConnection,
+  currentRemoteBranch: String,
+  targetProjectPath: String
+): String? {
+  return connection.projectData.mergeRequests.findByBranches(currentRemoteBranch).find {
+    it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath
+  }?.iid
+}
+
+private fun <T1, T2> combineFirst(flow1: Flow<T1>, flow2: Flow<T2>): Flow<T1> {
+  return combine(flow1, flow2) { value1, _ -> value1 }
 }

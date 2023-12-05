@@ -4,7 +4,7 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
@@ -24,18 +24,18 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
                                   outDir: Path,
                                   pluginCacheRootDir: Path,
                                   platformLayout: PlatformLayout,
-                                  context: BuildContext): List<List<DistributionFileEntry>> {
-  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
+                                  context: BuildContext): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope { span ->
     val counter = LongAdder()
     val pluginEntries = coroutineScope {
       pluginBuildDescriptors.map { plugin ->
         async {
-          buildPluginIfNotCached(plugin = plugin,
-                                 platformLayout = platformLayout,
-                                 outDir = outDir,
-                                 pluginCacheRootDir = pluginCacheRootDir,
-                                 context = context,
-                                 reusedPluginsCounter = counter)        
+          plugin to buildPluginIfNotCached(plugin = plugin,
+                                           platformLayout = platformLayout,
+                                           outDir = outDir,
+                                           pluginCacheRootDir = pluginCacheRootDir,
+                                           context = context,
+                                           reusedPluginsCounter = counter)
         }
       }
     }.map { it.getCompleted() }
@@ -54,7 +54,22 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
 
   val reason = withContext(Dispatchers.IO) {
     // check cache
-    val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir) ?: return@withContext null
+    val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir)
+
+    if (reason == null || reason == "initial build") {
+      if (plugin.layout.mainModule == "intellij.rider.plugins.clion.radler" && hasResourcePaths(plugin.layout)) {
+        // copy custom resources
+        spanBuilder("build plugin")
+          .setAttribute("mainModule", mainModule)
+          .setAttribute("dir", plugin.layout.directoryName)
+          .setAttribute("reason", "copy custom resources")
+          .useWithScope {
+            layoutResourcePaths(layout = plugin.layout, context = context, targetDirectory = plugin.dir, overwrite = true)
+          }
+      }
+    }
+
+    if (reason == null) return@withContext null
 
     if (mainModule != "intellij.platform.builtInHelp") {
       checkOutputOfPluginModules(mainPluginModule = mainModule,
@@ -68,7 +83,6 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
     reusedPluginsCounter.add(1)
     if (context.generateRuntimeModuleRepository) {
       return buildPlugin(plugin = plugin,
-                         outDir = outDir,
                          reason = "generate runtime module repository",
                          platformLayout = platformLayout,
                          context = context,
@@ -78,7 +92,6 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
   }
 
   return buildPlugin(plugin = plugin,
-                     outDir = outDir,
                      reason = reason,
                      platformLayout = platformLayout,
                      context = context,
@@ -86,7 +99,6 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
 }
 
 private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
-                                outDir: Path,
                                 reason: String,
                                 platformLayout: PlatformLayout,
                                 context: BuildContext,
@@ -96,7 +108,7 @@ private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
     .setAttribute("mainModule", plugin.layout.mainModule)
     .setAttribute("dir", plugin.layout.directoryName)
     .setAttribute("reason", reason)
-    .useWithScope2 {
+    .useWithScope {
       val (pluginEntries, _) = layoutDistribution(layout = plugin.layout,
                                                   platformLayout = platformLayout, targetDirectory = plugin.dir,
 

@@ -22,7 +22,19 @@
         "-Didea.paths.selector=XPlatLauncherTest",
         "-Dpath.macro.test=$APP_PACKAGE/Contents"
       ],
-      "mainClass": "com.intellij.idea.TestMain"
+      "mainClass": "com.intellij.idea.TestMain",
+      "customCommands": [
+        {
+          "commands": [
+            "custom-command"
+          ],
+          "additionalJvmArguments": [
+            "-Dproduct.property=product.value"
+          ],
+          "mainClass": "com.intellij.idea.CustomMain",
+          "dataDirectoryName": "XPlatLauncherTestCustom"
+        }
+      ]
     }
   ],
   "bundledPlugins": [

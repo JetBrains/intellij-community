@@ -72,6 +72,10 @@ button:focus {
   font-weight: bold;
 }
 
+.completion.cg-empty {
+  color: #70AAFF
+}
+
 .completion.cg-none {
   color: #ff3b30
 }

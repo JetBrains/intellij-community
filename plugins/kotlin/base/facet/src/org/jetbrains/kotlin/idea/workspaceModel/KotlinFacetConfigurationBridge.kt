@@ -29,27 +29,26 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
 
     constructor() :
             this(
-                KotlinSettingsEntity(KotlinFacetType.INSTANCE.presentableName,
-                                     ModuleId(""),
-                                     emptyList(),
-                                     emptyList(),
-                                     true,
-                                     emptyList(),
-                                     emptyList(),
-                                     emptySet(),
-                                     "",
-                                     "",
-                                     emptyList(),
-                                     false,
-                                     "",
-                                     false,
-                                     emptyList(),
-                                     KotlinModuleKind.DEFAULT,
-                                     "",
-                                     "",
-                                     CompilerSettingsData("", "", "", true, "lib"),
-                                     "",
-                                     object : EntitySource {}) as KotlinSettingsEntity.Builder
+                KotlinSettingsEntity(name = KotlinFacetType.INSTANCE.presentableName,
+                                     moduleId = ModuleId(""),
+                                     sourceRoots = emptyList(),
+                                     configFileItems = emptyList(),
+                                     useProjectSettings = true,
+                                     implementedModuleNames = emptyList(),
+                                     dependsOnModuleNames = emptyList(),
+                                     additionalVisibleModuleNames = emptySet(),
+                                     productionOutputPath = "",
+                                     testOutputPath = "",
+                                     sourceSetNames = emptyList(),
+                                     isTestModule = false,
+                                     externalProjectId = "",
+                                     isHmppEnabled = false,
+                                     pureKotlinSourceFolders = emptyList(),
+                                     kind = KotlinModuleKind.DEFAULT,
+                                     compilerArguments = "",
+                                     compilerSettings = CompilerSettingsData("", "", "", true, "lib"),
+                                     targetPlatform = "",
+                                     entitySource = object : EntitySource {}) as KotlinSettingsEntity.Builder
             )
 
     constructor(originKotlinSettingsEntity: KotlinSettingsEntity) :
@@ -70,7 +69,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                 originKotlinSettingsEntity.isHmppEnabled,
                 originKotlinSettingsEntity.pureKotlinSourceFolders,
                 originKotlinSettingsEntity.kind,
-                originKotlinSettingsEntity.mergedCompilerArguments,
                 originKotlinSettingsEntity.compilerArguments,
                 originKotlinSettingsEntity.compilerSettings,
                 originKotlinSettingsEntity.targetPlatform,
@@ -115,7 +113,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
             kotlinSettingsEntity.isHmppEnabled,
             kotlinSettingsEntity.pureKotlinSourceFolders,
             kotlinSettingsEntity.kind,
-            kotlinSettingsEntity.mergedCompilerArguments,
             kotlinSettingsEntity.compilerArguments,
             kotlinSettingsEntity.compilerSettings,
             kotlinSettingsEntity.targetPlatform,
@@ -142,7 +139,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
         kotlinSettingsEntity.isHmppEnabled = diffEntity.isHmppEnabled
         kotlinSettingsEntity.pureKotlinSourceFolders = diffEntity.pureKotlinSourceFolders.toMutableList()
         kotlinSettingsEntity.kind = diffEntity.kind
-        //kotlinSettingsEntity.mergedCompilerArguments = diffEntity.mergedCompilerArguments
         kotlinSettingsEntity.compilerArguments = diffEntity.compilerArguments
         kotlinSettingsEntity.compilerSettings = diffEntity.compilerSettings
         kotlinSettingsEntity.targetPlatform = diffEntity.targetPlatform

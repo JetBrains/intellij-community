@@ -787,6 +787,7 @@ public final class JBUI {
         Color SUCCESS_BORDER = JBColor.namedColor("Editor.ToolTip.successBorder", 0xAFDBB8, 0x375239);
         Color WARNING_BACKGROUND = JBColor.namedColor("Editor.ToolTip.warningBackground", 0xFFF6DE, 0x3D3223);
         Color WARNING_BORDER = JBColor.namedColor("Editor.ToolTip.warningBorder", 0xFED277, 0x5E4D33);
+        Color ICON_HOVER_BACKGROUND = JBColor.namedColor("Editor.ToolTip.iconHoverBackground", ActionButton.hoverBorder());
       }
 
       interface Notification {
@@ -831,6 +832,11 @@ public final class JBUI {
       Color WARNING = JBColor.namedColor("IconBadge.warningBackground", 0xFFAF0F, 0xF2C55C);
       Color INFORMATION = JBColor.namedColor("IconBadge.infoBackground", 0x588CF3, 0x548AF7);
       Color SUCCESS = JBColor.namedColor("IconBadge.successBackground", 0x55A76A, 0x5FAD65);
+    }
+
+    public interface InlineBanner {
+      Color HOVER_BACKGROUND = JBColor.namedColor("InlineBanner.hoverBackground", ActionButton.hoverBorder());
+      Color PRESSED_BACKGROUND = JBColor.namedColor("InlineBanner.pressedBackground", ActionButton.pressedBackground());
     }
 
     public interface Notification {
@@ -1710,7 +1716,8 @@ public final class JBUI {
     public interface Window {
       static Border getBorder(boolean undecoratedWindow) {
         Border result = UIManager.getBorder("Window.border");
-        if (result == null && undecoratedWindow && SystemInfoRt.isXWindow && Registry.is("ide.linux.use.undecorated.border")) {
+        if (result == null && undecoratedWindow &&
+            SystemInfo.isUnix && !SystemInfo.isMac && Registry.is("ide.linux.use.undecorated.border")) {
           result = UIManager.getBorder("Window.undecorated.border");
         }
         return result;
@@ -1929,7 +1936,7 @@ public final class JBUI {
       }
 
       public static int fieldsSeparatorWidth() {
-        return getInt("NewClass.separatorWidth", JBUIScale.scale(10));
+        return getInt("NewClass.separatorWidth", 10);
       }
     }
 
@@ -2201,6 +2208,18 @@ public final class JBUI {
         return 5;
       }
 
+      public static int toolbarBorderDirectionalGap() {
+        return getInt(toolbarBorderDirectionalGapKey(), defaultToolbarBorderDirectionalGap());
+      }
+
+      public static @NotNull String toolbarBorderDirectionalGapKey() {
+        return "RunWidget.toolbarBorderDirectionalGap";
+      }
+
+      public static int defaultToolbarBorderDirectionalGap() {
+        return 2;
+      }
+
       public static int actionButtonWidth() {
         return getInt(actionButtonWidthKey(), 30);
       }
@@ -2264,9 +2283,10 @@ public final class JBUI {
     }
 
     public static final class ManagedIde {
-      public static final Color BADGE_BORDER = JBColor.namedColor("ManagedIdeBadgeBorder", 0x5A5D6B, 0x4E5157);
-      private static final Color BADGE_BACKGROUND = JBColor.namedColor("ManagedIdeBadgeBackground", 0x383A42, 0x393B40);
-      private static final Color BADGE_BACKGROUND_HOVER = JBColor.namedColor("ManagedIdeBadgeBackgroundHover", 0x494B57, 0x43454A);
+      public static final Color BADGE_BORDER = JBColor.namedColor("ManagedIdeBadgeBorder", CustomFrameDecorations.separatorForeground());
+      private static final Color BADGE_BACKGROUND = JBColor.namedColor("ManagedIdeBadgeBackground", CustomFrameDecorations.paneBackground());
+      private static final Color BADGE_BACKGROUND_HOVER = JBColor.namedColor("ManagedIdeBadgeBackgroundHover", JBColor.namedColor(
+        "MainToolbar.Dropdown.transparentHoverBackground", UIManager.getColor("MainToolbar.Icon.hoverBackground")));
       public static final Color MENU_ITEM_HOVER = JBColor.namedColor("ManagedIdeMenuItemHover", 0xEBECF0, 0x43454A);
 
       public static @NotNull Color getBadgeBackground(boolean hover) {

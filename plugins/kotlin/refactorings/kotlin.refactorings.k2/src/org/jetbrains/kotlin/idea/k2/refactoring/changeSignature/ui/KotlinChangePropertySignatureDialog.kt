@@ -3,12 +3,11 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiCodeFragment
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
 import javax.swing.DefaultComboBoxModel
 
-@OptIn(KtAllowAnalysisOnEdt::class)
 class KotlinChangePropertySignatureDialog(project: Project,
                                           private val methodDescriptor: KotlinMethodDescriptor) :
     KotlinBaseChangePropertySignatureDialog<KotlinParameterInfo, Visibility, KotlinMethodDescriptor>(project, methodDescriptor) {
@@ -43,12 +41,14 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun PsiCodeFragment?.isValidType(): Boolean {
         if (this !is KtCodeFragment) return false
         val typeRef = findChildByClass(KtExpression::class.java) ?: return false
-        allowAnalysisOnEdt {
-            analyze(typeRef) {
-                val ktType = typeRef.getKtType()
-                return ktType !is KtErrorType
-            }
+        analyze(typeRef) {
+            val ktType = typeRef.getKtType()
+            return ktType !is KtErrorType
         }
+    }
+
+    override fun validateButtons() {
+        validateButtonsAsync()
     }
 
     private fun evaluateKotlinChangeInfo(): KotlinChangeInfo {
@@ -79,8 +79,10 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun doAction() {
         val changeInfo = evaluateKotlinChangeInfo()
         changeInfo.receiverParameterInfo?.let {
-            val defaultValue = it.defaultValueForCall
-            //todo it.defaultValueForCall = AddFullQualifierIntention.Holder.addQualifiersRecursively(defaultValue) as? KtExpression
+            val codeFragment = receiverTypeCodeFragment.getContentElement()
+            if (codeFragment != null) {
+                it.defaultValue = AddQualifiersUtil.addQualifiersRecursively(codeFragment) as? KtExpression
+            }
         }
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo))
     }

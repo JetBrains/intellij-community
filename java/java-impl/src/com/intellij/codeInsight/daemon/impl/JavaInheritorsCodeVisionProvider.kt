@@ -52,14 +52,14 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   private fun computeMethodInheritors(element: PsiMethod, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectOverridingMethods(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 
   private fun computeClassInheritors(element: PsiClass, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectInheritingClasses(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 

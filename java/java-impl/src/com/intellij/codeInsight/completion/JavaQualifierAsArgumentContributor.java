@@ -276,6 +276,9 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       }
       PsiType returnType = member.getReturnType();
       returnType = substitutor.substitute(returnType);
+      if (returnType == null) {
+        return false;
+      }
       for (PsiType type : myExpectedTypes.getValue()) {
         if (TypeConversionUtil.isAssignable(type, returnType)) {
           return true;

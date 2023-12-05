@@ -31,10 +31,9 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -42,6 +41,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.ideFingerprint
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
@@ -83,22 +83,15 @@ internal suspend fun loadApp(app: ApplicationImpl,
                              initAwtToolkitAndEventQueueJob: Job): ApplicationStarter {
   return span("app initialization") {
     val initServiceContainerJob = launch {
-      initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
+      val pluginSet = span("plugin descriptor init waiting") {
+        pluginSetDeferred.await().await()
+      }
+
+      span("app component registration") {
+        app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
+      }
       // ApplicationManager.getApplication may be used in ApplicationInitializedListener constructor
       ApplicationManager.setApplication(app)
-    }
-
-    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
-      initServiceContainerJob.join()
-      try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
-      }
     }
 
     val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
@@ -111,6 +104,23 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
 
     initServiceContainerJob.join()
+
+    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
+      try {
+        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(coroutineScope = app.coroutineScope, isUnitTestMode = app.isUnitTestMode))
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+      }
+    }
+
+    app.coroutineScope.launch {
+      // precompute after plugin model loaded
+      ideFingerprint()
+    }
 
     val loadIconMapping = if (app.isHeadlessEnvironment) {
       null
@@ -188,16 +198,6 @@ internal suspend fun loadApp(app: ApplicationImpl,
   }
 }
 
-private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
-  val pluginSet = span("plugin descriptor init waiting") {
-    pluginSetDeferred.await().await()
-  }
-
-  span("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
-  }
-}
-
 private suspend fun preInitApp(app: ApplicationImpl,
                                asyncScope: CoroutineScope,
                                initLafJob: Job,
@@ -259,11 +259,9 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configDir = PathManager.getConfigDir()
 
   span("beforeApplicationLoaded") {
-    for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-      launch {
-        runCatching {
-          listener.beforeApplicationLoaded(app, configDir)
-        }.getOrLogException(logger<AppStarter>())
+    for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
+      extension.useOrLogError {
+        it.beforeApplicationLoaded(app, configDir)
       }
     }
   }
@@ -300,10 +298,11 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
   ZipFilePool.POOL = null
 }
 
+@VisibleForTesting
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  val result = point.extensionList
+  val result = point.asSequence().toList()
   point.reset()
   return result
 }

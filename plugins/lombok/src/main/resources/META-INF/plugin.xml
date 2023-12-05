@@ -53,6 +53,8 @@
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <lang.jvm.annotationPackageSupport implementation="de.plushnikov.intellij.plugin.provider.LombokAnnotationSupport"/>
     <lang.jvm.ignoreAnnotationParamSupport implementation="de.plushnikov.intellij.plugin.provider.LombokDefaultAnnotationParamSupport"/>
+    <lang.jvm.ignoreVariableInitializedBeforeUsageSupport implementation="de.plushnikov.intellij.plugin.provider.LombokVariableInitializedBeforeUsageSupport"/>
+    <lang.jvm.ignoreMethodCallExpressionNPESupport implementation="de.plushnikov.intellij.plugin.provider.LombokMethodCallExpressionNPESupport"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <projectConfigurable groupId="language"
                          key="plugin.settings.title" bundle="messages.LombokBundle"
@@ -68,8 +70,7 @@
     <lang.inferredAnnotationProvider implementation="de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider"/>
 
     <fileType implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigFileType" name="LOMBOK_CONFIG"
-              language="Lombok.Config"
-              fieldName="INSTANCE" extensions="config" fileNames="lombok.config"/>
+              language="Lombok.Config" fieldName="INSTANCE" fileNames="lombok.config"/>
     <lang.parserDefinition language="Lombok.Config"
                            implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigParserDefinition"/>
     <lang.syntaxHighlighterFactory language="Lombok.Config"
@@ -88,6 +89,7 @@
 
     <findUsagesHandlerFactory
       implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
+    <readWriteAccessDetector implementation="de.plushnikov.intellij.plugin.extension.LombokReadWriteAccessDetector" id="lombok" order="before java"/>
 
     <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="first"/>
     <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameVetoHandler"
@@ -144,6 +146,16 @@
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.DeprecatedLombokAnnotationInspection"
       key="inspection.deprecated.lombok.display.name" bundle="messages.LombokBundle"/>
+
+    <localInspection
+      language="JAVA"
+      groupPath="Java"
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
+      shortName="StaticMethodImportLombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.StaticMethodImportLombokInspection"
+      key="inspection.builder.static.import.name" bundle="messages.LombokBundle"/>
 
     <localInspection
       language="JAVA"
@@ -212,6 +224,12 @@
     <intentionAction>
       <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.ReplaceWithLombokAnnotationAction</className>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>JAVA</language>
+      <className>de.plushnikov.intellij.plugin.intention.ReplaceSynchronizedWithLombokAction</className>
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>

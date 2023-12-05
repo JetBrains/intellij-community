@@ -57,6 +57,7 @@ cd vscode-mdx
 echo "Adding mdx"
 mkdir -p "$ROOT/lib/bundles/mdx"
 cp -r "package.json" "$ROOT/lib/bundles/mdx/"
+cp -r "language-configuration.json" "$ROOT/lib/bundles/mdx/"
 cp -r "license" "$ROOT/lib/bundles/mdx/"
 cp -r "syntaxes" "$ROOT/lib/bundles/mdx/"
 

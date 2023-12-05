@@ -2,7 +2,11 @@
 package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection;
 
@@ -49,13 +53,20 @@ public class MisspelledHeaderInspectionTest extends LightJavaCodeInsightFixtureT
   }
 
   public void testCustomHeaderFix() {
-    MisspelledHeaderInspection inspection = new MisspelledHeaderInspection();
-    myFixture.enableInspections(inspection);
-    myFixture.configureByText(ManifestFileType.INSTANCE, "Custom-Header: -\n");
-    List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Add ");
-    assertEquals(1, intentions.size());
-    myFixture.launchAction(intentions.get(0));
-    assertEquals(Collections.singletonList("Custom-Header"), inspection.CUSTOM_HEADERS);
+    try {
+      InspectionProfileImpl.INIT_INSPECTIONS = true;
+      myFixture.enableInspections(MisspelledHeaderInspection.class);
+      myFixture.configureByText(ManifestFileType.INSTANCE, "Custom-Header: -\n");
+      List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Add ");
+      assertEquals(1, intentions.size());
+      InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
+      assertEquals(List.of(), ((MisspelledHeaderInspection)profile.getToolById("MisspelledHeader", getFile()).getTool()).CUSTOM_HEADERS);
+      myFixture.launchAction(intentions.get(0));
+      assertEquals(List.of("Custom-Header"), ((MisspelledHeaderInspection)profile.getToolById("MisspelledHeader", getFile()).getTool()).CUSTOM_HEADERS);
+    }
+    finally {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+    }
   }
 
   private void doTest(String text, int expected) {

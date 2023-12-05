@@ -85,6 +85,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.ide.startup.importSettings"
       )
 
+      "intellij.pest" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PestIcons",
+        packageName = "com.pestphp.pest"
+      )
 
       else -> super.getConfigForModule(moduleName)
     }

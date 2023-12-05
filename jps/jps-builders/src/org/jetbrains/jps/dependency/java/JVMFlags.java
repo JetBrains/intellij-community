@@ -161,10 +161,13 @@ public final class JVMFlags {
     return isSet(GENERATED_MASK);
   }
 
+  public boolean isAllSet(JVMFlags flags) {
+    return (myFlags & flags.myFlags) == flags.myFlags;
+  }
+
   private boolean isSet(int mask) {
     return (myFlags & mask) != 0;
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -182,6 +185,10 @@ public final class JVMFlags {
     }
 
     return true;
+  }
+
+  public int getValue() {
+    return myFlags;
   }
 
   @Override

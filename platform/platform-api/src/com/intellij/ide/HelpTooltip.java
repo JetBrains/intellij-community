@@ -117,7 +117,7 @@ public class HelpTooltip {
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
   private static final String TOOLTIP_DISABLED_PROPERTY = "JComponent.helpTooltipDisabled";
 
-  private @Nullable Supplier<@TooltipTitle String> title;
+  private @Nullable Supplier<@NotNull @TooltipTitle String> title;
   private @NlsSafe String shortcut;
   private @Tooltip String description;
   private ActionLink link;
@@ -201,7 +201,7 @@ public class HelpTooltip {
    * @return {@code this}
    */
   public HelpTooltip setTitle(@Nullable @TooltipTitle String title) {
-    this.title = () -> title;
+    this.title = title != null ? () -> title : null;
     return this;
   }
 
@@ -318,7 +318,8 @@ public class HelpTooltip {
     if (that == null || getClass() != that.getClass()) return false;
     HelpTooltip tooltip = (HelpTooltip)that;
     return neverHide == tooltip.neverHide &&
-           Objects.equals(title, tooltip.title) &&
+           (title == null ? tooltip.title == null
+                          : tooltip.title != null && Objects.equals(title.get(), tooltip.title.get())) &&
            Objects.equals(shortcut, tooltip.shortcut) &&
            Objects.equals(description, tooltip.description) &&
            Objects.equals(link, tooltip.link) &&

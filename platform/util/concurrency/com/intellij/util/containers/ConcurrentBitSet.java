@@ -8,6 +8,12 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe version of the {@code java.util.BitSet}
  * (except for methods which don't make sense in concurrent environment or those I was too lazy to implement or that are not idempotent - e.g., flip()).
  * This class is optimized for read-heavy multi-threaded usage pattern, so very frequent concurrent modifications might be slow.
+ * <p>
+ * Bear in mind that the results of aggregate status methods including {@code cardinality}, {@code nextClearBit}, {@code nextSetBit}
+ * are typically useful only when a set is not undergoing concurrent updates in other threads.
+ * Otherwise, the results of these methods reflect transient states that may be adequate for monitoring or estimation purposes,
+ * but not for program control.
+ *
  * @see java.util.BitSet
  */
 public interface ConcurrentBitSet {

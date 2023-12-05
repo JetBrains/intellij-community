@@ -14,22 +14,19 @@ class ActionEmbeddingsStorageSetup(
   private val index: EmbeddingSearchIndex,
   private val indexSetupJob: AtomicReference<Job>
 ) {
-  private var shouldSaveToDisk = true
+  private var shouldSaveToDisk = false
 
   suspend fun run() = coroutineScope {
     val indexableActionIds = ActionEmbeddingsStorage.getIndexableActionIds()
-    if (checkEmbeddingsReady(indexableActionIds)) {
-      shouldSaveToDisk = false
-      return@coroutineScope
-    }
 
     val embeddingService = LocalEmbeddingServiceProvider.getInstance().getService() ?: return@coroutineScope
     // Cancel the previous embeddings calculation task if it's not finished
     indexSetupJob.getAndSet(launch {
-      val indexedActionsCount = index.size
+      var indexedActionsCount = 0
       val totalIndexableActionsCount = indexableActionIds.size
 
       val actionManager = ActionManager.getInstance() as ActionManagerImpl
+      index.onIndexingStart()
       indexableActionIds
         .asSequence()
         .filter { it !in index }
@@ -40,11 +37,16 @@ class ActionEmbeddingsStorageSetup(
           val actionIds = batch.map { (id, _) -> id }
           val texts = batch.map { (_, action) -> action!!.templateText!! }
 
-          durationStep(texts.size.toDouble() / (totalIndexableActionsCount - indexedActionsCount), null) {
+          durationStep(texts.size.toDouble() / totalIndexableActionsCount) {
             val embeddings = embeddingService.embed(texts).map { it.normalized() }
+            shouldSaveToDisk = true
+            ++indexedActionsCount
             index.addEntries(actionIds zip embeddings)
           }
         }
+      // Finish the progress reporter
+      durationStep((totalIndexableActionsCount - indexedActionsCount).toDouble() / totalIndexableActionsCount) {}
+      index.onIndexingFinish()
     })?.cancel()
   }
 
@@ -55,11 +57,6 @@ class ActionEmbeddingsStorageSetup(
         index.saveToDisk()
       }
     }
-  }
-
-  private fun checkEmbeddingsReady(indexableActionIds: Set<String>): Boolean {
-    index.filterIdsTo(indexableActionIds.associateWith { 1 })
-    return index.checkAllIdsPresent(indexableActionIds)
   }
 
   companion object {

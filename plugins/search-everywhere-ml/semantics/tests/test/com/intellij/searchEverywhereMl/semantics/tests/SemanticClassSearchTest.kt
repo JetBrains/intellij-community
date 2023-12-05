@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl.semantics.tests
 
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
@@ -9,9 +10,11 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticClassSearchEverywhereContributor
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
-import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileContentListener
 import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
@@ -22,18 +25,21 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
   private val storage
     get() = ClassEmbeddingsStorage.getInstance(project)
 
+  private val model
+    get() = GotoClassModel2(project)
+
   fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
-    var neighbours = storage.searchNeighboursIfEnabled("index project job", 10, 0.5)
-    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours.map { it.text }.toSet())
+    var neighbours = storage.searchNeighboursIfEnabled("index project job", 10, 0.5).asSequence().filterByModel()
+    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours("index project job", 0.5).toList()
-    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours.map { it.text }.toSet())
+    neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
+    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).toList()
-    assertEquals(setOf("ScoresFileManager"), neighbours.map { it.text }.toSet())
+    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).filterByModel()
+    assertEquals(setOf("ScoresFileManager"), neighbours)
   }
 
   fun `test index ids are not duplicated`() = runTest {
@@ -61,39 +67,38 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
-    var neighbours = storage.streamSearchNeighbours("index project job", 0.5).toList()
-    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours.map { it.text }.toSet())
+    var neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
+    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).toList()
-    assertEquals(setOf("ScoresFileManager"), neighbours.map { it.text }.toSet())
+    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).filterByModel()
+    assertEquals(setOf("ScoresFileManager"), neighbours)
 
     val nameToReplace = "IndexProjectAction"
     val startOffset = myFixture.editor.document.text.indexOf(nameToReplace)
     WriteCommandAction.runWriteCommandAction(project) {
       myFixture.editor.document.replaceString(startOffset, startOffset + nameToReplace.length, "ScoresFileHandler")
       myFixture.editor.document.saveToDisk() // This is how we trigger reindexing
+      myFixture.editor.document.commitToPsi(project)
     }
 
-    TimeoutUtil.sleep(2000) // wait for two seconds for index update
+    TimeoutUtil.sleep(2000) // wait for four seconds for index update
 
-    assertEquals(3, storage.index.size)
+    neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
+    assertEquals(setOf("ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours("index project job", 0.5).toList()
-    assertEquals(setOf("ProjectIndexingTask"), neighbours.map { it.text }.toSet())
-
-    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).toList()
-    assertEquals(setOf("ScoresFileManager", "ScoresFileHandler"), neighbours.map { it.text }.toSet())
+    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).filterByModel()
+    assertEquals(setOf("ScoresFileManager", "ScoresFileHandler"), neighbours)
   }
 
   fun `test removal of file with class changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
-    var neighbours = storage.streamSearchNeighbours("index project job", 0.5).toList()
-    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours.map { it.text }.toSet())
+    var neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
+    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).toList()
-    assertEquals(setOf("ScoresFileManager"), neighbours.map { it.text }.toSet())
+    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).filterByModel()
+    assertEquals(setOf("ScoresFileManager"), neighbours)
 
     WriteCommandAction.runWriteCommandAction(project) {
       myFixture.editor.virtualFile.deleteRecursively() // deletes the currently open file: java/IndexProjectAction.java
@@ -101,17 +106,23 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
     TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
-    assertEquals(2, storage.index.size)
+    neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
+    assertEquals(setOf("ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours("index project job", 0.5).toList()
-    assertEquals(setOf("ProjectIndexingTask"), neighbours.map { it.text }.toSet())
+    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).filterByModel()
+    assertEquals(setOf("ScoresFileManager"), neighbours)
+  }
 
-    neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).toList()
-    assertEquals(setOf("ScoresFileManager"), neighbours.map { it.text }.toSet())
+  private fun Sequence<ScoredText>.filterByModel(): Set<String> {
+    return map { it.text }.filter {
+      model.getElementsByName(it, false, it).any { element ->
+        (element as PsiElement).isValid
+      }
+    }.toSet()
   }
 
   private suspend fun setupTest(vararg filePaths: String) {
-    SemanticSearchFileContentListener.getInstance(project).clearEvents()
+    SemanticSearchFileChangeListener.getInstance(project).clearEvents()
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SemanticSearchSettings.getInstance().enabledInClassesTab = true

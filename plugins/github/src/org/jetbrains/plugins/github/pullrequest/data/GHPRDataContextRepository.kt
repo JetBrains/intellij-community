@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
@@ -9,8 +9,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.IconUtil
-import com.intellij.util.childScope
 import com.intellij.util.ui.ImageUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import icons.CollaborationToolsIcons
@@ -22,7 +22,6 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -102,25 +101,13 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                              accountDetails.name)
 
 
-    val repoOwner = repositoryInfo.owner
-    val currentUserTeams = if (repoOwner is GHRepositoryOwnerName.Organization) {
-      suspendingApiCall { indicator ->
-        SimpleGHGQLPagesLoader(requestExecutor, {
-          GHGQLRequests.Organization.Team.findByUserLogins(account.server, repoOwner.login, listOf(currentUser.login), it)
-        }).loadAll(indicator)
-      }
-    }
-    else {
-      emptyList()
-    }
-
     // repository might have been renamed/moved
     val apiRepositoryPath = repositoryInfo.path
     val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
 
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
                                                   ghostUserDetails,
-                                                  account, currentUser, currentUserTeams,
+                                                  account, currentUser,
                                                   repositoryInfo)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), project, securityService,
@@ -150,7 +137,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
 
     val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
                                                         remoteCoordinates, apiRepositoryCoordinates,
-                                                        repoOwner,
+                                                        repositoryInfo.owner,
                                                         repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
 
     val iconsScope = contextScope.childScope(Dispatchers.Main)

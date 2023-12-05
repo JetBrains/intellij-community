@@ -15,15 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -36,11 +37,11 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new CollapseConditionalFix();
   }
 
-  private static class CollapseConditionalFix extends GroovyFix {
+  private static class CollapseConditionalFix extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -48,13 +49,11 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      PsiElement element = descriptor.getPsiElement();
-      if (element == null) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof GrConditionalExpression expression)) return;
       final GrExpression thenBranch = expression.getThenBranch();
-      replaceExpression(expression, thenBranch.getText());
+      GrInspectionUtil.replaceExpression(expression, thenBranch.getText());
     }
   }
 

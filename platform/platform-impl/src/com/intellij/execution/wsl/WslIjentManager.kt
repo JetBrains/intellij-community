@@ -2,72 +2,118 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.ChannelInputStream
-import com.intellij.execution.process.ChannelOutputStream
-import com.intellij.execution.process.UnixSignal
+import com.intellij.execution.ijent.IjentChildProcessAdapter
+import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.ijent.IjentSessionProvider
 import com.intellij.util.SuspendingLazy
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.io.computeDetached
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
-import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.absolutePathString
 
+/**
+ * An entry point for running [IjentApi] over WSL and checking if [IjentApi] even should be used for WSL.
+ */
+@ApiStatus.Experimental
 @Service
+@Suppress("RAW_RUN_BLOCKING")  // This class is called by different legacy code, a ProgressIndicator is not always available.
 class WslIjentManager private constructor(private val scope: CoroutineScope) {
   private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
 
+  /**
+   * The returned instance is not supposed to be closed by the caller. [WslIjentManager] closes [IjentApi] by itself during shutdown.
+   */
   suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
-    return myCache.computeIfAbsent(wslDistribution.id + if (rootUser) ":root" else "") {
-      scope.suspendingLazy {
-        deployAndLaunchIjent(scope, project, wslDistribution, WSLCommandLineOptions().setSudo(rootUser))
+    return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
+      val validOldHolder = when (oldHolder?.isInitialized()) {
+        true ->
+          if (oldHolder.getInitialized().coroutineScope.isActive) oldHolder
+          else null
+        false -> oldHolder
+        null -> null
       }
-    }.getValue()
+
+      validOldHolder ?: scope.suspendingLazy {
+        deployAndLaunchIjent(scope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+      }
+    }!!.getValue()
   }
 
+  @RequiresBackgroundThread
+  @RequiresBlockingContext
   fun fetchLoginShellEnv(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): Map<String, String> {
     return runBlocking {
       getIjentApi(wslDistribution, project, rootUser).fetchLoginShellEnvVariables()
     }
   }
 
+  /**
+   * Runs a process inside a WSL container defined by [wslDistribution] using IJent.
+   *
+   * [project] is supposed to be used only for showing notifications with appropriate modality. Therefore, it may be almost safely omitted.
+   *
+   * [processBuilder] chosen as a convenient adapter for already written code. The functions uses command line arguments, environment
+   * variables and the working directory defined by [processBuilder].
+   *
+   * The function ignores [ProcessBuilder.redirectInput], [ProcessBuilder.redirectOutput], [ProcessBuilder.redirectError] and similar
+   * methods. Stdin, stdout, and stderr are always piped. The caller MUST drain both [Process.getInputStream] and [Process.getErrorStream].
+   * Otherwise, the remote operating system may suspend the remote process due to buffer overflow.
+   *
+   * [isSudo] allows to start IJent inside WSL through sudo. It implies that all children processes, including [processBuilder] will run
+   * from the root user as well.
+   */
+  @RequiresBackgroundThread
+  @RequiresBlockingContext
   fun runProcessBlocking(
     wslDistribution: WSLDistribution,
     project: Project?,
     processBuilder: ProcessBuilder,
-    options: WSLCommandLineOptions,
-    pty: IjentApi.Pty?
+    pty: IjentApi.Pty?,
+    isSudo: Boolean,
   ): Process {
     return runBlocking {
       val command = processBuilder.command()
 
-      when (val processResult = getIjentApi(wslDistribution, project, options.isSudo).executeProcess(
+      val ijentApi = getIjentApi(wslDistribution, project, isSudo)
+      when (val processResult = ijentApi.executeProcess(
         exe = FileUtil.toSystemIndependentName(command.first()),
-        args = *command.toList().drop(1).toTypedArray(),
+        args = command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty,
-        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.path) }
+        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
       )) {
-        is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(pty != null)
+        is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(ijentApi.coroutineScope, pty != null)
         is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
       }
+    }
+  }
+
+  @VisibleForTesting
+  fun dropCache() {
+    myCache.values.removeAll { ijent ->
+      if (ijent.isInitialized()) {
+        ijent.getInitialized().close()
+      }
+      true
     }
   }
 
@@ -75,103 +121,58 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     @JvmStatic
     fun isIjentAvailable(): Boolean {
       val id = PluginId.getId("intellij.platform.ijent.impl")
-      return Registry.`is`("wsl.use.remote.agent.for.launch.processes") && PluginManagerCore.getPlugin(id)?.isEnabled == true
+      return Registry.`is`("wsl.use.remote.agent.for.launch.processes", false) && PluginManagerCore.getPlugin(id)?.isEnabled == true
     }
 
     @JvmStatic
     fun getInstance(): WslIjentManager = service()
-  }
-}
 
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun IjentChildProcess.toProcess(isPty: Boolean): Process {
-  return object : Process() {
-    private val myIsDestroyed = AtomicBoolean(false)
-    private val myOutStream by lazy { ChannelOutputStream(stdin) }
-    private val myInputStream by lazy { ChannelInputStream(stdout) }
-    private val myErrorStream by lazy { if (isPty) ByteArrayInputStream(byteArrayOf()) else ChannelInputStream(stderr) }
-
-    override fun waitFor(): Int {
-      return try {
-        runBlocking {
-          exitCode.await()
-        }
+    @TestOnly
+    @JvmStatic
+    fun overrideIsIjentAvailable(value: Boolean): AutoCloseable {
+      val registry = Registry.get("wsl.use.remote.agent.for.launch.processes")
+      registry.setValue(value)
+      return AutoCloseable {
+        registry.resetToDefault()
       }
-      catch (e: Throwable) {
-        when (e) {
-          is CancellationException -> throw InterruptedException()
-          else -> throw RuntimeException(e)
-        }
-      }
-    }
-
-    override fun getOutputStream(): OutputStream = myOutStream
-    override fun getInputStream(): InputStream = myInputStream
-    override fun getErrorStream(): InputStream = myErrorStream
-
-    override fun destroy() {
-      if (myIsDestroyed.compareAndSet(false, true)) {
-        runBlocking {
-          sendSignal(UnixSignal.SIGTERM.linuxCode)
-        }
-
-        myOutStream.close()
-        myInputStream.close()
-        myErrorStream.close()
-      }
-    }
-
-    override fun exitValue(): Int {
-      return if (exitCode.isCompleted) exitCode.getCompleted() else -1
     }
   }
 }
 
-@VisibleForTesting
+private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, isPty: Boolean): Process =
+  if (isPty)
+    IjentChildPtyProcessAdapter(coroutineScope, this)
+  else
+    IjentChildProcessAdapter(coroutineScope, this)
+
 suspend fun deployAndLaunchIjent(
   ijentCoroutineScope: CoroutineScope,
   project: Project?,
   wslDistribution: WSLDistribution,
-  wslCommandLineOptions: WSLCommandLineOptions = WSLCommandLineOptions(),
-): IjentApi = deployAndLaunchIjentGettingPath(ijentCoroutineScope, project, wslDistribution, wslCommandLineOptions).second
+  wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
+): IjentApi = deployAndLaunchIjentGettingPath(ijentCoroutineScope, project, wslDistribution, wslCommandLineOptionsModifier).second
 
+@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
 @VisibleForTesting
 suspend fun deployAndLaunchIjentGettingPath(
   ijentCoroutineScope: CoroutineScope,
   project: Project?,
   wslDistribution: WSLDistribution,
-  wslCommandLineOptions: WSLCommandLineOptions = WSLCommandLineOptions(),
+  wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
 ): Pair<String, IjentApi> {
-  val targetPlatform = IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
-  val ijentBinary = IjentExecFileProvider.getIjentBinary(targetPlatform)
+  // IJent can start an interactive shell by itself whenever it needs.
+  // Enabling an interactive shell for IJent by default can bring problems, because stdio of IJent must not be populated
+  // with possible user extensions in ~/.profile
+  val wslCommandLineOptions = WSLCommandLineOptions()
+    .setExecuteCommandInInteractiveShell(false)
+    .setExecuteCommandInLoginShell(false)
+    .setExecuteCommandInShell(false)
 
-  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.absolutePathString())!!
+  wslCommandLineOptionsModifier(wslCommandLineOptions)
 
-  val commandLine = GeneralCommandLine(
-    // It's supposed that WslDistribution always converts commands into SHELL.
-    // There's no strict reason to call 'exec', just a tiny optimization.
-    listOf("exec") +
-    getIjentGrpcArgv(wslIjentBinary)
-  )
+  val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine("/bin/sh"))
   wslDistribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
-  LOG.debug {
-    "Going to launch IJent: ${commandLine.commandLineString}"
-  }
-
-  val process = commandLine.createProcess()
-  try {
-    return wslIjentBinary to IjentSessionProvider.connect(ijentCoroutineScope, targetPlatform, process)
-  }
-  catch (err: Throwable) {
-    try {
-      process.destroy()
-    }
-    catch (err2: Throwable) {
-      err.addSuppressed(err)
-    }
-    throw err
-  }
+  val process = computeDetached { commandLine.createProcess() }
+  return IjentSessionProvider.bootstrapOverShellSession(ijentCoroutineScope, process)
 }
-
-private val LOG = Logger.getInstance("com.intellij.platform.ijent.IjentWslLauncher")

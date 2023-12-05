@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
  * Marker interface for {@link Macro}s which expansion should be performed after other macros' expansion.
  *
  * @see MacroManager#expandMacrosInString(String, boolean, DataContext)
- * @see MacroManager#expandMacrosInString(String, boolean, DataContext, String, boolean)
+ * @see #expandMacrosInString(String, boolean, DataContext, boolean)
  * @see MacroManager#expandSilentMacros(String, boolean, DataContext)
  */
 public interface SecondQueueExpandMacro {

@@ -3,13 +3,18 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.events.*
+import org.intellij.lang.annotations.Pattern
+import org.jetbrains.annotations.NonNls
 
 /**
  * Best practices:
  * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each
  * - Prefer shorter group names; avoid common prefixes (such as "statistics.")
  */
-class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, val recorder: String = "FUS") {
+
+
+
+class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: String, val version: Int, val recorder: String = "FUS") {
   private val registeredEventIds = mutableSetOf<String>()
   private val registeredEvents = mutableListOf<BaseEventId>()
 
@@ -37,7 +42,7 @@ class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, 
    *
    * @see registerVarargEvent
    */
-  fun registerEvent(eventId: String): EventId {
+  fun registerEvent(@NonNls @EventIdName eventId: String): EventId {
     return EventId(this, eventId).also { addToRegisteredEvents(it) }
   }
 
@@ -47,7 +52,7 @@ class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, 
    * @see registerEvent
    * @see registerVarargEvent
    */
-  fun <T1> registerEvent(eventId: String, eventField1: EventField<T1>): EventId1<T1> {
+  fun <T1> registerEvent(@NonNls @EventIdName eventId: String, eventField1: EventField<T1>): EventId1<T1> {
     return EventId1(this, eventId, eventField1).also { addToRegisteredEvents(it) }
   }
 
@@ -57,7 +62,7 @@ class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, 
    * @see registerEvent
    * @see registerVarargEvent
    */
-  fun <T1, T2> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>): EventId2<T1, T2> {
+  fun <T1, T2> registerEvent(@NonNls @EventIdName eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>): EventId2<T1, T2> {
     return EventId2(this, eventId, eventField1, eventField2).also { addToRegisteredEvents(it) }
   }
 
@@ -67,7 +72,7 @@ class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, 
    * @see registerEvent
    * @see registerVarargEvent
    */
-  fun <T1, T2, T3> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>, eventField3: EventField<T3>): EventId3<T1, T2, T3> {
+  fun <T1, T2, T3> registerEvent(@NonNls @EventIdName eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>, eventField3: EventField<T3>): EventId3<T1, T2, T3> {
     return EventId3(this, eventId, eventField1, eventField2, eventField3).also { addToRegisteredEvents(it) }
   }
 
@@ -76,12 +81,12 @@ class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, 
    *
    * @see registerEvent
    */
-  fun registerVarargEvent(eventId: String, vararg fields: EventField<*>): VarargEventId {
+  fun registerVarargEvent(@NonNls @EventIdName eventId: String, vararg fields: EventField<*>): VarargEventId {
     return VarargEventId(this, eventId, *fields).also { addToRegisteredEvents(it) }
   }
 
   @JvmOverloads
-  fun registerIdeActivity(activityName: String?,
+  fun registerIdeActivity(@NonNls @EventIdName activityName: String?,
                           startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
                           finishEventAdditionalFields: Array<EventField<*>> = emptyArray(),
                           parentActivity: IdeActivityDefinition? = null,
@@ -89,13 +94,13 @@ class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, 
     return IdeActivityDefinition(this, parentActivity, activityName, startEventAdditionalFields, finishEventAdditionalFields, subStepWithStepId)
   }
 
-  internal fun validateEventId(eventId: String) {
+  internal fun validateEventId(@NonNls @EventIdName eventId: String) {
     if (!isEventIdValid(eventId)) {
       throw IllegalArgumentException("Trying to report unregistered event ID $eventId to group $id")
     }
   }
 
-  private fun isEventIdValid(eventId: String): Boolean {
+  private fun isEventIdValid(@NonNls @EventIdName eventId: String): Boolean {
     if (EventLogSystemEvents.SYSTEM_EVENTS.contains(eventId)) return true
     return registeredEventIds.isEmpty() || eventId in registeredEventIds
   }

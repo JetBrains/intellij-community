@@ -21,7 +21,7 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
 
   override fun getUserData(): JBAccountInfoService.JBAData? {
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      return JBAccountInfoService.JBAData("integrationTest", "testLogin", "testEmail@example.com")
+      return DummyJBAccountInfoService.userData
     }
     return getAccountInfoService()?.userData
   }
@@ -49,7 +49,10 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
   }
 
   // Extracted to simplify testing
-  internal fun getAccountInfoService(): JBAccountInfoService? {
+  override fun getAccountInfoService(): JBAccountInfoService? {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      return DummyJBAccountInfoService
+    }
     return JBAccountInfoService.getInstance()
   }
 }

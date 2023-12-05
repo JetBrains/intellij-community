@@ -25,7 +25,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringUiService;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -217,14 +216,12 @@ public class PsiElement2UsageTargetAdapter
 
   @Override
   public @Nls @NotNull String getLongDescriptiveName() {
-    SearchScope searchScope = myOptions.searchScope;
-    String scopeString = searchScope.getDisplayName();
     PsiElement psiElement = getElement();
 
     return psiElement == null ? UsageViewBundle.message("node.invalid") :
            FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                               DescriptiveNameUtil.getDescriptiveName(psiElement),
-                              scopeString
+                              myOptions.searchScope.getDisplayName()
            );
   }
 

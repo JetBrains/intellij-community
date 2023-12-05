@@ -14,8 +14,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager

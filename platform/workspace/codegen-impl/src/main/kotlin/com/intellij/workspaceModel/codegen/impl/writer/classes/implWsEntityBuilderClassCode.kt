@@ -38,6 +38,9 @@ ${
         if (name == LibraryEntity.simpleName) {
           line("indexLibraryRoots(roots)")
         }
+        if (name == SdkEntity.simpleName) {
+          line("indexSdkRoots(roots)")
+        }
         lineComment("Process linked entities that are connected without a builder")
         line("processLinkedEntities(builder)")
 
@@ -112,6 +115,13 @@ ${
           line("}.toHashSet()")
           line("index(this, \"roots\", libraryRootList)")
           line("indexJarDirectories(this, jarDirectories)")
+        }
+      }
+
+      if (name == SdkEntity.simpleName) {
+        section("private fun indexSdkRoots(sdkRoots: List<SdkRoot>)") {
+          line("val sdkRootList = sdkRoots.map { it.url }.toHashSet()")
+          line("index(this, \"roots\", sdkRootList)")
         }
       }
     }

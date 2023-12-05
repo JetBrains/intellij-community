@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.jps.serialization.impl
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
@@ -73,13 +73,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       // Loading data if the external storage is disabled
       val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
       if (moduleLoadedInfo != null) {
-        // Load facets
         runCatchingXmlIssues(exceptionsCollector) {
           createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
         }
 
         if (context.isOrphanageEnabled) {
-          // Load additional elements
           newModuleEntity = loadAdditionalContents(reader,
                                                    virtualFileManager,
                                                    moduleLoadedInfo.moduleEntity,
@@ -144,7 +142,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       exceptionsCollector.firstOrNull(),
     )
 
-    loadEntitiesTimeMs.addElapsedTimeMs(start)
+    loadEntitiesTimeMs.addElapsedTimeMillis(start)
     return loadingResult
   }
 
@@ -163,7 +161,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     if (roots == null) return moduleEntity
-    return if (moduleEntity.isEmpty) {
+    return if (moduleEntity.isEmpty()) {
       ModuleEntity(moduleEntity.name, emptyList(), OrphanageWorkerEntitySource) {
         this.contentRoots = roots
       } as ModuleEntity.Builder
@@ -684,7 +682,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
     createFacetSerializer().saveFacetEntities(module, entities, writer, this::acceptsSource)
 
-    saveEntitiesTimeMs.addElapsedTimeMs(start)
+    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   protected open fun createFacetSerializer(): FacetsSerializer {
@@ -1104,6 +1102,8 @@ fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
   return compareBy<SourceRootEntity> { order[it.url] ?: order.size }.thenBy { it.url.url }
 }
 
-private val ModuleEntity.isEmpty: Boolean
-  get() = this.contentRoots.isEmpty() && this.javaSettings == null && this.facets.isEmpty() && this.dependencies.filterNot { it is ModuleDependencyItem.ModuleSourceDependency }.isEmpty()
+
+private fun ModuleEntity.isEmpty(): Boolean {
+  return this.contentRoots.isEmpty() && this.javaSettings == null && this.facets.isEmpty() && this.dependencies.filterNot { it is ModuleDependencyItem.ModuleSourceDependency }.isEmpty()
+}
 

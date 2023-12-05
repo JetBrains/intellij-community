@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -28,7 +28,7 @@ import kotlin.io.path.copyTo
 import kotlin.time.Duration
 
 internal fun span(spanBuilder: SpanBuilder, task: Runnable) {
-  spanBuilder.useWithScope {
+  spanBuilder.useWithScopeBlocking {
     task.run()
   }
 }
@@ -43,7 +43,7 @@ inline fun CoroutineScope.createSkippableJob(spanBuilder: SpanBuilder,
   }
   else {
     return launch {
-      spanBuilder.useWithScope2 {
+      spanBuilder.useWithScope {
         task()
       }
     }
@@ -60,7 +60,7 @@ fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<
 fun zip(context: CompilationContext, targetFile: Path, dir: Path) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
-    .useWithScope {
+    .useWithScopeBlocking {
       org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = mapOf(dir to ""))
     }
 }

@@ -53,12 +53,12 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
         return new TreeSet<>(project.getTasks());
       });
     }
-    catch (Exception e) {
+    catch (Exception exception) {
       context.getMessageReporter().createMessage()
         .withGroup(Messages.TASK_MODEL_COLLECTING_GROUP)
         .withTitle("Tasks collecting failure")
         .withText("Tasks for " + project + " cannot be collected due to plugin exception.")
-        .withException(e)
+        .withException(exception)
         .withKind(Message.Kind.WARNING)
         .reportMessage(project);
       return Collections.emptySet();

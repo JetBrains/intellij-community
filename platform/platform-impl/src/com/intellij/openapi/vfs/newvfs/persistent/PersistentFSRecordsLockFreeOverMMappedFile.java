@@ -463,7 +463,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                          final int flags,
                          final int nameId,
                          final int parentId,
-                         final boolean overwriteAttrRef) throws IOException {
+                         final boolean cleanAttributeRef) throws IOException {
+    checkParentIdIsValid(parentId);
+
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     final Page page = storage.pageByOffset(recordOffsetInFile);
@@ -471,9 +473,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.PARENT_REF_OFFSET, parentId);
     setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.NAME_REF_OFFSET, nameId);
     setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.FLAGS_OFFSET, flags);
-    if (overwriteAttrRef) {
+    if (cleanAttributeRef) {
       setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.ATTR_REF_OFFSET, 0);
     }
+    //TODO RC: why not set contentId?
     setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.TIMESTAMP_OFFSET, timestamp);
     setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.LENGTH_OFFSET, length);
 
@@ -649,18 +652,19 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
 
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
-    final int recordsAllocatedSoFar = allocatedRecordsCount();
-    if (!(NULL_ID < recordId && recordId <= recordsAllocatedSoFar)) {
+    final int maxAllocatedID = maxAllocatedID();
+    if (!(NULL_ID < recordId && recordId <= maxAllocatedID)) {
       throw new IndexOutOfBoundsException(
-        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + recordsAllocatedSoFar + "]");
+        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + maxAllocatedID + "]");
     }
   }
 
   private void checkParentIdIsValid(final int parentId) throws IndexOutOfBoundsException {
-    final int recordsAllocatedSoFar = allocatedRecordsCount();
-    if (!(NULL_ID <= parentId && parentId <= recordsAllocatedSoFar)) {
+    //parentId could be NULL (for root records) -- this is the difference with checkRecordIdIsValid()
+    final int maxAllocatedID = maxAllocatedID();
+    if (!(NULL_ID <= parentId && parentId <= maxAllocatedID)) {
       throw new IndexOutOfBoundsException(
-        "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + recordsAllocatedSoFar + "]");
+        "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + maxAllocatedID + "]");
     }
   }
 

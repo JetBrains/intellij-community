@@ -17,6 +17,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
@@ -278,7 +279,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       return Prohibited()
     }
 
-    val commitList = selection.cachedMetadata.takeIf { it.isNotEmpty() } ?: return Prohibited()
+    val commitList = selection.commits.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
     val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(

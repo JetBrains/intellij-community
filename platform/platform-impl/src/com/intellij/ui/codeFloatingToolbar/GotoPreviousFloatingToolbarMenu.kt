@@ -22,6 +22,6 @@ class GotoPreviousFloatingToolbarMenu: AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-        showNextMenu(findFloatingToolbar(e), isForwardDirection = false)
+    showNextMenu(e, isForwardDirection = false)
   }
 }

@@ -17,3 +17,14 @@ UFile (package = )
                                 USimpleNameReferenceExpression (identifier = br)
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                     UIdentifier (Identifier (readLine))
+        UMethod (name = foo)
+            UParameter (name = br)
+            UBlockExpression
+                UTryExpression (with resources)
+                    USimpleNameReferenceExpression (identifier = br)
+                    UBlockExpression
+                        UReturnExpression
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = br)
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                    UIdentifier (Identifier (readLine))

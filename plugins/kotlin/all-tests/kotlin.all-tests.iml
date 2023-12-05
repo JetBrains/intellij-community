@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.i18n.tests" scope="RUNTIME" />
@@ -59,10 +60,12 @@
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.indices.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
   </component>
 </module>

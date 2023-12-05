@@ -117,34 +117,13 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final ComboBoxModel<DirectoryChooser.ItemWrapper> model = getComboBox().getModel();
         VirtualFile root = CommonMoveClassesOrPackagesUtil.chooseSourceRoot(
           new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()),
           mySourceRoots,
           targetDirectory
         );
         if (root == null) return;
-        List<DirectoryChooser.ItemWrapper> items = new ArrayList<>(model.getSize());
-        for (int i = 0; i < model.getSize(); i++) items.add(model.getElementAt(i));
-        record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) {
-        }
-        ReadAction
-          .nonBlocking(() -> new NonBlockingResult(
-            root,
-            ContainerUtil.find(items, item ->
-              item != DirectoryChooser.ItemWrapper.NULL
-              && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)
-            )
-          ))
-          .expireWith(DestinationFolderComboBox.this)
-          .finishOnUiThread(ModalityState.current(), result -> {
-            if (result.item != null) {
-              getComboBox().setSelectedItem(result.item);
-              getComboBox().repaint();
-            }
-            setComboboxModel(result.root, result.root, true);
-          })
-          .submit(AppExecutorUtil.getAppExecutorService());
+        selectRoot(project, root);
       }
     });
     final AtomicReference<VirtualFile> selection = new AtomicReference<>(sourceRoot);
@@ -181,12 +160,37 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
             return new NonBlockingResult(getUpdateErrorMessage(fileIndex, selectedItem), relativeSrcPath);
           })
           .expireWith(DestinationFolderComboBox.this)
-          .finishOnUiThread(ModalityState.stateForComponent(getComboBox()), (result) -> {
+          .finishOnUiThread(ModalityState.stateForComponent(getComboBox()), result -> {
             myUpdateErrorMessage.accept(result.error);
             updateTooltipText(result.relativeSrcPath);
           }).submit(AppExecutorUtil.getAppExecutorService());
       }
     });
+  }
+
+  public void selectRoot(Project project, VirtualFile root) {
+    final ComboBoxModel<DirectoryChooser.ItemWrapper> model = getComboBox().getModel();
+    List<DirectoryChooser.ItemWrapper> items = new ArrayList<>(model.getSize());
+    for (int i = 0; i < model.getSize(); i++) items.add(model.getElementAt(i));
+    record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) {
+    }
+    ReadAction
+      .nonBlocking(() -> new NonBlockingResult(
+        root,
+        ContainerUtil.find(items, item ->
+          item != DirectoryChooser.ItemWrapper.NULL
+          && Comparing.equal(ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(item.getDirectory().getVirtualFile()), root)
+        )
+      ))
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.current(), result -> {
+        if (result.item != null) {
+          getComboBox().setSelectedItem(result.item);
+          getComboBox().repaint();
+        }
+        setComboboxModel(result.root, result.root, true);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @NotNull
@@ -248,6 +252,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   }
 
   private static final DirectoryChooser.ItemWrapper NO_UPDATE_REQUIRED = DirectoryChooser.ItemWrapper.NULL;
+
   private void setComboboxModelInternal(@Nullable VirtualFile sourceRoot, @Nullable VirtualFile oldSelection, boolean forceIncludeAll) {
     if (myProject.isDisposed()) return;
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();

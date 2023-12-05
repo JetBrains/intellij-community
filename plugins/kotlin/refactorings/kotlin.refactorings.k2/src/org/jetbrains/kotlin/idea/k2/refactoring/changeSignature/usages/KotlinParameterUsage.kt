@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 internal class KotlinParameterUsage(
     element: KtElement,
     private val parameterInfo: KotlinParameterInfo
-) : UsageInfo(element), KotlinBaseUsage {
+) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
@@ -22,7 +22,7 @@ internal class KotlinParameterUsage(
     ): KtElement {
         val newElement = KtPsiFactory(element.project).createExpression(getReplacementText(changeInfo))
         val elementToReplace = (element.parent as? KtThisExpression) ?: element
-        return elementToReplace.replace(newElement) as KtElement
+        return elementToReplace.replace(newElement).parent as KtElement
     }
 
     private fun getReplacementText(changeInfo: KotlinChangeInfoBase): String {
@@ -38,7 +38,7 @@ internal class KotlinParameterUsage(
 internal class KotlinNonQualifiedOuterThisUsage(
     element: KtThisExpression,
     private val targetDescriptor: Name
-) : UsageInfo(element), KotlinBaseUsage {
+) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
@@ -46,7 +46,7 @@ internal class KotlinNonQualifiedOuterThisUsage(
     ): KtElement {
         val newElement = KtPsiFactory(element.project).createExpression(getReplacementText())
         val elementToReplace = (element.parent as? KtThisExpression) ?: element
-        return elementToReplace.replace(newElement) as KtElement
+        return elementToReplace.replace(newElement).parent as KtElement
     }
 
     private fun getReplacementText(): String = "this@${targetDescriptor.asString()}"
@@ -55,7 +55,7 @@ internal class KotlinNonQualifiedOuterThisUsage(
 internal class KotlinImplicitThisToParameterUsage(
     callElement: KtElement,
     val parameterInfo: KotlinParameterInfo,
-) : UsageInfo(callElement), KotlinBaseUsage {
+) : UsageInfo(callElement), KotlinBaseChangeSignatureUsage {
     private fun getNewReceiverText(): String = parameterInfo.getInheritedName(null)
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
@@ -70,7 +70,7 @@ internal class KotlinImplicitThisToParameterUsage(
 internal class KotlinImplicitThisUsage(
     callElement: KtElement,
     private val targetDescriptor: Name
-) : UsageInfo(callElement), KotlinBaseUsage {
+) : UsageInfo(callElement), KotlinBaseChangeSignatureUsage {
     private fun getNewReceiverText() = when {
         targetDescriptor.isSpecial -> "this"
         else -> "this@${targetDescriptor.asString()}"
@@ -83,6 +83,6 @@ internal class KotlinImplicitThisUsage(
     ): KtElement {
         val newQualifiedCall = KtPsiFactory(element.project).createExpression("${getNewReceiverText()}.${element.text}"
         ) as KtQualifiedExpression
-        return element.replace(newQualifiedCall) as KtElement
+        return element.replace(newQualifiedCall).parent as KtElement
     }
 }

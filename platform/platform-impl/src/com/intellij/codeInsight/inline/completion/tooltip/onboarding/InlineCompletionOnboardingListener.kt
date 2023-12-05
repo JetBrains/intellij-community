@@ -8,7 +8,6 @@ import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionToolti
 import com.intellij.openapi.editor.Editor
 
 internal class InlineCompletionOnboardingListener private constructor(private val editor: Editor) : InlineCompletionEventAdapter {
-
   private var state: State? = null
 
   override fun onRequest(event: InlineCompletionEventType.Request) {
@@ -20,7 +19,7 @@ internal class InlineCompletionOnboardingListener private constructor(private va
   }
 
   override fun onCompletion(event: InlineCompletionEventType.Completion) {
-    if (state?.isEmpty == false) {
+    if (state?.isEmpty == false && event.cause == null) {
       InlineCompletionSession.getOrNull(editor)?.let { session ->
         if (InlineCompletionOnboardingComponent.getInstance().shouldExplicitlyDisplayTooltip()) {
           InlineCompletionTooltip.show(session)

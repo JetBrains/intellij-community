@@ -11,7 +11,7 @@ class CompletionGolfFragmentBuilder(project: Project,
                                     private val completionGolfMode: CompletionGolfMode)
   : CodeFragmentFromPsiBuilder(project, language) {
   override fun getVisitors(): List<CompletionGolfEvaluationVisitor> {
-    return CompletionGolfVisitorFactory.EP_NAME.extensions.toList()
+    return CompletionGolfVisitorFactory.EP_NAME.extensionList
              .filter { it.language == language }.takeIf { it.isNotEmpty() }
              ?.map { it.createVisitor(featureName, completionGolfMode) }
            ?: listOf(CompletionGolfAllEvaluationVisitor.Default(featureName, language))

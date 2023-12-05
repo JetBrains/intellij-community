@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.projectView
 
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
@@ -13,14 +14,17 @@ import org.jetbrains.kotlin.psi.KtFile
 class KtFileTreeNode(
     project: Project?,
     val ktFile: KtFile,
-    viewSettings: ViewSettings
-) : PsiFileNode(project, ktFile, viewSettings) {
+    viewSettings: ViewSettings,
+    private val nestedFileNodes: Collection<AbstractTreeNode<*>>
+) : PsiFileNode(project, ktFile, viewSettings), FileNodeWithNestedFileNodes {
+
+    override fun getNestedFileNodes(): Collection<AbstractTreeNode<*>> = nestedFileNodes
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> =
         if (settings.isShowMembers) {
-            ktFile.toDeclarationsNodes(settings)
+            nestedFileNodes + ktFile.toDeclarationsNodes(settings)
         } else {
-            emptyList()
+            nestedFileNodes
         }
 }
 

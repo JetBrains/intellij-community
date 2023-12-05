@@ -68,7 +68,6 @@ class PersistentFSTreeAccessor {
         "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
-    connection.markDirty();
     try (DataOutputStream record = attributeAccessor.writeAttribute(parentId, CHILDREN_ATTR)) {
       DataInputOutputUtil.writeINT(record, toSave.children.size());
 
@@ -329,8 +328,6 @@ class PersistentFSTreeAccessor {
   void deleteRootRecord(int fileId) throws IOException {
     rootsAccessLock.lock();
     try {
-      connection.markDirty();
-
       if (fsRootDataLoader != null) {
         fsRootDataLoader.deleteRootRecord(getRootsStoragePath(fsRootDataLoader), fileId);
       }
@@ -362,6 +359,8 @@ class PersistentFSTreeAccessor {
       try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         saveNameIdSequenceWithDeltas(names, ids, output);
       }
+
+      connection.markDirty();
     }
     finally {
       rootsAccessLock.unlock();

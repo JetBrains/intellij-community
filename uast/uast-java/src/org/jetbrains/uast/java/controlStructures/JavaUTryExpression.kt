@@ -15,7 +15,7 @@ class JavaUTryExpression(
   private val tryClausePart = UastLazyPart<UExpression>()
   private val catchClausesPart = UastLazyPart<List<UCatchClause>>()
   private val finallyClausePart = UastLazyPart<UBlockExpression?>()
-  private val resourceVariablesPart = UastLazyPart<List<UVariable>>()
+  private val resourceVariablesPart = UastLazyPart<List<UAnnotated>>()
 
   override val tryClause: UExpression
     get() = tryClausePart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.tryBlock, this) }
@@ -26,12 +26,18 @@ class JavaUTryExpression(
   override val finallyClause: UBlockExpression?
     get() = finallyClausePart.getOrBuild { sourcePsi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
 
-  override val resourceVariables: List<UVariable>
+  @Deprecated("This API doesn't support resource expression", replaceWith = ReplaceWith("resources"))
+  override val resourceVariables: List<UVariable> get() = resources.filterIsInstance<UVariable>()
+
+  override val resources: List<UAnnotated>
     get() = resourceVariablesPart.getOrBuild {
-      sourcePsi.resourceList
-        ?.filterIsInstance<PsiResourceVariable>()
-        ?.map { JavaUVariable.create(it, this) }
-      ?: emptyList()
+      sourcePsi.resourceList?.mapNotNull { resourceListElem ->
+        when (resourceListElem) {
+          is PsiResourceVariable -> JavaUVariable.create(resourceListElem, this)
+          is PsiResourceExpression -> JavaConverter.convertOrEmpty(resourceListElem.expression, this)
+          else -> null
+        }
+      } ?: emptyList()
     }
 
   override val hasResources: Boolean

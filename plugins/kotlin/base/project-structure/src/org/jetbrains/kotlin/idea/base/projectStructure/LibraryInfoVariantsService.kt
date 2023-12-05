@@ -5,7 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
 
 /**
  * Stores mappings from [LibraryInfo] to all its variants. "Library variant" here means an imported library
@@ -71,6 +74,10 @@ class LibraryInfoVariantsService(project: Project): Disposable {
      */
     private fun LibraryInfo.mavenGroupArtifactId(): MavenGroupArtifactId? {
 
+        if (bundledLibraryVariant(this) != null) {
+            return "org.jetbrains.kotlin:kotlin-bundled"
+        }
+
         val externalSource = library.externalSource
         if (externalSource?.id != "GRADLE") {
             return null
@@ -90,6 +97,39 @@ class LibraryInfoVariantsService(project: Project): Disposable {
 
     companion object {
         fun getInstance(project: Project): LibraryInfoVariantsService = project.service()
+
+        enum class BundledLibraryVariant(val displayName: String, val wellKnownCoordinates: Set<String>) {
+            Jvm("jvm", setOf(
+                "org.jetbrains.kotlin:kotlin-test",
+                "org.jetbrains.kotlin:kotlin-test-junit",
+                "org.jetbrains.kotlin:kotlin-test-junit5",
+                "org.jetbrains.kotlin:kotlin-test-testng",
+            )),
+            Js("js", setOf("org.jetbrains.kotlin:kotlin-test-js")),
+            Native("native", emptySet()),
+            Common("common", setOf(
+                "org.jetbrains.kotlin:kotlin-test-common",
+                "org.jetbrains.kotlin:kotlin-test-annotations-common",
+                "org.jetbrains.kotlin:kotlin-stdlib:commonMain",
+            ))
+        }
+
+        /**
+         * Detects libraries that are bundled in the K/N distribution and their variants from maven.
+         *
+         * For now there are `stdlib` and `kotlin-test`
+         */
+        fun bundledLibraryVariant(libraryInfo: LibraryInfo): BundledLibraryVariant? {
+            val name = libraryInfo.library.name.orEmpty().substringBeforeLast(':')
+            return when {
+                libraryInfo is NativeKlibLibraryInfo && libraryInfo.isStdlib -> BundledLibraryVariant.Native
+                KotlinJvmStdlibDetectorFacility.isStdlib(libraryInfo.project, libraryInfo.library) -> BundledLibraryVariant.Jvm
+                KotlinJavaScriptStdlibDetectorFacility.isStdlib(libraryInfo.project, libraryInfo.library) -> BundledLibraryVariant.Js
+                else -> BundledLibraryVariant.entries.firstOrNull { bundledLibraryVariant ->
+                    name in bundledLibraryVariant.wellKnownCoordinates
+                }
+            }
+        }
     }
 }
 

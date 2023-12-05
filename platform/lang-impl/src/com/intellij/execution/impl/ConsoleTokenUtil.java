@@ -174,7 +174,7 @@ final class ConsoleTokenUtil {
       ConsoleViewContentType tokenType = getTokenType(marker);
       if (tokenType != null) {
         if (tokenType != ConsoleViewContentType.USER_INPUT || marker.getUserData(USER_INPUT_SENT) == Boolean.TRUE) {
-          break;
+          continue;
         }
         marker.putUserData(USER_INPUT_SENT, true);
         textToSend.insert(0, marker.getDocument().getText(marker.getTextRange()));

@@ -32,6 +32,10 @@ interface JpsFileContentWriter {
   fun getReplacePathMacroMap(fileUrl: String): PathMacroMap
 }
 
+interface JpsAppFileContentWriter: JpsFileContentWriter {
+  suspend fun saveSession()
+}
+
 /**
  * Represents a serializer for a configuration XML file in JPS format.
  */

@@ -3,18 +3,53 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 
+/**
+ * Abstract class representing a debounced inline completion provider.
+ *
+ * This class provides a base implementation for inline completion providers that debounce completion suggestions based on input events.
+ * Subclasses must implement the [getSuggestionDebounced] function to generate the debounced suggestions.
+ *
+ * Also, subclasses must implement [getDebounceDelay] to configure the delay between an input event and start of computations.
+ * Please, do not use [delay] as it will be removed in the next release and [getDebounceDelay] will become `abstract`.
+ */
 abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
-  private var jobCall: Job? = null
-  protected abstract val delay: Duration
+  private val jobCall = AtomicReference<Job?>(null)
+
+  @Deprecated(
+    message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
+    replaceWith = ReplaceWith("getDebounceDelay(request)"),
+    level = DeprecationLevel.WARNING
+  )
+  protected open val delay: Duration
+    @ScheduledForRemoval
+    @Deprecated(
+      message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
+      replaceWith = ReplaceWith("getDebounceDelay(request)"),
+      level = DeprecationLevel.WARNING
+    )
+    get() = throw UnsupportedOperationException("Please, use more flexible method: getDebounceDelay.")
+
+  /**
+   * Retrieves the delay duration for debouncing code completion requests.
+   * This function gives the time interval for which input events are delayed before
+   * the completion suggestions are calculated.
+   */
+  protected open suspend fun getDebounceDelay(request: InlineCompletionRequest): Duration {
+    @Suppress("DEPRECATION")
+    return delay
+  }
 
   /**
    * Returns a Flow of InlineCompletionElement objects with debounced proposals for the given InlineCompletionRequest.
-   * Override [delay] to control debounce delay
+   * Override [getDebounceDelay] to control debounce delay
    */
   abstract suspend fun getSuggestionDebounced(request: InlineCompletionRequest): InlineCompletionSuggestion
 
@@ -29,22 +64,35 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   }
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
+    replaceJob()
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return getSuggestionDebounced(request)
     }
 
-    if (shouldBeForced(request)) {
-      jobCall?.cancel()
-      return getSuggestionDebounced(request)
-    }
-
-    return debounce(request)
+    return if (shouldBeForced(request)) getSuggestionDebounced(request) else debounce(request)
   }
 
   suspend fun debounce(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    jobCall?.cancel()
-    jobCall = coroutineContext.job
-    delay(delay)
+    delay(getDebounceDelay(request))
     return getSuggestionDebounced(request)
+  }
+
+  private suspend fun replaceJob() {
+    val newJob = coroutineContext.job
+    if (jobCall.compareAndSet(newJob, newJob)) {
+      return
+    }
+
+    newJob.invokeOnCompletion {
+      jobCall.compareAndSet(newJob, null)
+    }
+
+    while (true) {
+      val currentJob = jobCall.get()
+      if (jobCall.compareAndSet(currentJob, newJob)) {
+        currentJob?.cancelAndJoin()
+        return
+      }
+    }
   }
 }

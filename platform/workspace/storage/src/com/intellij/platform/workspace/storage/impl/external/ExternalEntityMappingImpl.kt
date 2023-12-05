@@ -8,10 +8,11 @@ import com.intellij.platform.workspace.storage.ExternalEntityMapping
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
+import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMap
+import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMapImpl
 import java.util.*
 
-internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: BidirectionalMap<EntityId, T>)
+internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: PersistentBidirectionalMap<EntityId, T>)
   : ExternalEntityMapping<T> {
   protected lateinit var entityStorage: AbstractEntityStorage
 
@@ -43,28 +44,27 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
   }
 
   override fun forEach(action: (key: WorkspaceEntity, value: T) -> Unit) {
-    index.forEach { (key, value) -> action(entityStorage.entityDataByIdOrDie(key).createEntity(entityStorage), value) }
+    index.forEach { key, value -> action(entityStorage.entityDataByIdOrDie(key).createEntity(entityStorage), value) }
   }
 }
 
 internal class MutableExternalEntityMappingImpl<T> private constructor(
-  // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-  override var index: BidirectionalMap<EntityId, T>,
+  override var index: PersistentBidirectionalMap.Builder<EntityId, T>,
   internal var indexLogBunches: IndexLog,
-  private var freezed: Boolean
 ) : ExternalEntityMappingImpl<T>(index), MutableExternalEntityMapping<T> {
 
-  constructor() : this(BidirectionalMap<EntityId, T>(), IndexLog(mutableListOf()), false)
+  constructor() : this(PersistentBidirectionalMapImpl<EntityId, T>().builder(), IndexLog(LinkedHashMap()))
 
   override fun addMapping(entity: WorkspaceEntity, data: T) {
-    startWrite()
     add((entity as WorkspaceEntityBase).id, data)
     (entityStorage as MutableEntityStorageImpl).incModificationCount()
   }
 
   internal fun add(id: EntityId, data: T) {
-    startWrite()
-    index[id] = data
+    val removedValue = index.put(id, data)
+    if (removedValue != null) {
+      indexLogBunches.add(id, IndexLogRecord.Remove(id))
+    }
     indexLogBunches.add(id, IndexLogRecord.Add(id, data))
     LOG.trace {
       try {
@@ -77,7 +77,6 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   override fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean {
-    startWrite()
     entity as WorkspaceEntityBase
     return if (entity.id !in index) {
       add(entity.id, data)
@@ -87,7 +86,6 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   override fun getOrPutDataByEntity(entity: WorkspaceEntity, defaultValue: () -> T): T {
     return getDataByEntity(entity) ?: run {
-      startWrite()
       val defaultVal = defaultValue()
       add((entity as WorkspaceEntityBase).id, defaultVal)
       defaultVal
@@ -95,21 +93,13 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   override fun removeMapping(entity: WorkspaceEntity): T? {
-    startWrite()
     entity as WorkspaceEntityBase
     val removed = remove(entity.id)
     (entityStorage as MutableEntityStorageImpl).incModificationCount()
     return removed
   }
 
-  internal fun clearMapping() {
-    startWrite()
-    index.clear()
-    indexLogBunches.clear()
-  }
-
   internal fun remove(id: EntityId): T? {
-    startWrite()
     LOG.trace { "Remove $id from external index" }
     val removed = index.remove(id)
     if (removed != null) {
@@ -121,27 +111,25 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>,
                    replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
                    target: MutableEntityStorageImpl) {
-    other.indexLogBunches.chain.forEach { operation ->
-      when (operation) {
-        is IndexLogOperation.Changes -> {
-          operation.changes.values.forEach { record ->
-            when (record) {
-              is IndexLogRecord.Add<*> -> {
-                getTargetId(replaceMap, target, record.id)?.let { entityId ->
-                  @Suppress("UNCHECKED_CAST")
-                  add(entityId, record.data as T)
-                }
-              }
-              is IndexLogRecord.Remove -> {
-                getTargetId(replaceMap, target, record.id)?.let { entityId ->
-                  remove(entityId)
-                }
-              }
-            }
-          }
+    other.indexLogBunches.changes.values.forEach { record ->
+      applyChange(replaceMap, target, record.first)
+      record.second?.let { applyChange(replaceMap, target, it) }
+    }
+  }
+
+  private fun applyChange(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
+                          target: MutableEntityStorageImpl,
+                          record: IndexLogRecord) {
+    when (record) {
+      is IndexLogRecord.Add<*> -> {
+        getTargetId(replaceMap, target, record.id)?.let { entityId ->
+          @Suppress("UNCHECKED_CAST")
+          add(entityId, record.data as T)
         }
-        IndexLogOperation.Clear -> {
-          clearMapping()
+      }
+      is IndexLogRecord.Remove -> {
+        getTargetId(replaceMap, target, record.id)?.let { entityId ->
+          remove(entityId)
         }
       }
     }
@@ -158,18 +146,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     return if (sourceId != null) null else id
   }
 
-  private fun startWrite() {
-    if (!freezed) return
-    this.index = this.index.copy()
-    this.indexLogBunches = IndexLog(this.indexLogBunches.chain.mapTo(ArrayList()) {
-      if (it is IndexLogOperation.Changes) IndexLogOperation.Changes(LinkedHashMap(it.changes)) else it
-    })
-    this.freezed = false
-  }
-
   private fun toImmutable(): ExternalEntityMappingImpl<T> {
-    this.freezed = true
-    return ExternalEntityMappingImpl(this.index)
+    return ExternalEntityMappingImpl(this.index.build())
   }
 
   internal sealed class IndexLogRecord {
@@ -183,37 +161,49 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   internal class IndexLog(
-    val chain: MutableList<IndexLogOperation>,
+    // Pair may have one of three allowed states:
+    //  [Added, null], [Removed, null], [Removed, Added]
+    // The last state is used when the value is replaced with the new one
+    val changes: LinkedHashMap<EntityId, Pair<IndexLogRecord, IndexLogRecord?>>,
   ) {
     fun add(id: EntityId, operation: IndexLogRecord) {
-      var lastBunch = chain.lastOrNull()
-      if (lastBunch !is IndexLogOperation.Changes) {
-        chain.add(IndexLogOperation.Changes(LinkedHashMap()))
-        lastBunch = chain.last()
-      }
-      lastBunch as IndexLogOperation.Changes
-      val existing = lastBunch.changes[id]
+      val existing = changes[id]
       if (existing != null) {
         when (operation) {
           is IndexLogRecord.Add<*> -> {
-            lastBunch.changes.remove(id)
-            lastBunch.changes[id] = operation
+            val newValue = if (existing.second == null) {
+              val firstValue = existing.first
+              when(firstValue) {
+                is IndexLogRecord.Add<*> -> existing.copy(first = operation)
+                is IndexLogRecord.Remove -> existing.copy(second = operation)
+              }
+            }
+            else {
+              check(existing.second is IndexLogRecord.Add<*>)
+              check(existing.first is IndexLogRecord.Remove)
+              existing.copy(second = operation)
+            }
+            changes[id] = newValue
           }
           is IndexLogRecord.Remove -> {
-            if (existing is IndexLogRecord.Add<*>) {
-              lastBunch.changes.remove(id)
-            } else {
-              lastBunch.changes[id] = operation
+            val newValue = if (existing.second == null) {
+              val firstValue = existing.first
+              when(firstValue) {
+                is IndexLogRecord.Add<*> -> null
+                is IndexLogRecord.Remove -> existing.copy(first = operation)
+              }
             }
+            else {
+              val firstRemoval = existing.first
+              check(firstRemoval is IndexLogRecord.Remove)
+              existing.copy(second = null)
+            }
+            if (newValue != null) changes[id] = newValue else changes.remove(id)
           }
         }
       } else {
-        lastBunch.changes[id] = operation
+        changes[id] = operation to null
       }
-    }
-
-    fun clear() {
-      chain.add(IndexLogOperation.Clear)
     }
   }
 
@@ -221,8 +211,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     fun fromMap(other: Map<String, ExternalEntityMappingImpl<*>>): MutableMap<String, MutableExternalEntityMappingImpl<*>> {
       val result = mutableMapOf<String, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
-        if (index is MutableExternalEntityMappingImpl) index.freezed = true
-        result[identifier] = MutableExternalEntityMappingImpl(index.index, IndexLog(mutableListOf()), true)
+        if (index is MutableExternalEntityMappingImpl) error("Cannot create mutable index from mutable index")
+        result[identifier] = MutableExternalEntityMappingImpl((index.index as PersistentBidirectionalMap.Immutable).builder(), IndexLog(LinkedHashMap()))
       }
       return result
     }

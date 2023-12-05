@@ -50,7 +50,7 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
       override fun actionReceived(action: UpdateAction) {
         if (restartRequested && action.isRestartRequired && action is ToolboxUpdateAction) {
           restartRequested = false
-          restartIde(project, action)
+          restartIde(project) { action.perform() }
         }
       }
     })

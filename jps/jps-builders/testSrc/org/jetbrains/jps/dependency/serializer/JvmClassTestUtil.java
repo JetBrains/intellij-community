@@ -5,10 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.java.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
@@ -59,11 +56,9 @@ public final class JvmClassTestUtil {
 
     Set<ParamAnnotation> paramAnnotations = new HashSet<>(Arrays.asList(PARAM_ANNOTATION1, PARAM_ANNOTATION2));
 
-    JvmMethod jvmMethod1 = new JvmMethod(jvmFlags, SIGNATURE, NAME, DESCRIPTOR, annotations, paramAnnotations,
-                                         new String[]{EXCEPTION1, EXCEPTION2}, FIRST_JVM_METHOD_VALUE);
-    JvmMethod jvmMethod2 = new JvmMethod(jvmFlags, SIGNATURE2, NAME2, DESCRIPTOR2, annotations, paramAnnotations,
-                                         new String[]{EXCEPTION3, EXCEPTION4}, SECOND_JVM_METHOD_VALUE);
-    Iterable<JvmMethod> methods = Arrays.asList(jvmMethod1, jvmMethod2);
+    JvmMethod jvmMethod1 = new JvmMethod(jvmFlags, SIGNATURE, NAME, DESCRIPTOR, annotations, paramAnnotations, List.of(EXCEPTION1, EXCEPTION2), FIRST_JVM_METHOD_VALUE);
+    JvmMethod jvmMethod2 = new JvmMethod(jvmFlags, SIGNATURE2, NAME2, DESCRIPTOR2, annotations, paramAnnotations, List.of(EXCEPTION3, EXCEPTION4), SECOND_JVM_METHOD_VALUE);
+    Iterable<JvmMethod> methods = List.of(jvmMethod1, jvmMethod2);
 
     Iterable<TypeRepr.ClassType> classAnnotations =
       Arrays.asList(new TypeRepr.ClassType(CLASS_TYPE_1), new TypeRepr.ClassType(CLASS_TYPE_2));
@@ -106,9 +101,9 @@ public final class JvmClassTestUtil {
   }
 
   static void checkJvmMethodsEquals(Iterable<JvmMethod> jvmMethodIterable, Iterable<JvmMethod> jvmMethodIterable2) {
-    Iterator<JvmMethod> iterator = jvmMethodIterable2.iterator();
+    Iterator<JvmMethod> iterator2 = jvmMethodIterable2.iterator();
     for (JvmMethod jvmMethod1 : jvmMethodIterable) {
-      JvmMethod jvmMethod2 = iterator.next();
+      JvmMethod jvmMethod2 = iterator2.next();
       assertEquals(jvmMethod1.getFlags(), jvmMethod2.getFlags());
       assertEquals(jvmMethod1.getSignature(), jvmMethod2.getSignature());
       assertEquals(jvmMethod1.getName(), jvmMethod2.getName());
@@ -116,8 +111,8 @@ public final class JvmClassTestUtil {
       assertIterableEquals(jvmMethod1.getAnnotations(), jvmMethod2.getAnnotations());
       assertEquals(jvmMethod1.getValue(), jvmMethod2.getValue());
       assertIterableEquals(jvmMethod1.getArgTypes(), jvmMethod2.getArgTypes());
-      assertEquals(jvmMethod1.getParamAnnotations(), jvmMethod2.getParamAnnotations());
-      assertEquals(jvmMethod1.getExceptions(), jvmMethod2.getExceptions());
+      assertIterableEquals(jvmMethod1.getParamAnnotations(), jvmMethod2.getParamAnnotations());
+      assertIterableEquals(jvmMethod1.getExceptions(), jvmMethod2.getExceptions());
       assertEquals(jvmMethod1.getDescriptor(), jvmMethod2.getDescriptor());
     }
   }

@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -35,6 +35,20 @@ import java.util.concurrent.atomic.AtomicLong
 
 private val LOG: Logger
   get() = logger<ModuleBridgeLoaderService>()
+
+private val moduleLoadingTimeMs = AtomicLong().also { setupOpenTelemetryReporting(jpsMetrics.meter) }
+
+private fun setupOpenTelemetryReporting(meter: Meter) {
+  val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  meter.batchCallback(
+    {
+      modulesLoadingTimeGauge.record(moduleLoadingTimeMs.get())
+    },
+    modulesLoadingTimeGauge
+  )
+}
 
 private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
   override suspend fun execute(project: Project) {
@@ -97,29 +111,9 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         (project.serviceAsync<WorkspaceFileIndex>() as WorkspaceFileIndexEx).initialize()
       }
 
-      moduleLoadingTimeMs.addElapsedTimeMs(start)
+      moduleLoadingTimeMs.addElapsedTimeMillis(start)
     }
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
-  }
-
-  companion object {
-    private val moduleLoadingTimeMs = AtomicLong()
-
-    private fun setupOpenTelemetryReporting(meter: Meter) {
-      val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      meter.batchCallback(
-        {
-          modulesLoadingTimeGauge.record(moduleLoadingTimeMs.get())
-        },
-        modulesLoadingTimeGauge
-      )
-    }
-
-    init {
-      setupOpenTelemetryReporting(jpsMetrics.meter)
-    }
   }
 }
 

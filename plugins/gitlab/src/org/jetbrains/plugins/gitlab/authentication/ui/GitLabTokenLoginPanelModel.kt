@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.auth.ui.login.LoginPanelModelBase
 import com.intellij.collaboration.auth.ui.login.LoginTokenGenerator
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
@@ -13,7 +12,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.getMetadata
+import org.jetbrains.plugins.gitlab.api.getMetadataOrNull
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -27,12 +26,12 @@ class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
     val api = service<GitLabApiManager>().getClient(server, token)
     val user = withContext(Dispatchers.IO) {
       api.graphQL.getCurrentUser()
-    } ?: throw IllegalArgumentException(CollaborationToolsBundle.message("account.token.invalid"))
+    }
 
-    val version = api.getMetadata().version
+    val version = api.getMetadataOrNull()?.version
     val earliestSupportedVersion = serviceAsync<GitLabServersManager>().earliestSupportedVersion
-    require(earliestSupportedVersion <= version) {
-      GitLabBundle.message("server.version.unsupported", version, earliestSupportedVersion)
+    require(version != null && earliestSupportedVersion <= version) {
+      GitLabBundle.message("server.version.unsupported", version.toString(), earliestSupportedVersion)
     }
 
     val username = user.username

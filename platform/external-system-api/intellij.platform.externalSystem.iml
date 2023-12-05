@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
   </component>
 </module>

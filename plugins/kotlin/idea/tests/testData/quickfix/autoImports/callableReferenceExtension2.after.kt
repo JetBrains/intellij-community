@@ -2,6 +2,4 @@ import dependency.extensionFun
 
 // "Import extension function 'String.extensionFun'" "true"
 // ERROR: Unresolved reference: extensionFun
-val v = "a"::extensionFun<caret>
-
-/* IGNORE_K2 */
+val v = "a"::extensionFun<selection><caret></selection>

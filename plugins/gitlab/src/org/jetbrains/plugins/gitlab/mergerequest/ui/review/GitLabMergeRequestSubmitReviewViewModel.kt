@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -115,7 +115,7 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
   }
 
   private suspend fun addNoteIfNotEmpty() {
-    text.value.takeIf { it.isNotEmpty() }?.let { mergeRequest.addNote(it, false) }
+    text.value.takeIf { it.isNotEmpty() }?.let { mergeRequest.addNote(it) }
   }
 
   private suspend inline fun executeAndSaveError(crossinline task: suspend () -> Unit) {

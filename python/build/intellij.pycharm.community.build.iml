@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.idea.community.build" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.testFramework" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
@@ -19,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
 </module>

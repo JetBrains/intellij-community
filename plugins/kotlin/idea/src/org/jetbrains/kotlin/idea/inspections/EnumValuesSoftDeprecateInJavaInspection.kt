@@ -61,6 +61,6 @@ internal fun hasKotlinFiles(module: Module): Boolean {
             KotlinFileType.INSTANCE,
             moduleWithDependenciesAndLibrariesScope(module)
         )
-        Result.create(hasKotlinFiles, OuterModelsModificationTrackerManager.getInstance(module.project).tracker)
+        Result.create(hasKotlinFiles, OuterModelsModificationTrackerManager.getTracker(module.project))
     })
 }

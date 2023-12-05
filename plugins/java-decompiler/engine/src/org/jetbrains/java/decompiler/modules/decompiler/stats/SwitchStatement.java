@@ -23,13 +23,19 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 
+import static org.jetbrains.java.decompiler.ClassNameConstants.JAVA_LANG_CHARACTER;
+import static org.jetbrains.java.decompiler.code.CodeConstants.TYPE_OBJECT;
+import static org.jetbrains.java.decompiler.struct.gen.VarType.VARTYPE_CHAR;
+
 public final class SwitchStatement extends Statement {
   private List<Statement> caseStatements = new ArrayList<>();
   private List<List<StatEdge>> caseEdges = new ArrayList<>();
   private List<List<@Nullable Exprent>> caseValues = new ArrayList<>();
+  private final Map<Statement, Exprent> guards = new HashMap<>();
   private StatEdge defaultEdge;
   private Exprent headExprent;
   private boolean canBeRule = false;
+  private boolean useCustomDefault = false;
 
   private SwitchStatement() {
     super(StatementType.SWITCH);
@@ -54,6 +60,83 @@ public final class SwitchStatement extends Statement {
 
   public void setCanBeRule(boolean canBeRule) {
     this.canBeRule = canBeRule;
+  }
+
+  public void addGuard(@NotNull Statement statement, @NotNull Exprent guard) {
+    guards.put(statement, guard);
+  }
+
+
+  /**
+   * Removes the specified case statement from the switch statement.
+   *
+   * @param statement the statement to be removed
+   */
+  public void removeCaseStatement(@NotNull Statement statement) {
+    stats.removeWithKey(statement.id);
+    int caseIndex = caseStatements.indexOf(statement);
+    if (caseIndex < 0) {
+      return;
+    }
+    caseStatements.remove(caseIndex);
+    caseEdges.remove(caseIndex);
+    caseValues.remove(caseIndex);
+    for (StatEdge edge : statement.getAllSuccessorEdges()) {
+      edge.getDestination().removePredecessor(edge);
+    }
+    for (StatEdge edge : statement.getAllPredecessorEdges()) {
+      edge.getSource().removeSuccessor(edge);
+    }
+  }
+
+
+  /**
+   * Duplicates a case statement within a switch statement.
+   * Labels are not copied
+   *
+   * @param currentStatement The current case statement to duplicate.
+   * @return The index of the duplicated case statement.
+   *
+   */
+  public int duplicateCaseStatement(@NotNull Statement currentStatement) {
+    Statement dummy = currentStatement.getSimpleCopy();
+    int statIndex = stats.indexOf(currentStatement);
+    if (statIndex < 0) {
+      return statIndex;
+    }
+    stats.addWithKeyAndIndex(statIndex + 1, dummy, dummy.id);
+
+    int caseIndex = caseStatements.indexOf(currentStatement);
+    caseStatements.add(caseIndex + 1, dummy);
+    List<@Nullable Exprent> toCopyValues = caseValues.get(caseIndex);
+    caseValues.add(caseIndex + 1, toCopyValues);
+    List<StatEdge> previousEdges = caseEdges.get(caseIndex);
+    List<StatEdge> toCopyEdges = new ArrayList<>();
+    for (StatEdge previousEdge : previousEdges) {
+      StatEdge edge = previousEdge.copy();
+      edge.setDestination(dummy);
+      toCopyEdges.add(edge);
+    }
+    caseEdges.add(caseIndex + 1, toCopyEdges);
+
+    for (StatEdge edge : currentStatement.getAllPredecessorEdges()) {
+      StatEdge copy = edge.copy();
+      copy.setDestination(dummy);
+      copy.getSource().addSuccessor(copy);
+    }
+
+    for (StatEdge edge : currentStatement.getAllSuccessorEdges()) {
+      StatEdge copy = edge.copy();
+      copy.setSource(dummy);
+      dummy.addSuccessor(copy);
+    }
+
+    dummy.setParent(this);
+    return caseIndex + 1;
+  }
+
+  public void setUseCustomDefault() {
+    useCustomDefault = true;
   }
 
   @Nullable
@@ -94,7 +177,7 @@ public final class SwitchStatement extends Statement {
       List<StatEdge> edges = caseEdges.get(i);
       List<Exprent> values = caseValues.get(i);
       for (int j = 0; j < edges.size(); j++) {
-        if (edges.get(j) == defaultEdge) {
+        if (edges.get(j) == defaultEdge && !useCustomDefault) {
           if (!canBeRule) {
             buf.appendIndent(indent + 1).append("default:").appendLineSeparator();
           }
@@ -105,9 +188,14 @@ public final class SwitchStatement extends Statement {
         else {
           buf.appendIndent(indent + 1).append("case ");
           Exprent value = values.get(j);
-          if (value instanceof ConstExprent) {
+          if (value instanceof ConstExprent constExprent && !constExprent.isNull()) {
             value = value.copy();
-            ((ConstExprent)value).setConstType(switchType);
+            if (switchType.getType() != TYPE_OBJECT) {
+              ((ConstExprent)value).setConstType(switchType);
+            }
+            else if (((JAVA_LANG_CHARACTER).equals(switchType.getValue()))) {
+              ((ConstExprent)value).setConstType(VARTYPE_CHAR);
+            }
           }
           if (value instanceof FieldExprent && ((FieldExprent)value).isStatic()) { // enum values
             buf.append(((FieldExprent)value).getName());
@@ -115,6 +203,12 @@ public final class SwitchStatement extends Statement {
           else {
             buf.append(value.toJava(indent, tracer));
           }
+
+          Exprent guard = guards.get(stat);
+          if (guard != null) {
+            buf.append(" when ").append(guard.toJava(0, tracer));
+          }
+
           if (!canBeRule) {
             buf.append(":").appendLineSeparator();
           }
@@ -128,7 +222,8 @@ public final class SwitchStatement extends Statement {
       }
       //example:
       //case 0: break
-      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty()) {
+      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty() &&
+          (stat.getExprents() == null || stat.getExprents().isEmpty())) {
         buf.append("{ }").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }

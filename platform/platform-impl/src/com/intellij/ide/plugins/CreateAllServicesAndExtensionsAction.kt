@@ -252,7 +252,7 @@ private fun checkExtensions(
 private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecutor: (task: () -> Unit) -> Unit) {
   var extensionClass: Class<out Any> by notNull()
   taskExecutor {
-    extensionClass = extensionPoint.extensionClass
+    extensionClass = extensionPoint.getExtensionClass()
   }
 
   extensionPoint.checkImplementations { extension ->

@@ -2,28 +2,34 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.importing.workspaceModel.WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
+import java.util.*
 import java.util.function.Function
+
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
-
-  override fun runInDispatchThread() = false
 
   override fun setUp() {
     super.setUp()
@@ -313,7 +319,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     val m = getModule("project")
-    resolveDependenciesAndImport()
     assertSame(m, getModule("project"))
   }
 
@@ -368,7 +373,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-
   fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(myDir, "plugins")
@@ -396,6 +400,39 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     }
     finally {
       MavenServerManager.getInstance().shutdown(true) // to unlock files
+    }
+  }
+
+  @Test
+  fun testUserPropertiesCanBeCustomizedByMavenImporters() = runBlocking {
+    val disposable: Disposable = Disposer.newDisposable()
+    try {
+      maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
+                     listOf<MavenImporter>(NameSettingMavenImporter("name-from-properties")),
+                     disposable)
+      importProjectAsync("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <name>${'$'}{myName}</name>
+                      """.trimIndent())
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+
+    val project = projectsManager.findProject(MavenId("test", "project", "1"))
+    assertNotNull(project)
+    assertEquals("name-from-properties", project!!.name)
+  }
+
+  private class NameSettingMavenImporter(private val myName: String) : MavenImporter("gid", "id") {
+    override fun customizeUserProperties(project: Project, mavenProject: MavenProject, properties: Properties) {
+      properties.setProperty("myName", myName)
+    }
+
+    override fun isApplicable(mavenProject: MavenProject): Boolean {
+      return true
     }
   }
 }

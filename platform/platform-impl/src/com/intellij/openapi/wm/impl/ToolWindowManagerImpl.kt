@@ -127,6 +127,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     set(value) {
       state.layoutToRestoreLater = value
     }
+
   private var currentState = KeyState.WAITING
   private val waiterForSecondPress: SingleAlarm?
   private val recentToolWindowsState: LinkedList<String>
@@ -136,8 +137,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
   @Suppress("TestOnlyProblems")
-  constructor(project: Project, coroutineScope: CoroutineScope) : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true,
-                                                                       coroutineScope = coroutineScope)
+  constructor(project: Project, coroutineScope: CoroutineScope)
+    : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true, coroutineScope = coroutineScope)
 
   init {
     if (project.isDefault) {
@@ -588,16 +589,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun projectClosed() {
-    // Hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere.
+    // hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere
     for (entry in idToEntry.values) {
       if (entry.toolWindow.windowInfo.type.isInternal) {
         continue
       }
+
       try {
         removeExternalDecorators(entry)
-      }
-      catch (e: CancellationException) {
-        throw e
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -624,13 +623,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }
 
+  @RequiresEdt
   open fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource? = null) {
-    ThreadingAssertions.assertEventDispatchThread()
-
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.nonModal())
 
-    activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), autoFocusContents, source)
+    activateToolWindow(entry = idToEntry.get(id)!!,
+                       info = getRegisteredMutableInfoOrLogError(id),
+                       autoFocusContents = autoFocusContents,
+                       source = source)
 
     coroutineScope.launch(Dispatchers.EDT) {
       runnable?.run()
@@ -963,6 +964,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     ToolWindowCollector.getInstance().recordShown(project, source, toBeShownInfo)
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
+    if (toBeShownInfo.order == -1) {
+      toBeShownInfo.order = layoutState.getMaxOrder(toBeShownInfo.safeToolWindowPaneId, toBeShownInfo.anchor)
+    }
 
     val snapshotInfo = toBeShownInfo.copy()
     entry.applyWindowInfo(snapshotInfo)
@@ -1651,6 +1655,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
            entry.toolWindow.type == ToolWindowType.FLOATING)) {
         tracker = createPositionTracker(entry.toolWindow.component, ToolWindowAnchor.BOTTOM)
       }
+      else if (!button.isShowing) {
+        tracker = createPositionTracker(toolWindowPane, anchor)
+        if (balloon is BalloonImpl) {
+          balloon.setShowPointer(false)
+        }
+      }
       else {
         tracker = object : PositionTracker<Balloon>(button) {
           override fun recalculateLocation(balloon: Balloon): RelativePoint? {
@@ -2143,16 +2153,31 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     internalDecorator: InternalDecoratorImpl,
     parentFrame: JFrame,
   ) {
-    val bounds = info.floatingBounds
-    if (bounds != null && isValidBounds(bounds)) {
+    val storedBounds = info.floatingBounds
+    val screen = ScreenUtil.getScreenRectangle(parentFrame)
+    val needToCenter: Boolean
+    val bounds: Rectangle
+    if (storedBounds != null && isValidBounds(storedBounds)) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Keeping the tool window ${info.id} valid bounds: $bounds")
+        LOG.debug("Keeping the tool window ${info.id} valid bounds: $storedBounds")
       }
-      externalDecorator.bounds = Rectangle(bounds)
+      bounds = Rectangle(storedBounds)
+      needToCenter = false
+    }
+    else if (storedBounds != null && storedBounds.width > 0 && storedBounds.height > 0) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusting the stored bounds for the tool window ${info.id} to fit the screen $screen")
+      }
+      bounds = Rectangle(storedBounds)
+      ScreenUtil.moveToFit(bounds, screen, null, true)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusted the stored bounds to fit the screen: $bounds")
+      }
+      needToCenter = true
     }
     else {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusting the tool window ${info.id} bounds because the stored bounds are ${if (bounds == null) "null" else "invalid"}")
+        LOG.debug("Computing default bounds for the tool window ${info.id}")
       }
       // place a new frame at the center of the current frame if there are no floating bounds
       var size = internalDecorator.size
@@ -2163,10 +2188,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
         size = preferredSize
       }
-      externalDecorator.bounds = Rectangle(externalDecorator.bounds.location, size)
+      bounds = Rectangle(externalDecorator.bounds.location, size)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Computed the bounds using the default location: $bounds")
+      }
+      needToCenter = true
+    }
+    externalDecorator.bounds = bounds
+    if (needToCenter) {
       externalDecorator.setLocationRelativeTo(parentFrame)
       if (LOG.isDebugEnabled) {
-        LOG.debug("Set size to $size and location to ${externalDecorator.bounds.location} (centered to the frame)")
+        LOG.debug("Centered the bounds relative to the IDE frame: ${externalDecorator.bounds}")
       }
     }
   }

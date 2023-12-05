@@ -39,10 +39,9 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
 
     val problems = SmartList<ProblemDescriptor>()
 
-    val subclassProviders = ImplicitSubclassProvider.EP_NAME.extensions
-      .asSequence().filter { it.isApplicableTo(psiClass) }
-
-    val subclassInfos = subclassProviders.mapNotNull { it.getSubclassingInfo(psiClass) }
+    val subclassInfos = ImplicitSubclassProvider.EP_NAME.extensionList.asSequence().filter {
+      it.isApplicableTo(psiClass)
+    }.mapNotNull { it.getSubclassingInfo(psiClass) }
 
     val methodsToOverride = aClass.methods.mapNotNull { method ->
       subclassInfos
@@ -57,7 +56,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     else null
 
     for ((method, overridingInfo) in methodsToOverride) {
-      if (method.isFinal || method.isStatic || !overridingInfo.acceptedModifiers.any{ method.javaPsi.hasModifier(it)}) {
+      if (method.isFinal || method.isStatic || !overridingInfo.acceptedModifiers.any { method.javaPsi.hasModifier(it) }) {
         methodsToAttachToClassFix?.add(method.createUastSmartPointer())
         val methodFixes = createFixesIfApplicable(method, method.name, emptyList(), overridingInfo.acceptedModifiers)
         problemTargets(method, HashSet(methodHighlightableModifiersSet).apply { addAll(modifiersToHighlight(overridingInfo)) }).forEach {
@@ -209,14 +208,16 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     private val text = when (uDeclaration) {
       is UClass ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
-          actionsToPerform.joinToString { it.text }
+          actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
+            .joinToString { it.text }
         else JavaAnalysisBundle.message("inspection.implicit.subclass.make.class.extendable",
                                         hintTargetName,
                                         siblings.size,
                                         siblingsDescription())
       else ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
-          actionsToPerform.joinToString { it.text }
+          actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
+            .joinToString { it.text }
         else
           JavaAnalysisBundle.message("inspection.implicit.subclass.extendable", hintTargetName)
     }

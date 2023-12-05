@@ -51,7 +51,6 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             emptyList(),
             KotlinModuleKind.DEFAULT,
             "",
-            "",
             CompilerSettingsData("", "", "", true, "lib"),
             "",
             entitySource
@@ -66,7 +65,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
 
         val kotlinFacetSettings = deserializeFacetSettings(facetConfiguration).also { it.updateMergedArguments() }
 
-        // Can be optimized by not setting default values
+        // Can be optimized by not setting default values (KTIJ-27769)
         kotlinSettingsEntity.useProjectSettings = kotlinFacetSettings.useProjectSettings
         kotlinSettingsEntity.implementedModuleNames = kotlinFacetSettings.implementedModuleNames.toMutableList()
         kotlinSettingsEntity.dependsOnModuleNames = kotlinFacetSettings.dependsOnModuleNames.toMutableList()
@@ -79,10 +78,6 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         kotlinSettingsEntity.isHmppEnabled = kotlinFacetSettings.isHmppEnabled
         kotlinSettingsEntity.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
         kotlinSettingsEntity.kind = kotlinFacetSettings.kind
-
-        //if (kotlinFacetSettings.mergedCompilerArguments != null) {
-        //    kotlinSettingsEntity.mergedCompilerArguments = serializeToString(kotlinFacetSettings.mergedCompilerArguments!!)
-        //}
 
         if (kotlinFacetSettings.compilerArguments != null) {
             kotlinSettingsEntity.compilerArguments = serializeToString(kotlinFacetSettings.compilerArguments!!)
@@ -98,16 +93,12 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
                 compilerSettings.outputDirectoryForJsLibraryFiles
             )
         }
-
     }
 
     override fun serialize(entity: KotlinSettingsEntity, rootElement: Element): Element {
-        // TODO: optimize compiler arguments serialization
         KotlinFacetSettings().apply {
             useProjectSettings = entity.useProjectSettings
 
-            //mergedCompilerArguments =
-            //    if (entity.mergedCompilerArguments.isEmpty()) null else serializeFromString(entity.mergedCompilerArguments) as CommonCompilerArguments
             compilerArguments =
                 if (entity.compilerArguments.isEmpty()) null else serializeFromString(entity.compilerArguments) as CommonCompilerArguments
 
@@ -128,8 +119,6 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
                 outputDirectoryForJsLibraryFiles = compilerSettingsFromEntity.outputDirectoryForJsLibraryFiles
             } else null
 
-            //externalSystemRunTasks = entity.externalSystemRunTasks
-
             implementedModuleNames = entity.implementedModuleNames
             dependsOnModuleNames = entity.dependsOnModuleNames
             additionalVisibleModuleNames = entity.additionalVisibleModuleNames
@@ -147,6 +136,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
     }
 
     // naive implementation of compile arguments serialization, need to be optimized
+    // TODO: optimize compiler arguments serialization (KTIJ-27769)
     companion object {
         fun serializeToString(o: Serializable?): String {
             if (o == null) return ""

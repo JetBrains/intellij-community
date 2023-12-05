@@ -1,30 +1,72 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.psi.stubs.StubInconsistencyReporter
+import com.intellij.psi.stubs.StubInconsistencyReporter.InconsistencyType
+import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck
+import com.intellij.util.indexing.FileBasedIndex.RebuildRequestedByUserAction
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
 @Internal
 object IndexStatisticGroup {
-  val GROUP = EventLogGroup("indexing.statistics", 10)
+  val GROUP = EventLogGroup("indexing.statistics", 12)
 
-  private val stubIndexInconsistencyRegistered = GROUP.registerEvent("stub.index.inconsistency")
+  private val sourceOfCheckField =
+    EventFields.Enum<SourceOfCheck>("check_source") { type -> type.fusDescription }
+  private val inconsistencyTypeField = EventFields.Enum<InconsistencyType>("inconsistency_type") { type -> type.fusDescription }
+  private val enforcedInconsistencyTypeField =
+    EventFields.Enum<StubInconsistencyReporter.EnforcedInconsistencyType>("enforced_inconsistency") { type -> type.fusDescription }
+
+  private val stubIndexInconsistencyRegistered = GROUP.registerVarargEvent("stub.index.inconsistency", sourceOfCheckField,
+                                                                           inconsistencyTypeField, enforcedInconsistencyTypeField)
 
   @JvmStatic
-  fun reportStubIndexInconsistencyRegistered(project: Project) {
-    stubIndexInconsistencyRegistered.log(project)
+  fun reportEnforcedStubInconsistency(project: Project,
+                                      sourceOfCheck: SourceOfCheck,
+                                      enforcedInconsistencyType: StubInconsistencyReporter.EnforcedInconsistencyType) {
+    stubIndexInconsistencyRegistered.log(project,
+                                         sourceOfCheckField.with(sourceOfCheck),
+                                         enforcedInconsistencyTypeField.with(enforcedInconsistencyType))
+  }
+
+  /**
+   * `stub.index.inconsistency` event with only a project in versions of collector <= 11
+   *  corresponds in collectors of version 12+ to a `stub.index.inconsistency` event with a project,
+   *  SourceOfCheck.WrongTypePsiInStubHelper,
+   *  any InconsistencyType including none,
+   *  and EnforcedInconsistencyType.PsiOfUnexpectedClass
+   */
+  @JvmStatic
+  fun reportStubInconsistency(project: Project,
+                              sourceOfCheck: SourceOfCheck,
+                              inconsistencyType: InconsistencyType,
+                              enforcedInconsistencyType: StubInconsistencyReporter.EnforcedInconsistencyType?) {
+    if (enforcedInconsistencyType == null) {
+      stubIndexInconsistencyRegistered.log(project, sourceOfCheckField.with(sourceOfCheck), inconsistencyTypeField.with(inconsistencyType))
+    }
+    else {
+      stubIndexInconsistencyRegistered.log(project, sourceOfCheckField.with(sourceOfCheck), inconsistencyTypeField.with(inconsistencyType),
+                                           enforcedInconsistencyTypeField.with(enforcedInconsistencyType))
+    }
   }
 
   private val indexIdField =
     EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator::class.java)
   private val rebuildCauseField =
     EventFields.Class("rebuild_cause")
+  private val requestorPluginId = EventFields.StringValidatedByCustomRule(
+    "requestor_plugin_id",
+    PluginIdRuleValidator::class.java,
+  )
   private val insideIndexInitialization =
     EventFields.Boolean("inside_index_initialization")
 
@@ -32,6 +74,7 @@ object IndexStatisticGroup {
     "index_rebuild",
     indexIdField,
     rebuildCauseField,
+    requestorPluginId,
     insideIndexInitialization,
   )
 
@@ -39,8 +82,17 @@ object IndexStatisticGroup {
   fun reportIndexRebuild(indexId: ID<*, *>,
                          cause: Throwable,
                          isInsideIndexInitialization: Boolean) {
+    val realCause = (if (cause.javaClass == Throwable::class.java) cause.cause else cause) ?: cause
+    val causeClass = realCause.javaClass
+
+    var requestorPluginID: PluginId? = null
+    if (realCause is RebuildRequestedByUserAction) {
+      requestorPluginID = realCause.requestorPluginId
+    }
+
     indexRebuildEvent.log(indexIdField with indexId.name,
-                          rebuildCauseField with cause.javaClass,
+                          rebuildCauseField with causeClass,
+                          requestorPluginId with requestorPluginID?.idString,
                           insideIndexInitialization with isInsideIndexInitialization)
   }
 

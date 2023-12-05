@@ -70,7 +70,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private fun getRoot(builder: LibraryIdIteratorBuilder): Root {
-    if (builder.roots == null && builder.sourceRoots == null) return AllRoots
+    if (builder.roots == null && builder.sourceRoots == null && builder.rootUrls == null) return AllRoots
     return RootList(builder)
   }
 
@@ -88,7 +88,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   private sealed interface Root
 
-  private object AllRoots : Root
+  private data object AllRoots : Root
 
   private class RootList() : Root {
     val roots = mutableListOf<VirtualFile>()
@@ -97,6 +97,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     constructor(builder: LibraryIdIteratorBuilder) : this() {
       builder.roots?.also { roots.addAll(it) }
       builder.sourceRoots?.also { sourceRoots.addAll(it) }
+      builder.rootUrls?.toSourceRootHolder()?.also { roots.addAll(it.roots); sourceRoots.addAll(it.sourceRoots) }
     }
   }
 

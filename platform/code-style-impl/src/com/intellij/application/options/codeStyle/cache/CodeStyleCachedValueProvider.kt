@@ -123,6 +123,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     private fun start() {
       val app = ApplicationManager.getApplication()
       if (app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
+        LOG.debug { "async for ${viewProvider.virtualFile.name}" }
         job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch {
           readAction {
             computeSettings()
@@ -133,6 +134,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         }
       }
       else {
+        LOG.debug { "sync for ${viewProvider.virtualFile.name}" }
         app.runReadAction(::computeSettings)
         if (app.isDispatchThread) {
           notifyCachedValueComputed()
@@ -146,6 +148,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     }
 
     fun cancel() {
+      LOG.debug { "expire computation for ${viewProvider.virtualFile.name}" }
       job?.cancel()
       currentResult = null
     }
@@ -181,8 +184,9 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
           modifiableSettings.applyIndentOptionsFromProviders(project, file)
           LOG.debug { "Created TransientCodeStyleSettings for ${file.name}" }
           for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
+            LOG.debug { "Modifying ${file.name}: ${modifier.javaClass.name}" }
             if (modifier.modifySettings(modifiableSettings, psiFile)) {
-              LOG.debug { "Modifier: ${modifier.javaClass.name}" }
+              LOG.debug { "Modified ${file.name}: ${modifier.javaClass.name}" }
               modifiableSettings.setModifier(modifier)
               currSettings = modifiableSettings
               break
@@ -228,6 +232,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
       if (oldTrackerSetting < newTrackerSetting && !insideRestartedComputation) {
         insideRestartedComputation = true
         try {
+          LOG.debug { "restarted for ${viewProvider.virtualFile.name}" }
           start()
         }
         finally {
@@ -235,6 +240,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         }
         return
       }
+      LOG.debug { "running scheduled runnables for ${viewProvider.virtualFile.name}" }
       for (runnable in scheduledRunnables) {
         runnable.run()
       }

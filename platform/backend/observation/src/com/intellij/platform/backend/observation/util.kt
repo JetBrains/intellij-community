@@ -6,39 +6,40 @@ package com.intellij.platform.backend.observation
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import kotlin.reflect.KClass
 
 /**
  * Starts tracking of all suspending activities that are invoked in [action].
- * The tracking data is processed within [ActivityInProgressService], and is used to await complex configuration activities.
- * @see MarkupBasedActivityInProgressWitness for high-level explanations
+ * The tracking data is processed within [PlatformActivityTrackerService], and is used to await complex configuration activities.
+ * @see ActivityKey for high-level explanations
  */
-suspend fun <R> Project.trackActivity(marker: KClass<out MarkupBasedActivityInProgressWitness>, action: suspend () -> R): R {
-  return ActivityInProgressService.getInstanceAsync(this).trackConfigurationActivity(marker.java, action)
+suspend fun <R> Project.trackActivity(marker: ActivityKey, action: suspend () -> R): R {
+  return PlatformActivityTrackerService.getInstanceAsync(this).trackConfigurationActivity(marker, action)
 }
 
 /**
  * Starts tracking of all asynchronous activities that are invoked in [action].
- * The tracking data is processed within [ActivityInProgressService], and is used to await complex configuration activities.
+ * The tracking data is processed within [PlatformActivityTrackerService], and is used to await complex configuration activities.
  * This function is intended to be used in the blocking context,
- * and therefore it tracks all asynchronous activities spawned by the means of IntelliJ Platform.
+ * and therefore it tracks all asynchronous activities spawned by means of IntelliJ Platform.
  * Its behavior is similar to [com.intellij.openapi.progress.blockingContextScope].
  *
  * **For usage in non-suspending Kotlin.**
- * @see MarkupBasedActivityInProgressWitness for high-level explanations
+ *
+ * **The name means that the function is intended for blocking context, though it in fact does not block by itself.**
+ * @see ActivityKey for high-level explanations
  */
 @RequiresBlockingContext
-fun Project.trackActivityBlocking(marker: KClass<out MarkupBasedActivityInProgressWitness>, action: () -> Unit): Unit {
-  return ActivityInProgressService.getInstance(this).trackConfigurationActivityBlocking(marker.java, action)
+fun Project.trackActivityBlocking(marker: ActivityKey, action: () -> Unit): Unit {
+  return PlatformActivityTrackerService.getInstance(this).trackConfigurationActivityBlocking(marker, action)
 }
 
 /**
- * The same as [trackActivityBlocking], but **for usage in java**.
- * It still has a receiver argument to avoid polluting the global namespace of kotlin functions.
- * In java, the receiver parameter will anyway desugar to the first formal parameter.
- * @see MarkupBasedActivityInProgressWitness for high-level explanations
+ * The same as [trackActivityBlocking], but **for usage in Java**.
+ * It still has a receiver parameter to avoid polluting the global namespace of Kotlin functions.
+ * In Java, the receiver parameter will anyway be desugared to the first formal parameter.
+ * @see ActivityKey for high-level explanations
  */
 @RequiresBlockingContext
-fun Project.trackActivity(clazz: Class<out MarkupBasedActivityInProgressWitness>, action: Runnable): Unit {
-  return ActivityInProgressService.getInstance(this).trackConfigurationActivityBlocking(clazz, action::run)
+fun Project.trackActivity(key: ActivityKey, action: Runnable): Unit {
+  return PlatformActivityTrackerService.getInstance(this).trackConfigurationActivityBlocking(key, action::run)
 }

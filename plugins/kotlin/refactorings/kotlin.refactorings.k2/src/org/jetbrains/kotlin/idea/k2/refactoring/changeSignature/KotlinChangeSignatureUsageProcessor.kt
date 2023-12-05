@@ -15,19 +15,20 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.ResolveSnapshotProvider.ResolveSnapshot
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinBaseUsage
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
+import org.jetbrains.kotlin.idea.base.util.useScope
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -50,7 +51,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     val ktCallExpression = ktElement.parent as? KtCallExpression ?: return@mapNotNull null
                     if (ktCallExpression.calleeExpression == ktElement && ktCallExpression.lambdaArguments.size == 1) {
                         val overrider = ktCallExpression.lambdaArguments[0].getLambdaExpression()?.functionLiteral
-                        overrider?.let { KotlinOverrideUsageInfo(overrider, psiMethod) }
+                        overrider?.let { KotlinOverrideUsageInfo(overrider, psiMethod, false) }
                     } else null
                 }.toTypedArray()
             }
@@ -85,21 +86,39 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         findUsages(ktCallableDeclaration, changeInfo, result)
 
-        KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
+        if (ktCallableDeclaration is KtCallableDeclaration) {
+            KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
+        }
 
         if (ktCallableDeclaration is KtPrimaryConstructor) {
             findConstructorPropertyUsages(ktCallableDeclaration, changeInfo, result)
+        }
+
+        if (ktCallableDeclaration is KtClass && ktCallableDeclaration.isEnum()) {
+            for (declaration in ktCallableDeclaration.declarations) {
+                if (declaration is KtEnumEntry && declaration.superTypeListEntries.isEmpty()) {
+                    result.add(KotlinEnumEntryWithoutSuperCallUsage(declaration))
+                }
+            }
+        }
+
+        ktCallableDeclaration.processDelegationCallConstructorUsages(ktCallableDeclaration.useScope()) { callElement ->
+            when (callElement) {
+                is KtConstructorDelegationCall -> result.add(KotlinConstructorDelegationCallUsage(callElement, ktCallableDeclaration))
+                is KtSuperTypeCallEntry -> result.add(KotlinFunctionCallUsage(callElement, ktCallableDeclaration))
+            }
+            true
         }
 
         return result.toTypedArray()
     }
 
     private fun findUsages(
-        ktCallableDeclaration: KtCallableDeclaration,
+        ktCallableDeclaration: KtNamedDeclaration,
         changeInfo: ChangeInfo,
         result: MutableList<UsageInfo>
     ) {
-        ktCallableDeclaration.findAllOverridings().forEach { overrider ->
+        (ktCallableDeclaration as? KtCallableDeclaration)?.findAllOverridings()?.forEach { overrider ->
             val provider = ChangeSignatureUsageProviders.findProvider(overrider.language)
             if (provider != null) {
                 val usageInfo = provider.createOverrideUsageInfo(
@@ -182,22 +201,26 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         if (!element.language.`is`(KotlinLanguage.INSTANCE)) return false
         val kotlinChangeInfo = fromJavaChangeInfo(changeInfo, usageInfo) ?: return false
         if (!beforeMethodChange) {
-            if (usageInfo is KotlinBaseUsage) {
-                usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)?.let { shortenReferences(it) }
+            if (usageInfo is KotlinBaseChangeSignatureUsage) {
+                usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)?.let { shortenReferences(it, ShortenOptions.ALL_ENABLED) }
             }
         }
         else {
             if (usageInfo is KotlinByConventionCallUsage) {
                 usageInfo.preprocessUsage()
             }
-            if ((usageInfo is KotlinOverrideUsageInfo || usageInfo is OverriderUsageInfo) && element is KtCallableDeclaration) {
-                val baseElement =
-                    if (usageInfo is KotlinOverrideUsageInfo) usageInfo.baseMethod
-                    else (usageInfo as OverriderUsageInfo).baseMethod.unwrapped
+            if (usageInfo is KotlinEnumEntryWithoutSuperCallUsage) {
+                usageInfo.preprocess(kotlinChangeInfo, usageInfo.element as KtElement)
+            }
+            if (usageInfo is KotlinOverrideUsageInfo && element is KtCallableDeclaration) {
+                val baseElement = usageInfo.baseMethod
                 val mappedChangeInfo =
                     (kotlinChangeInfo as? KotlinChangeInfo)?.dependentProperties?.get(baseElement)
                         ?: kotlinChangeInfo
-                updatePrimaryMethod(element, mappedChangeInfo, true)
+                updatePrimaryMethod(element, mappedChangeInfo, isInherited = true, isCaller = usageInfo.isCaller)
+            }
+            if (usageInfo is CallerUsageInfo && element is KtNamedDeclaration) {
+                updatePrimaryMethod(element, kotlinChangeInfo, isCaller = true)
             }
         }
 
@@ -228,7 +251,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         return true
     }
 
-    private fun updatePrimaryMethod(element: KtCallableDeclaration, changeInfo: KotlinChangeInfoBase, isInherited: Boolean = false) {
+    private fun updatePrimaryMethod(
+        element: KtNamedDeclaration,
+        changeInfo: KotlinChangeInfoBase,
+        isInherited: Boolean = false,
+        isCaller: Boolean = false
+    ) {
         val psiFactory = KtPsiFactory(element.project)
 
         if (changeInfo.isNameChanged) {
@@ -241,10 +269,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         changeReturnTypeIfNeeded(changeInfo, element)
 
         if (changeInfo.isParameterSetOrOrderChanged) {
-            processParameterListWithStructuralChanges(changeInfo, element, element.getValueParameterList(), psiFactory, changeInfo.method, isInherited)
+            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.getValueParameterList(), psiFactory, changeInfo.method, isInherited, isCaller)
         }
         else {
-            val parameterList = element.valueParameterList
+            val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
             if (parameterList != null) {
                 val offset = if (element.receiverTypeReference != null) 1 else 0
                 val parameterTypes = mutableMapOf<KtParameter, KtTypeReference>()
@@ -270,11 +298,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val receiverTypeText = changeInfo.receiverParameterInfo?.typeText
             val receiverTypeRef = if (receiverTypeText != null) psiFactory.createType(
                 receiverTypeText,
-                element,
+                element as KtCallableDeclaration,
                 changeInfo.method,
                 Variance.IN_VARIANCE
             ) else null
-            element.setReceiverTypeReference(receiverTypeRef)?.let { shortenReferences(it) }
+            (element as KtCallableDeclaration).setReceiverTypeReference(receiverTypeRef)?.let { shortenReferences(it) }
         }
 
         if (changeInfo.isVisibilityChanged() && !KtPsiUtil.isLocal(element)) {
@@ -288,7 +316,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
-        val parameterList = element.valueParameterList
+        val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
         if (parameterList != null) {
             shortenReferences(parameterList)
         }
@@ -304,11 +332,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
         when (element) {
             is KtCallableDeclaration -> element.setVisibility(newVisibilityToken)
+            is KtClass -> element.createPrimaryConstructorIfAbsent().setVisibility(newVisibilityToken)
             else -> throw AssertionError("Invalid element: " + element.getElementTextWithContext())
         }
     }
 
-    private fun KtCallableDeclaration.setVisibility(visibilityToken: KtModifierKeywordToken) {
+    private fun KtModifierListOwner.setVisibility(visibilityToken: KtModifierKeywordToken) {
         if (visibilityToken == KtTokens.PUBLIC_KEYWORD) {
             visibilityModifierType()?.let { removeModifier(it) }
         } else {
@@ -318,11 +347,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
     private fun processParameterListWithStructuralChanges(
         changeInfo: KotlinChangeInfoBase,
-        element: KtCallableDeclaration,
+        element: KtDeclaration,
         originalParameterList: KtParameterList?,
         psiFactory: KtPsiFactory,
         baseFunction: PsiElement,
-        isInherited: Boolean
+        isInherited: Boolean,
+        isCaller: Boolean
     ) {
         var parameterList = originalParameterList
         val parametersCount = changeInfo.newParameters.filter { it != changeInfo.receiverParameterInfo }.count()
@@ -339,11 +369,32 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     parameterList = null
                 }
             } else {
-                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element, baseFunction, isInherited))
+                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element as KtFunctionLiteral, baseFunction, isInherited))
                 canReplaceEntireList = true
             }
         } else if (!(element is KtProperty || element is KtParameter)) {
-            newParameterList = psiFactory.createParameterList("(" + changeInfo.getNewParametersSignatureWithoutParentheses(element, baseFunction, isInherited) + ")")
+            if (isCaller) {
+                //propagation
+                val paramString = buildString {
+                    val existingParameters = (element as? KtCallableDeclaration)?.valueParameters?.joinToString(", ") {
+                        it.text
+                    }
+                    if (existingParameters != null) {
+                        append(existingParameters)
+                    }
+                    val newParameters = changeInfo.newParameters.filter { it.isNewParameter }
+                    if (isNotEmpty() && newParameters.isNotEmpty()) {
+                        append(",")
+                    }
+                    append(newParameters.joinToString(", ") {
+                        it.getDeclarationSignature(element, baseFunction, false).text
+                    })
+                }
+
+                newParameterList = psiFactory.createParameterList("($paramString)")
+            } else {
+                newParameterList = psiFactory.createParameterList("(" + changeInfo.getNewParametersSignatureWithoutParentheses(element as? KtCallableDeclaration, baseFunction, isInherited) + ")")
+            }
         }
 
         if (newParameterList == null) return

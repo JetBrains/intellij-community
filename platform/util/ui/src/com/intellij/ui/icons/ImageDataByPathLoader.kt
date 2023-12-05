@@ -76,7 +76,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                         isOriginal: Boolean): ImageDataLoader? {
       val patched = transform.patchPath(originalLoader.path, originalLoader.classLoader) ?: return if (isOriginal) null else originalLoader
       val classLoader = if (patched.second == null) originalLoader.classLoader else patched.second!!
-      return if (patched.first.startsWith("file:/")) {
+      return if (patched.first.startsWith(FILE_SCHEME_PREFIX)) {
         ImageDataByFilePathLoader(patched.first)
       }
       else {

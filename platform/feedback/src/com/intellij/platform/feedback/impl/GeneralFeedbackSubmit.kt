@@ -2,13 +2,12 @@
 package com.intellij.platform.feedback.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.JSON_CONTENT_TYPE
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.*
 import java.io.IOException
 import java.net.HttpURLConnection
 import javax.net.ssl.HttpsURLConnection
@@ -17,12 +16,13 @@ private const val TEST_FEEDBACK_URL = "https://forms-stgn.w3jbcom-nonprod.aws.in
 private const val PRODUCTION_FEEDBACK_URL = "https://forms-service.jetbrains.com/feedback"
 
 private const val FEEDBACK_FORM_ID_ONLY_DATA = "feedback/ide"
-private const val FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER = "feedback/ide_with_detailed_answer"
+private const val FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER = "v2/feedback/ide_with_detailed_answer"
 
 /** Should be used inside JSON top-level keys to distinguish reports without any external information */
 const val FEEDBACK_REPORT_ID_KEY: String = "feedback_id"
 
 private const val FEEDBACK_FROM_ID_KEY = "formid"
+private const val FEEDBACK_AUTO_SOLVE_TICKET_KEY = "autosolve"
 private const val FEEDBACK_INTELLIJ_PRODUCT_KEY = "intellij_product"
 private const val FEEDBACK_TYPE_KEY = "feedback_type"
 private const val FEEDBACK_PRIVACY_CONSENT_KEY = "privacy_consent"
@@ -31,10 +31,15 @@ private const val FEEDBACK_COLLECTED_DATA_KEY = "collected_data"
 private const val FEEDBACK_EMAIL_KEY = "email"
 private const val FEEDBACK_SUBJECT_KEY = "subject"
 private const val FEEDBACK_COMMENT_KEY = "comment"
+private const val FEEDBACK_TAGS_KEY = "tags"
 
 const val DEFAULT_FEEDBACK_CONSENT_ID = "rsch.statistics.feedback.common"
 
 private const val REQUEST_ID_KEY = "Request-Id"
+
+private const val EMAIL_PLACEHOLDER = "<EMAIL>"
+internal val EMAIL_REGEX = Regex("\\S+@\\S+\\.\\S+")
+internal val SPACE_SYMBOL_REGEX = Regex("\\s")
 
 private val LOG = Logger.getInstance(FeedbackRequestDataHolder::class.java)
 
@@ -47,9 +52,8 @@ sealed interface FeedbackRequestDataHolder {
 
 /**
  * Feedback request data for answers that do not include a detailed answer and the user's email.
- * Sent to WebTeam Backend and stored only on AWS S3.
- *
- * [privacyConsentType] is only required if the feedback contains personal data or system data. Otherwise, pass null.
+ * Feedback request data will be sent to WebTeam Backend and stored on the AWS S3.
+ * The 'collectedData' parameter MUST not contain any user email or other personal information.
  */
 data class FeedbackRequestData(override val feedbackType: String,
                                override val collectedData: JsonObject) : FeedbackRequestDataHolder {
@@ -58,26 +62,31 @@ data class FeedbackRequestData(override val feedbackType: String,
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_ONLY_DATA)
       put(FEEDBACK_INTELLIJ_PRODUCT_KEY, getProductTag())
       put(FEEDBACK_TYPE_KEY, feedbackType)
-      put(FEEDBACK_COLLECTED_DATA_KEY, collectedData)
+      put(FEEDBACK_COLLECTED_DATA_KEY, cleanFeedbackFromEmails(collectedData))
     }
   }
 }
 
 /**
  * Feedback request data for answers that include a detailed answer and the user's email.
- * Sent to WebTeam Backend. Stored on the AWS S3 and also submit ticket to Zendesk.
- * Please note that the created ticket will be closed immediately,
- * and it is assumed that it will be reviewed by a support specialist only if the user responds something to this ticket.
+ *
+ * The 'collectedData' parameter MUST not contain any user email or other personal information.
+ * Feedback request data will be sent to WebTeam Backend and stored on the AWS S3 in any case.
+ * Also a ticket with feedback data will be submitted to Zendesk if email is not empty.
+ * The created ticket can be auto solved in Zendesk by specifying 'autoSolveTicket' parameter as true.
  */
 data class FeedbackRequestDataWithDetailedAnswer(val email: String,
                                                  val title: String,
                                                  val description: String,
                                                  val privacyConsentType: String,
+                                                 val autoSolveTicket: Boolean,
+                                                 val ticketTags: List<String>,
                                                  override val feedbackType: String,
                                                  override val collectedData: JsonObject) : FeedbackRequestDataHolder {
   override fun toJsonObject(): JsonObject {
     return buildJsonObject {
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER)
+      put(FEEDBACK_AUTO_SOLVE_TICKET_KEY, autoSolveTicket)
       put(FEEDBACK_EMAIL_KEY, email)
       put(FEEDBACK_SUBJECT_KEY, title)
       put(FEEDBACK_COMMENT_KEY, description)
@@ -85,7 +94,8 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
       put(FEEDBACK_TYPE_KEY, feedbackType)
       put(FEEDBACK_PRIVACY_CONSENT_KEY, true)
       put(FEEDBACK_PRIVACY_CONSENT_TYPE_KEY, privacyConsentType)
-      put(FEEDBACK_COLLECTED_DATA_KEY, collectedData)
+      put(FEEDBACK_TAGS_KEY, buildJsonArray { ticketTags.forEach { add(it.replace(SPACE_SYMBOL_REGEX, "_")) } })
+      put(FEEDBACK_COLLECTED_DATA_KEY, cleanFeedbackFromEmails(collectedData))
     }
   }
 }
@@ -158,27 +168,58 @@ enum class FeedbackRequestType {
   PRODUCTION_REQUEST
 }
 
+fun cleanFeedbackFromEmails(jsonElement: JsonElement): JsonElement {
+  return when (jsonElement) {
+    is JsonObject -> {
+      buildJsonObject {
+        jsonElement.forEach { (key, element) ->
+          put(key, cleanFeedbackFromEmails(element))
+        }
+      }
+    }
+    is JsonArray -> {
+      buildJsonArray {
+        jsonElement.forEach { element ->
+          add(cleanFeedbackFromEmails(element))
+        }
+      }
+    }
+    is JsonPrimitive -> {
+      if (EMAIL_REGEX.find(jsonElement.content) != null) {
+        JsonPrimitive(EMAIL_REGEX.replace(jsonElement.content, EMAIL_PLACEHOLDER))
+      }
+      else {
+        jsonElement
+      }
+    }
+  }
+}
+
 /**
  * @return product tag.
  * @see <a href="https://youtrack.jetbrains.com/issue/ZEN-1460#focus=Comments-27-5692479.0-0">ZEN-1460</a> for more information
  */
 internal fun getProductTag(): String {
   return when {
-    PlatformUtils.isIntelliJ() -> "ij_idea"
-    PlatformUtils.isPhpStorm() -> "ij_phpstorm"
-    PlatformUtils.isWebStorm() -> "ij_webstorm"
-    PlatformUtils.isPyCharm() -> "ij_pycharm"
-    PlatformUtils.isRubyMine() -> "ij_rubymine"
-    PlatformUtils.isAppCode() -> "ij_appcode"
-    PlatformUtils.isCLion() -> "ij_clion"
-    PlatformUtils.isDataGrip() -> "ij_datagrip"
-    PlatformUtils.isPyCharmEducational() -> "ij_pycharm_edu"
-    PlatformUtils.isGoIde() -> "ij_goland"
-    PlatformUtils.isJetBrainsClient() -> "ij_code_with_me"
-    PlatformUtils.isDataSpell() -> "ij_dataspell"
-    PlatformUtils.isRider() -> "ij_rider"
-    PlatformUtils.isRustRover() -> "ij_rustrover"
-    PlatformUtils.isAqua() -> "ij_aqua"
+    PlatformUtils.isIntelliJ() -> "ij_idea1"
+    PlatformUtils.isPhpStorm() -> "ij_phpstorm1"
+    PlatformUtils.isWebStorm() -> "ij_webstorm1"
+    PlatformUtils.isPyCharm() -> "ij_pycharm1"
+    PlatformUtils.isRubyMine() -> "ij_rubymine1"
+    PlatformUtils.isAppCode() -> "ij_appcode1"
+    PlatformUtils.isCLion() && !isCLionNova() -> "ij_clion1"
+    PlatformUtils.isCLion() && isCLionNova() -> "ij_clion_nova1"
+    PlatformUtils.isDataGrip() -> "ij_datagrip1"
+    PlatformUtils.isGoIde() -> "ij_goland1"
+    PlatformUtils.isJetBrainsClient() -> "ij_code_with_me1"
+    PlatformUtils.isDataSpell() -> "ij_dataspell1"
+    PlatformUtils.isRider() -> "ij_rider1"
+    PlatformUtils.isRustRover() -> "ij_rustrover1"
+    PlatformUtils.isAqua() -> "ij_aqua1"
     else -> "undefined"
   }
+}
+
+private fun isCLionNova(): Boolean {
+  return ApplicationNamesInfo.getInstance().fullProductNameWithEdition.contains("Nova")
 }

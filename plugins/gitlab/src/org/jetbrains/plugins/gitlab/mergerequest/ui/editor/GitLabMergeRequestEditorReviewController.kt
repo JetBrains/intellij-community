@@ -22,6 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
@@ -55,7 +56,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                 val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.incoming != true }.distinctUntilChanged()
                 combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest {
                   if (it) supervisorScope {
-                    val model = GitLabMergeRequestEditorReviewUIModel(this, project, fileVm, editor.document)
+                    val model = GitLabMergeRequestEditorReviewUIModel(this, fileVm, editor.document)
                     editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
                     showGutterMarkers(model, editor)
                     showGutterControls(model, editor)
@@ -99,16 +100,19 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     editor as EditorEx
 
     editor.controlInlaysIn(cs, model.discussions, { it.id }) {
-      GitLabMergeRequestDiscussionInlayRenderer(this, project, it, model.avatarIconsProvider)
+      GitLabMergeRequestDiscussionInlayRenderer(this, project, it, model.avatarIconsProvider,
+                                                GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
     }
 
     editor.controlInlaysIn(cs, model.draftDiscussions, { it.id }) {
-      GitLabMergeRequestDiscussionInlayRenderer(this, project, it, model.avatarIconsProvider)
+      GitLabMergeRequestDiscussionInlayRenderer(this, project, it, model.avatarIconsProvider,
+                                                GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
     }
 
     editor.controlInlaysIn(cs, model.newDiscussions, { "NEW_${it.originalLine}" }) {
       GitLabMergeRequestNewDiscussionInlayRenderer(
-        this, project, it, model.avatarIconsProvider
+        this, project, it, model.avatarIconsProvider,
+        GitLabStatistics.MergeRequestNoteActionPlace.EDITOR
       ) { model.cancelNewDiscussion(it.originalLine) }
     }
   }

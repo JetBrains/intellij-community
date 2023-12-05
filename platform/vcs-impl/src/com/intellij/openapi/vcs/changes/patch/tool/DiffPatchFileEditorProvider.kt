@@ -131,7 +131,7 @@ private class PatchDiffRequestProducer(private val patch: FilePatch) : ChangeDif
   @Throws(ProcessCanceledException::class)
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
     if (patch is TextFilePatch) {
-      return PatchDiffRequest(patch)
+      return PatchDiffRequest(patch, null, patch.beforeName, patch.afterName)
     }
     if (patch is BinaryFilePatch) {
       return MessageDiffRequest(VcsBundle.message("patch.is.binary.text"))

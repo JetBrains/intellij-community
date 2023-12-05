@@ -21,10 +21,9 @@ private class SemanticSearchInitializer : ProjectActivity {
     if (semanticSearchSettings.enabledInActionsTab) {
       ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
     }
-    else if ((ApplicationManager.getApplication().isInternal ||
-              (ApplicationManager.getApplication().isEAP &&
+    else if ((ApplicationManager.getApplication().isEAP &&
                serviceAsync<SearchEverywhereSemanticExperiments>()
-                 .getSemanticFeatureForTab(ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED)) &&
+                 .getSemanticFeatureForTab(ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED) &&
              !semanticSearchSettings.manuallyDisabledInActionsTab) {
       // Manually enable search in the corresponding experiment groups
       semanticSearchSettings.enabledInActionsTab = true
@@ -48,13 +47,8 @@ private class SemanticSearchInitializer : ProjectActivity {
       embeddingStorage.prepareForSearch()
     }
 
-    if (semanticSearchSettings.enabledInClassesTab || semanticSearchSettings.enabledInSymbolsTab) {
-      VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileContentListener.getInstance(project),
-                                                            IndexingLifecycleTracker.getInstance(project))
-    }
-
-    if (semanticSearchSettings.enabledInFilesTab) {
-      VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileNameListener.getInstance(project),
+    if (semanticSearchSettings.isEnabledFileRelated()) {
+      VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileChangeListener.getInstance(project),
                                                             IndexingLifecycleTracker.getInstance(project))
     }
   }

@@ -196,6 +196,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
 
   void profileChanged() {
     UIUtil.invokeLaterIfNeeded(() -> {
+      if (myDisposed) return;
       myTree.revalidate();
       myTree.repaint();
       syncRightPanel();

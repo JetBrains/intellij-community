@@ -1,0 +1,219 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
+package com.intellij.openapi.fileEditor.impl
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.impl.LightFilePointer
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentList
+import org.jdom.Element
+import org.jetbrains.annotations.NonNls
+
+/**
+ * `Heavy` entries should be disposed with [.destroy] to prevent leak of VirtualFilePointer
+ */
+internal class HistoryEntry private constructor(@JvmField val filePointer: VirtualFilePointer,
+                                                /**
+                                                 * can be null when read from XML
+                                                 */
+                                                var selectedProvider: FileEditorProvider?,
+                                                @JvmField var isPreview: Boolean,
+                                                private val disposable: Disposable?) {
+  // ordered
+  private var providerToState = persistentMapOf<FileEditorProvider, FileEditorState>()
+
+  val providers: List<FileEditorProvider>
+    get() = providerToState.keys.toPersistentList()
+
+  companion object {
+    const val TAG: @NonNls String = "entry"
+    const val FILE_ATTRIBUTE: String = "file"
+
+    fun createLight(file: VirtualFile,
+                    providers: List<FileEditorProvider?>,
+                    states: List<FileEditorState?>,
+                    selectedProvider: FileEditorProvider,
+                    isPreview: Boolean): HistoryEntry {
+      val pointer = LightFilePointer(file)
+      val entry = HistoryEntry(filePointer = pointer,
+                               selectedProvider = selectedProvider,
+                               isPreview = isPreview,
+                               disposable = null)
+      for (i in providers.indices) {
+        entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
+      }
+      return entry
+    }
+
+    private fun createLight(project: Project,
+                            element: Element,
+                            fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
+      val entryData = parseEntry(project = project, element = element, fileEditorProviderManager = fileEditorProviderManager)
+      val pointer = LightFilePointer(entryData.url)
+      val entry = HistoryEntry(filePointer = pointer,
+                               selectedProvider = entryData.selectedProvider,
+                               isPreview = entryData.preview,
+                               disposable = null)
+      for (state in entryData.providerStates) {
+        entry.putState(state.first, state.second)
+      }
+      return entry
+    }
+
+    fun createHeavy(project: Project,
+                    file: VirtualFile,
+                    providers: List<FileEditorProvider?>,
+                    states: List<FileEditorState?>,
+                    selectedProvider: FileEditorProvider,
+                    preview: Boolean): HistoryEntry {
+      if (project.isDisposed) {
+        return createLight(file = file, providers = providers, states = states, selectedProvider = selectedProvider, isPreview = preview)
+      }
+
+      val disposable = Disposer.newDisposable()
+      val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
+
+      val entry = HistoryEntry(filePointer = pointer,
+                               selectedProvider = selectedProvider,
+                               isPreview = preview,
+                               disposable = disposable)
+      for (i in providers.indices) {
+        entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
+      }
+      return entry
+    }
+
+    @Throws(InvalidDataException::class)
+    fun createHeavy(project: Project, e: Element): HistoryEntry {
+      if (project.isDisposed) {
+        return createLight(project, e, FileEditorProviderManager.getInstance())
+      }
+
+      val entryData = parseEntry(project = project, element = e, fileEditorProviderManager = FileEditorProviderManager.getInstance())
+
+      val disposable = Disposer.newDisposable()
+      val pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)
+      val entry = HistoryEntry(filePointer = pointer,
+                               selectedProvider = entryData.selectedProvider,
+                               isPreview = entryData.preview,
+                               disposable = disposable)
+      for (state in entryData.providerStates) {
+        entry.putState(state.first, state.second)
+      }
+      return entry
+    }
+  }
+
+  val file: VirtualFile?
+    get() = filePointer.file
+
+  fun getState(provider: FileEditorProvider): FileEditorState? = providerToState.get(provider)
+
+  fun putState(provider: FileEditorProvider, state: FileEditorState) {
+    providerToState = providerToState.put(provider, state)
+  }
+
+  fun destroy() {
+    if (disposable != null) Disposer.dispose(disposable)
+  }
+
+  /**
+   * @return element that was added to the `element`.
+   * Returned element has tag [.TAG]. Never null.
+   */
+  fun writeExternal(project: Project): Element {
+    val element = Element(TAG)
+    element.setAttribute(FILE_ATTRIBUTE, filePointer.url)
+
+    for ((provider, value) in providerToState) {
+      val providerElement = Element(PROVIDER_ELEMENT)
+      if (provider == selectedProvider) {
+        providerElement.setAttribute(SELECTED_ATTRIBUTE_VALUE, true.toString())
+      }
+      providerElement.setAttribute(EDITOR_TYPE_ID_ATTRIBUTE, provider.editorTypeId)
+
+      val stateElement = Element(STATE_ELEMENT)
+      provider.writeState(value, project, stateElement)
+      if (!stateElement.isEmpty) {
+        providerElement.addContent(stateElement)
+      }
+
+      element.addContent(providerElement)
+    }
+
+    if (isPreview) {
+      element.setAttribute(PREVIEW_ATTRIBUTE, true.toString())
+    }
+
+    return element
+  }
+
+  fun onProviderRemoval(provider: FileEditorProvider) {
+    if (selectedProvider === provider) {
+      selectedProvider = null
+    }
+    providerToState = providerToState.remove(provider)
+  }
+}
+
+internal const val PROVIDER_ELEMENT: @NonNls String = "provider"
+internal const val EDITOR_TYPE_ID_ATTRIBUTE: @NonNls String = "editor-type-id"
+internal const val SELECTED_ATTRIBUTE_VALUE: @NonNls String = "selected"
+internal const val STATE_ELEMENT: @NonNls String = "state"
+internal const val PREVIEW_ATTRIBUTE: @NonNls String = "preview"
+
+private val EMPTY_ELEMENT = Element("state")
+
+private fun parseEntry(project: Project,
+                       element: Element,
+                       fileEditorProviderManager: FileEditorProviderManager): EntryData {
+  if (element.name != HistoryEntry.TAG) {
+    throw IllegalArgumentException("unexpected tag: $element")
+  }
+
+  val url = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
+  var providerStates = persistentListOf<Pair<FileEditorProvider, FileEditorState>>()
+  var selectedProvider: FileEditorProvider? = null
+
+  val file = VirtualFileManager.getInstance().findFileByUrl(url)
+  for (providerElement in element.getChildren(PROVIDER_ELEMENT)) {
+    val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTRIBUTE)
+    val provider = fileEditorProviderManager.getProvider(typeId) ?: continue
+    if (providerElement.getAttributeValue(SELECTED_ATTRIBUTE_VALUE).toBoolean()) {
+      selectedProvider = provider
+    }
+
+    if (file != null) {
+      val stateElement = providerElement.getChild(STATE_ELEMENT)
+      val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project, file)
+      providerStates = providerStates.add(provider to state)
+    }
+  }
+
+  val preview = element.getAttributeValue(PREVIEW_ATTRIBUTE) != null
+  return EntryData(
+    url = url,
+    providerStates = providerStates,
+    selectedProvider = selectedProvider,
+    preview = preview,
+  )
+}
+
+internal class EntryData(
+  @JvmField val url: String,
+  @JvmField val providerStates: List<Pair<FileEditorProvider, FileEditorState>>,
+  @JvmField val selectedProvider: FileEditorProvider?,
+  @JvmField val preview: Boolean,
+)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInspection.SuppressionUtilCore;
@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,7 +61,7 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new ServiceReferenceTagInfo("uses"));
     myInfos.add(new ValueDocTagInfo());
 
-    Collections.addAll(myInfos, JavadocTagInfo.EP_NAME.getExtensions(project));
+    myInfos.addAll(JavadocTagInfo.EP_NAME.getExtensionList(project));
 
     for (CustomJavadocTagProvider extension : CustomJavadocTagProvider.EP_NAME.getExtensionList()) {
       myInfos.addAll(extension.getSupportedTags());

@@ -2,10 +2,14 @@
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Implement this interface and register the implementation as `com.intellij.workspaceModel.fileIndexContributor` extension in plugin.xml 

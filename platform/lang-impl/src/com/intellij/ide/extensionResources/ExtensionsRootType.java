@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -273,17 +274,27 @@ public final class ExtensionsRootType extends RootType {
     FileUtil.rename(file, newName);
   }
 
-  private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) throws IOException {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      return;
-    }
+  private final Set<IdeaPluginDescriptor> updatingResources = ConcurrentHashMap.newKeySet();
 
+  private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-    if (plugin == null || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
+    if (plugin == null || updatingResources.contains(plugin) || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
       return;
     }
 
-    extractBundledResources(pluginId, "");
-    ResourceVersions.getInstance().resourcesUpdated(plugin);
+    if (updatingResources.add(plugin)) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          extractBundledResources(pluginId, "");
+          ResourceVersions.getInstance().resourcesUpdated(plugin);
+        }
+        catch (IOException ex) {
+          LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
+        }
+        finally {
+          updatingResources.remove(plugin);
+        }
+      });
+    }
   }
 }

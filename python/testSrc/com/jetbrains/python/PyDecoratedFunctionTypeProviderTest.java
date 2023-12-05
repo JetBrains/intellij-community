@@ -190,7 +190,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testMakeDecoratorStack() {
-    doTest("int", "(tt: LiteralString) -> int",
+    doTest("int", "(tt: str) -> int",
            """
              from typing import Callable
              from functools import wraps

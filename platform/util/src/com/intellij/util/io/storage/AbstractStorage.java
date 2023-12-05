@@ -244,12 +244,12 @@ public abstract class AbstractStorage implements IStorage {
   @Override
   @TestOnly
   public RecordIdIterator createRecordIdIterator() throws IOException {
-    myRecordsTable.myStorage.lockWrite();
+    myContext.lockWrite();
     try {
       return myRecordsTable.createRecordIdIterator();
     }
     finally {
-      myRecordsTable.myStorage.unlockWrite();
+      myContext.unlockWrite();
     }
   }
 

@@ -121,7 +121,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
-      return myLogData.getMiniDetailsGetter().getCommitData(index);
+      return myLogData.getMiniDetailsGetter().getCachedDataOrPlaceholder(index);
     }, withEditorDiffPreview, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
@@ -208,7 +208,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myFilterUi;
   }
 
-  private @NotNull JComponent createActionsToolbar() {
+  protected @NotNull JComponent createActionsToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
 
     DefaultActionGroup toolbarGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP);
@@ -225,12 +225,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
-    DefaultActionGroup presentationSettingsGroup =
-      (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
+    DefaultActionGroup presentationSettingsGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
     configureIntelliSortAction(presentationSettingsGroup);
 
-    ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(
-      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
+    ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
     ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
     rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
@@ -280,7 +278,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return new QuickActionProvider() {
         @Override
         public @NotNull List<AnAction> getActions(boolean originalProvider) {
-          AnAction textFilterAction = EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER));
+          AnAction textFilterAction = ActionUtil.wrap(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER);
           textFilterAction.getTemplatePresentation().setText(VcsLogBundle.message("vcs.log.text.filter.action.text"));
           List<AnAction> actions = new ArrayList<>();
           actions.add(textFilterAction);

@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
@@ -105,7 +105,7 @@ internal class ModifiableModuleModelBridgeImpl(
     }
 
     val moduleInstance = createModuleInstance(moduleEntity, true)
-    newModuleTimeMs.addElapsedTimeMs(start)
+    newModuleTimeMs.addElapsedTimeMillis(start)
     return moduleInstance
   }
 
@@ -161,7 +161,7 @@ internal class ModifiableModuleModelBridgeImpl(
     val moduleEntity = moduleManager.loadModuleToBuilder(moduleName, filePath, diff)
     val moduleInstance = createModuleInstance(moduleEntity, false)
 
-    loadModuleTimeMs.addElapsedTimeMs(start)
+    loadModuleTimeMs.addElapsedTimeMillis(start)
     return moduleInstance
   }
 
@@ -233,7 +233,7 @@ internal class ModifiableModuleModelBridgeImpl(
     modulesToDispose.clear()
     newNameToModule.clear()
 
-    disposingTimeMs.addElapsedTimeMs(start)
+    disposingTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun isChanged(): Boolean =
@@ -291,7 +291,7 @@ internal class ModifiableModuleModelBridgeImpl(
       throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)
     }
 
-    moduleRenamingTimeMs.addElapsedTimeMs(start)
+    moduleRenamingTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun getModuleToBeRenamed(newName: String): Module? = newNameToModule[newName]

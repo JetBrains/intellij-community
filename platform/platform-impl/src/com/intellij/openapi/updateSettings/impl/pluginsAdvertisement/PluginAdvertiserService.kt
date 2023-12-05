@@ -63,9 +63,9 @@ sealed interface PluginAdvertiserService {
                                                   "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    private val pyCharmProfessional = SuggestedIde("PyCharm Professional",
-                                                   "https://www.jetbrains.com/pycharm/download/",
-                                                   "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}")
+    val pyCharmProfessional = SuggestedIde("PyCharm Professional",
+                                           "https://www.jetbrains.com/pycharm/download/",
+                                           "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}")
 
     @Suppress("HardCodedStringLiteral")
     internal val ides: Map<String, SuggestedIde> = linkedMapOf(
@@ -530,7 +530,7 @@ open class PluginAdvertiserServiceImpl(
     featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
       .forEach { featuresCollector.unregisterUnknownFeature(it) }
 
-    DependencyCollectorBean.EP_NAME.extensions
+    DependencyCollectorBean.EP_NAME.extensionList
       .asSequence()
       .flatMap { dependencyCollectorBean ->
         dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
@@ -571,7 +571,7 @@ open class PluginAdvertiserServiceImpl(
     val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
     if (dependencyUnknownFeatures.isNotEmpty()) {
       run(
-        customPlugins = loadPluginsFromCustomRepositories(),
+        customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null),
         unknownFeatures = dependencyUnknownFeatures,
       )
     }

@@ -158,9 +158,7 @@ internal object Completions {
             createWeighingContextForNameReference(basicContext, positionContext, symbolsToSkip)
         }
 
-        is KotlinExpressionNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-        is KotlinInfixCallPositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-
+        is KotlinNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
         else -> WeighingContext.createEmptyWeighingContext(positionContext.position)
     }
 

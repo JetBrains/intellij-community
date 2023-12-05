@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text.foldingGrave
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Document
@@ -9,6 +8,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
+import com.intellij.openapi.fileEditor.impl.text.TextEditorCache.Companion.contentHash
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
@@ -59,7 +59,7 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
 
   @RequiresEdt
   fun applyState(document: Document, foldingModel: FoldingModelEx) {
-    if (contentHash == contentHash(document)) {
+    if (contentHash == document.contentHash()) {
       foldingModel.runBatchFoldingOperationDoNotCollapseCaret {
         var zombieRaised = false
         for ((start, end, placeholder, neverExpands, isExpanded) in regions) {
@@ -85,8 +85,7 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
 
     const val SERDE_VERSION = 2
 
-    fun create(document: Document, foldRegions: Array<FoldRegion>): FoldingState {
-      val contentHash = contentHash(document)
+    fun create(contentHash: Int, foldRegions: Array<FoldRegion>): FoldingState {
       val regions = foldRegions.map { RegionState.create(it) }.toList()
       return FoldingState(contentHash, regions)
     }
@@ -104,10 +103,6 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
         regions.add(RegionState.read(input))
       }
       return FoldingState(contentHash, regions)
-    }
-
-    private fun contentHash(document: Document): Int {
-      return Hashing.komihash5_0().hashCharsToInt(document.immutableCharSequence)
     }
   }
 

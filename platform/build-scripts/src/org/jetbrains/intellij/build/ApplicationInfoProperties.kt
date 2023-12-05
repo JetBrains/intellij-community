@@ -17,7 +17,7 @@ interface ApplicationInfoProperties {
   val minorVersionMainPart: String
   val shortProductName: String
   val productCode: String
-  val productName: String
+  val fullProductName: String
   val majorReleaseDate: String
   val releaseVersionForLicensing: String
   val edition: String?

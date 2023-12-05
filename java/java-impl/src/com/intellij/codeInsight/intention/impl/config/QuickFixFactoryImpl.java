@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
@@ -74,7 +73,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                            @NotNull String modifier,
                                                                            boolean shouldHave,
                                                                            boolean showContainingClass) {
-    return new ModifierFix(modifierList, modifier, shouldHave,showContainingClass);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModifierFix(modifierList, modifier, shouldHave, showContainingClass),
+                                                            modifierList.getParent());
   }
 
   @NotNull
@@ -83,7 +83,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                            @NotNull final String modifier,
                                                                            final boolean shouldHave,
                                                                            final boolean showContainingClass) {
-    return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModifierFix(owner, modifier, shouldHave, showContainingClass), owner);
   }
 
   @NotNull
@@ -703,7 +703,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      if (myOnTheFly && !timeToOptimizeImports(file, myInContent, extensionsAllowToChangeFileSilently) || !(file instanceof PsiJavaFile)) {
+      if (!(file instanceof PsiJavaFile)) {
+        return false;
+      }
+      if (ApplicationManager.getApplication().isDispatchThread() && myOnTheFly && !timeToOptimizeImports(file, myInContent, extensionsAllowToChangeFileSilently)) {
         return false;
       }
       VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
@@ -742,18 +745,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project,
                                                                       @NotNull String qualifiedName) {
-    final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
-    return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
-      QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
+    return EntryPointsManagerBase.createAddEntryPointAnnotation(qualifiedName).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createAddToImplicitlyWrittenFieldsFix(@NotNull Project project, @NotNull final String qualifiedName) {
-    EntryPointsManagerBase entryPointsManagerBase = EntryPointsManagerBase.getInstance(project);
-    return entryPointsManagerBase.new AddImplicitlyWriteAnnotation(qualifiedName);
+    return EntryPointsManagerBase.createAddImplicitWriteAnnotation(qualifiedName).asIntention();
   }
 
   @NotNull
@@ -772,7 +770,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createEnableOptimizeImportsOnTheFlyFix() {
-    return new EnableOptimizeImportsOnTheFlyFix();
+    return new EnableOptimizeImportsOnTheFlyFix().asIntention();
   }
 
   @NotNull
@@ -957,7 +955,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
-    return new SameErasureButDifferentMethodsFix(method, superMethod);
+    return new SameErasureButDifferentMethodsFix(method, superMethod).asIntention();
   }
 
   @NotNull
@@ -1214,6 +1212,16 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text) {
     return new DeleteElementFix.DeleteMultiFix(elements, text).asIntention();
+  }
+
+  @Override
+  public @NotNull ModCommandAction createReplaceCaseDefaultWithDefaultFix(@NotNull PsiCaseLabelElementList list){
+    return new ReplaceCaseDefaultWithDefaultFix(list);
+  }
+
+  @Override
+  public @NotNull ModCommandAction createReverseCaseDefaultNullFixFix(@NotNull PsiCaseLabelElementList list){
+    return new ReverseCaseDefaultNullFix(list);
   }
 
   @Override

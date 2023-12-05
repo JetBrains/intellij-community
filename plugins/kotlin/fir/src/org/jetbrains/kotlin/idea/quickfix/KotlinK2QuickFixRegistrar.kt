@@ -190,6 +190,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val typeMismatch = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ChangeTypeQuickFixFactories.componentFunctionReturnTypeMismatch)
         registerApplicator(ChangeTypeQuickFixFactories.returnTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.returnTypeNullableTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.initializerTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.assignmentTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.parameterTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.typeMismatch)
 
         registerApplicator(AddToStringFixFactories.typeMismatch)
         registerApplicator(AddToStringFixFactories.argumentTypeMismatch)

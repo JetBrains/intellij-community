@@ -511,12 +511,18 @@ public final class AnnotationsHighlightUtil {
     }
 
     PsiElement parent = ref.getParent();
-    if (parent instanceof PsiJavaCodeReferenceElement) {
+    while (parent instanceof PsiJavaCodeReferenceElement) {
       PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
       if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
         return createAnnotationError(annotation,
                                      JavaErrorBundle.message("annotation.not.allowed.static"),
                                      new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asIntention());
+      }
+      if (qualified instanceof PsiClass) {
+        parent = parent.getParent();
+      }
+      else {
+        break;
       }
     }
     return null;

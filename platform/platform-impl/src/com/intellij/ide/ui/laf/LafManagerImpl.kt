@@ -4,7 +4,6 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.CommonBundle
-import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
@@ -12,7 +11,6 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
-import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
@@ -29,7 +27,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -244,8 +241,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun loadState(element: Element) {
     autodetect = element.getAttributeBooleanValue(ATTRIBUTE_AUTODETECT)
-    preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
-    preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
+    preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getThemeNameWithReplacingDeprecated()
+    preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getThemeNameWithReplacingDeprecated()
 
     val lafToPreviousScheme = HashMap<String, String>()
     val child = element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
@@ -282,7 +279,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun loadThemeState(element: Element): Supplier<out UIThemeLookAndFeelInfo?> {
     val themeProviderManager = UiThemeProviderListManager.getInstance()
 
-    element.getChild(ELEMENT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)?.let {
+    element.getChild(ELEMENT_LAF)?.getThemeNameWithReplacingDeprecated()?.let {
       themeProviderManager.findThemeSupplierById(it)
     }?.let {
       return it
@@ -344,6 +341,17 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     return element
+  }
+
+  //IDEA-331405 Hide IntelliJ Light from new UI
+  private fun Element.getThemeNameWithReplacingDeprecated(): String? {
+    val currentTheme = this.getAttributeValue(ATTRIBUTE_THEME_NAME)
+    if (ExperimentalUI.isNewUI() && currentTheme == "JetBrainsLightTheme") {
+      val newThemeId = "ExperimentalLightWithLightHeader"
+      this.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
+      return newThemeId
+    }
+    return currentTheme
   }
 
   override fun getInstalledLookAndFeels(): Array<UIManager.LookAndFeelInfo> {
@@ -560,7 +568,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     uiDefaults.put("laf.scaleFactor", scale(1f))
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.getLcdContrastValue())
-    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
+    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.getAdjustedFractionalMetricsValue())
     usedValuesOfUiOptions = computeValuesOfUsedUiOptions()
     if (!isFirstSetup) {
       ExperimentalUI.getInstance().lookAndFeelChanged()
@@ -684,7 +692,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
-    val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.id) ?: return null
+    val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.id)
+                     ?: lafToPreviousScheme.get(lookAndFeelInfo.name)
+                     ?: return null
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }
 
@@ -698,8 +708,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     val theme = currentTheme ?: return
+    // Remove the mapping previously imported from 2023.2.
+    lafToPreviousScheme.remove(theme.name)
     // Classic Light color scheme has id `EditorColorsScheme.DEFAULT_SCHEME_NAME` - save it as is
-    if (Scheme.getBaseName(scheme.name) == theme.editorSchemeId) {
+    if (scheme.isDefaultForTheme(theme)) {
       lafToPreviousScheme.remove(theme.id)
     }
     else {
@@ -992,9 +1004,13 @@ private fun patchRowHeight(defaults: UIDefaults, key: String, prevScale: Float) 
   if (rowHeight <= 0) {
     LOG.warn("$key = $value in ${UIManager.getLookAndFeel().name}; it may lead to performance degradation")
   }
-  val custom = if (LoadingState.APP_STARTED.isOccurred) Registry.intValue("ide.override.$key", -1) else -1
-  defaults.put(key, if (custom >= 0) custom else if (rowHeight <= 0) 0 else scale((rowHeight / prevScale).toInt()))
+  val custom = intSystemPropertyValue("ide.override.$key", -1)
+  defaults.put(key, if (custom >= 0) scale(custom) else if (rowHeight <= 0) 0 else scale((rowHeight / prevScale).toInt()))
 }
+
+fun intSystemPropertyValue(name: String, defaultValue: Int): Int = runCatching {
+  System.getProperty(name)?.toInt() ?: defaultValue
+}.getOrNull() ?: defaultValue
 
 /**
  * The following code is a trick! By default, Swing uses lightweight and "medium" weight
@@ -1079,18 +1095,20 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.Toolbar.horizontalInsetsKey(), cmInsets(2, 4))
     defaults.put(JBUI.CurrentTheme.Toolbar.verticalInsetsKey(), cmInsets(2, 4))
     // main toolbar
-    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(30, 30))
+    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(26, 26))
+    defaults.put(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsetsKey(), cmInsets(3, 4))
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium().asUIResource() })
-    defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 34))
+    defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 32))
     // tool window stripes
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), cmInsets(4))
-    defaults.put(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsetsKey(), cmInsets(2))
     // Run Widget
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
-    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
+    defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), 26)
+    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGapKey(), 4)
+    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 3)
     defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorFontKey(), Supplier { JBFont.medium().asUIResource() })
     // trees
     defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)

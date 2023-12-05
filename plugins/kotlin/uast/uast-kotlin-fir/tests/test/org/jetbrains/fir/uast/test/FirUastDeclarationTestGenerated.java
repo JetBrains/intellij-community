@@ -68,6 +68,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/deprecatedHiddenProperty_getter.kt");
     }
 
+    @TestMetadata("deprecatedHiddenProperty_interface.kt")
+    public void testDeprecatedHiddenProperty_interface() throws Exception {
+        runTest("testData/declaration/deprecatedHiddenProperty_interface.kt");
+    }
+
     @TestMetadata("deprecatedHiddenProperty_noAccesor.kt")
     public void testDeprecatedHiddenProperty_noAccesor() throws Exception {
         runTest("testData/declaration/deprecatedHiddenProperty_noAccesor.kt");

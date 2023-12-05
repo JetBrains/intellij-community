@@ -25,13 +25,13 @@ abstract class ProjectManagerEx : ProjectManager() {
     @Experimental
     val IS_PER_PROJECT_INSTANCE_READY: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
       (SystemInfoRt.isMac || SystemInfoRt.isLinux) && PerProjectState.valueOf(it) != PerProjectState.DISABLED
-    } ?: false
+    } == true
 
     @JvmField
     @Experimental
     val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
       IS_PER_PROJECT_INSTANCE_READY && PerProjectState.valueOf(it) == PerProjectState.ENABLED
-    } ?: false
+    } == true
 
     val IS_CHILD_PROCESS: Boolean by lazy { isChildProcessPath(PathManager.getSystemDir()) }
 
@@ -45,10 +45,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?
 
     @Internal
-    fun getOpenProjects(): List<Project> {
-      val projectManager = getInstanceIfCreated()
-      return projectManager?.openProjects?.toList() ?: emptyList()
-    }
+    fun getOpenProjects(): List<Project> = getInstanceIfCreated()?.openProjects?.toList() ?: emptyList()
 
     @Experimental
     fun isChildProcessPath(path: Path): Boolean = path.toString().contains(PER_PROJECT_SUFFIX)
@@ -65,7 +62,7 @@ abstract class ProjectManagerEx : ProjectManager() {
   }
 
   /**
-   * Creates a project but not open it. Use this method only in a test mode or special cases like the new project wizard.
+   * Creates a project but does not open it. Use this method only in a test mode or special cases like the new project wizard.
    */
   abstract fun newProject(file: Path, options: OpenProjectTask): Project?
 
@@ -89,8 +86,10 @@ abstract class ProjectManagerEx : ProjectManager() {
   /**
    * The project and the app settings will be not saved.
    */
-  @TestOnly
-  fun forceCloseProject(project: Project): Boolean = forceCloseProject(project, save = false)
+  @Internal
+  fun forceCloseProject(project: Project): Boolean =
+    @Suppress("TestOnlyProblems")
+    forceCloseProject(project, save = false)
 
   @TestOnly
   abstract fun forceCloseProject(project: Project, save: Boolean): Boolean
@@ -99,7 +98,9 @@ abstract class ProjectManagerEx : ProjectManager() {
   abstract suspend fun forceCloseProjectAsync(project: Project, save: Boolean = false): Boolean
 
   @Internal
-  fun saveAndForceCloseProject(project: Project): Boolean = forceCloseProject(project, save = true)
+  fun saveAndForceCloseProject(project: Project): Boolean =
+    @Suppress("TestOnlyProblems")
+    forceCloseProject(project, save = true)
 
   // return true if successful
   abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean

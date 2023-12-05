@@ -1,10 +1,11 @@
-import static C.A.*;
+import static C.AA.*;
 class C {
-  enum A {Abc}
+  enum AA {Abc}
 
-  public static void main(A a) {
+  public static void main(AA a) {
     switch (a) {
-      case A<caret>
+      //simple 'A' can be associated with enum AA, it is allowed started from Java 21
+      case Ab<caret>
 
     }
   }

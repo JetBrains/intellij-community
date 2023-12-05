@@ -10,10 +10,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Disposer;
@@ -23,10 +23,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.testFramework.TestModeFlags;
-import com.intellij.util.CoroutinesKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -53,7 +50,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -313,10 +309,15 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       Disposer.dispose(scanningLifetime);
     }
 
-    if (isFullIndexUpdate() &&
-        UnindexedFilesScannerExecutor.getInstance(myProject).getInitialVfsRefreshRequested().compareAndSet(false, true)) {
+    if (isFullIndexUpdate()) {
       // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
-      runInitialVfsRefresh();
+      var service = myProject.getService(InitialVfsRefreshService.class);
+      if (ApplicationManager.getApplication().isCommandLine() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
+        service.runInitialVfsRefresh();
+      }
+      else {
+        service.scheduleInitialVfsRefresh();
+      }
     }
   }
 
@@ -340,30 +341,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       }
     );
     ProgressIndicatorUtils.awaitWithCheckCanceled(latch);
-  }
-
-  private void runInitialVfsRefresh() {
-    var projectId = myProject.getLocationHash();
-    if (Boolean.getBoolean("ij.indexes.skip.initial.refresh") || ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.debug(projectId + ": initial VFS refresh skipped");
-    }
-    else {
-      LOG.info(projectId + ": marking roots for initial VFS refresh");
-      var roots = ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
-      LOG.info(projectId + ": starting initial VFS refresh of " + roots.size() + " roots");
-      var session = RefreshQueue.getInstance().createSession(false, true, null);
-      @SuppressWarnings("deprecation") var scope = myProject.getCoroutineScope();
-      CoroutinesKt.awaitCancellationAndRun(scope, () -> session.cancel());
-      session.addAllFiles(roots);
-      var t = System.nanoTime();
-      session.launch();
-      var duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t);
-      LOG.info(projectId + ": initial VFS refresh finished " + duration + " ms");
-      VfsUsageCollector.logInitialRefresh(myProject, duration);
-    }
-
-    ((ProjectInitialActivitiesNotifierImpl)myProject.getService(ProjectInitialActivitiesNotifier.class))
-      .notifyInitialVfsRefreshFinished();
   }
 
   private void flushPerProjectIndexingQueue(@Nullable String indexingReason, CheckCancelOnlyProgressIndicator indicator) {
@@ -581,7 +558,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
     finally {
       ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking(myProject);
-      myIndex.filesUpdateFinished(myProject);
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
         DependenciesIndexedStatusService.getInstance(myProject)
           .indexingFinished(!scanningHistory.getTimes().getWasInterrupted(), markRef.get());

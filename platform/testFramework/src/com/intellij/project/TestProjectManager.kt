@@ -17,6 +17,7 @@ import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -172,10 +173,11 @@ open class TestProjectManager : ProjectManagerImpl() {
         }
       }
     }
-    val result = super.closeProject(project, saveProject, dispose, checkCanClose)
-    val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
+
+    val result = super.closeProject(project = project, saveProject = saveProject, dispose = dispose, checkCanClose = checkCanClose)
+    val undoManager = serviceIfCreated<UndoManager>() as UndoManagerImpl?
     // test may use WrapInCommand (it is ok - in this case HeavyPlatformTestCase will call dropHistoryInTests)
-    if (!undoManager.isInsideCommand) {
+    if (undoManager != null && !undoManager.isInsideCommand) {
       undoManager.dropHistoryInTests()
     }
     return result

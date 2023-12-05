@@ -30,8 +30,8 @@ import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -90,6 +90,9 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       override fun afterValueChanged(value: RegistryValue) {
         launchWithAnyModality { disposeLog(recreate = true) }
       }
+    }, listenersDisposable)
+    project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
+      launchWithAnyModality { disposeLog(recreate = true) }
     }, listenersDisposable)
 
     @Suppress("SSBasedInspection", "ObjectLiteralToLambda") val shutdownTask = object : Runnable {
@@ -192,7 +195,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
     if (logProviders.isEmpty()) return null
 
-    project.trackActivity(VcsInProgressWitness::class) {
+    project.trackActivity(VcsActivityKey) {
       val logManager = getOrCreateLogManager(logProviders)
       logManager.initialize(force = forceInit)
     }

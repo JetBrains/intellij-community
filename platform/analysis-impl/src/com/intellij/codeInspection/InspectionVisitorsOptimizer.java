@@ -1,22 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.extapi.psi.ASTDelegatePsiElement;
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
+import com.intellij.lang.ASTNode;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTarget;
-import com.intellij.psi.BasicInspectionVisitorBean;
-import com.intellij.psi.HintedPsiElementVisitor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.ReparseableASTNode;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +32,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet;
 import static java.util.Collections.*;
 
 /**
@@ -76,27 +82,29 @@ public final class InspectionVisitorsOptimizer {
   public static @NotNull Map<Class<?>, Collection<Class<?>>> getTargetPsiClasses(@NotNull List<? extends PsiElement> elements) {
     if (!useOptimizedVisitors) return emptyMap();
 
-    Set<Class<?>> uniqueElementClasses = CollectionFactory.createSmallMemoryFootprintSet();
+    Map<Class<?>, Collection<Class<?>>> targetPsiClasses = new IdentityHashMap<>(100);
+    Set<Class<?>> uniqueElementClasses = createSmallMemoryFootprintSet(100);
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
-      uniqueElementClasses.add(element.getClass());
-    }
+      Class<? extends PsiElement> elementClass = element.getClass();
 
-    Map<Class<?>, Collection<Class<?>>> targetPsiClasses = new IdentityHashMap<>();
-    for (Class<?> elementClass : uniqueElementClasses) {
-      for (Class<?> aSuper : ELEMENT_TYPE_SUPERS.get(elementClass)) {
-        Collection<Class<?>> classes = targetPsiClasses.get(aSuper);
-        if (classes == null) {
-          classes = CollectionFactory.createSmallMemoryFootprintSet();
-          targetPsiClasses.put(aSuper, classes);
-          if (!aSuper.isInterface() && !Modifier.isAbstract(aSuper.getModifiers())) { // PSI elements in tree cannot be abstract
-            classes.add(aSuper);
+      // this check guarantees that items are unique in value collections, so we can use simple lists inside
+      if (uniqueElementClasses.add(elementClass)) {
+        for (Class<?> aSuper : ELEMENT_TYPE_SUPERS.get(elementClass)) {
+          Collection<Class<?>> classes = targetPsiClasses.get(aSuper);
+          if (classes == null) {
+            classes = new ArrayList<>(10);
+            targetPsiClasses.put(aSuper, classes);
+            if (!aSuper.isInterface() && !Modifier.isAbstract(aSuper.getModifiers())) { // PSI elements in tree cannot be abstract
+              classes.add(aSuper);
+            }
           }
-        }
 
-        classes.add(elementClass);
+          classes.add(elementClass);
+        }
       }
     }
+
     return targetPsiClasses;
   }
 
@@ -143,9 +151,13 @@ public final class InspectionVisitorsOptimizer {
       }
 
       supers.removeIf(aSuper -> {
-        return (aSuper == UserDataHolderBase.class
+        return (aSuper == UserDataHolder.class
+                || aSuper == UserDataHolderBase.class
                 || aSuper == UserDataHolderEx.class
                 || aSuper == CompositePsiElement.class
+                || aSuper == StubBasedPsiElementBase.class
+                || aSuper == ASTNode.class
+                || aSuper == ReparseableASTNode.class
                 || aSuper == ElementBase.class
                 || aSuper == Cloneable.class
                 || aSuper == Iconable.class
@@ -153,7 +165,13 @@ public final class InspectionVisitorsOptimizer {
                 || aSuper == PomTarget.class
                 || aSuper == Queryable.class
                 || aSuper == Navigatable.class
-                || aSuper == AtomicReference.class);
+                || aSuper == AtomicReference.class
+                || aSuper == NavigationItem.class
+                || aSuper == NavigatablePsiElement.class
+                || aSuper == PsiElementBase.class
+                || aSuper == TreeElement.class
+                || aSuper == LeafElement.class
+                || aSuper == ASTDelegatePsiElement.class);
       });
 
       return supers;

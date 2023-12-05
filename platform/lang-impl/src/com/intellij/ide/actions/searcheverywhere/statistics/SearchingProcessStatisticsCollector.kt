@@ -5,34 +5,30 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-private const val GROUP_ID = "search.everywhere.process"
+internal object SearchingProcessStatisticsCollector : CounterUsagesCollector() {
+  private val group = EventLogGroup("search.everywhere.process", 1)
 
-class SearchingProcessStatisticsCollector : CounterUsagesCollector() {
+  private val searchStartedEvent = group.registerEvent("contributor.search.started",
+                                                       SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
+  private val elementFoundEvent = group.registerEvent("first.element.found", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
+  private val elementShownEvent = group.registerEvent("firs.element.shown", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
 
-  companion object {
-    private val group = EventLogGroup(GROUP_ID, 1)
+  @JvmStatic
+  fun searchStarted(contributor: SearchEverywhereContributor<*>) {
+    val id = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor)
+    searchStartedEvent.log(id)
+  }
 
-    private val searchStartedEvent = group.registerEvent("contributor.search.started", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
-    private val elementFoundEvent = group.registerEvent("first.element.found", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
-    private val elementShownEvent = group.registerEvent("firs.element.shown", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
+  @JvmStatic
+  fun elementFound(contributor: SearchEverywhereContributor<*>) {
+    val id = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor)
+    elementFoundEvent.log(id)
+  }
 
-    @JvmStatic
-    fun searchStarted(contributor: SearchEverywhereContributor<*>) {
-      val id = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor)
-      searchStartedEvent.log(id)
-    }
-
-    @JvmStatic
-    fun elementFound(contributor: SearchEverywhereContributor<*>) {
-      val id = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor)
-      elementFoundEvent.log(id)
-    }
-
-    @JvmStatic
-    fun elementShown(contributor: SearchEverywhereContributor<*>) {
-      val id = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor)
-      elementShownEvent.log(id)
-    }
+  @JvmStatic
+  fun elementShown(contributor: SearchEverywhereContributor<*>) {
+    val id = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor)
+    elementShownEvent.log(id)
   }
 
   override fun getGroup(): EventLogGroup = SearchingProcessStatisticsCollector.group

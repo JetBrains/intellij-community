@@ -71,11 +71,16 @@ __jetbrains_intellij_command_preexec() {
   then
     return 0
   fi
+  __jetbrains_intellij_clear_all_and_move_cursor_to_top_left
   builtin local entered_command="$1"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
     "$(__jetbrains_intellij_encode "${entered_command}")" \
     "$(__jetbrains_intellij_encode "${current_directory}")"
+}
+
+__jetbrains_intellij_clear_all_and_move_cursor_to_top_left() {
+  builtin printf '\e[3J\e[1;1H'
 }
 
 __jetbrains_intellij_command_precmd() {
@@ -91,12 +96,14 @@ __jetbrains_intellij_command_precmd() {
   __jetbrains_intellij_configure_prompt
 }
 
+# override clear behaviour to handle it on IDE side and remove the blocks
+clear() {
+  builtin printf '\e]1341;clear_invoked\a'
+}
+
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
-
-# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
-builtin printf '\e]1341;initialized\a'
 
 __jetbrains_intellij_configure_prompt
 
@@ -104,3 +111,6 @@ __jetbrains_intellij_configure_prompt
 # Get all commands from history from the first command
 builtin local hist="$(builtin history 1)"
 builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
+
+# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
+builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$PWD")"

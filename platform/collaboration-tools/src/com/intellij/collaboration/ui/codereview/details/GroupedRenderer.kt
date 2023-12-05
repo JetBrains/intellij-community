@@ -7,14 +7,13 @@ import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.util.ui.JBUI.CurrentTheme.ActionsList
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-@ApiStatus.Internal
-class GroupedRenderer<T>(
+class GroupedRenderer<T> @Internal constructor(
   private val baseRenderer: ListCellRenderer<T>,
   private val hasSeparatorAbove: (value: T, index: Int) -> Boolean = { _, _ -> false },
   private val hasSeparatorBelow: (value: T, index: Int) -> Boolean = { _, _ -> false },
@@ -56,6 +55,13 @@ class GroupedRenderer<T>(
   }
 
   companion object {
+    fun <T> create(
+      baseRenderer: ListCellRenderer<T>,
+      hasSeparatorAbove: (value: T, index: Int) -> Boolean = { _, _ -> false },
+      hasSeparatorBelow: (value: T, index: Int) -> Boolean = { _, _ -> false },
+      buildSeparator: (value: T, index: Int, position: SeparatorPosition) -> JComponent = defaultSeparatorBuilder()
+    ): ListCellRenderer<T> = GroupedRenderer(baseRenderer, hasSeparatorAbove, hasSeparatorBelow, buildSeparator)
+
     fun createDefaultSeparator(text: @NlsContexts.Separator String? = null, paintLine: Boolean = false): GroupHeaderSeparator {
       val labelInsets = if (ExperimentalUI.isNewUI()) Popup.separatorLabelInsets() else ActionsList.cellPadding()
       return GroupHeaderSeparator(labelInsets).apply {

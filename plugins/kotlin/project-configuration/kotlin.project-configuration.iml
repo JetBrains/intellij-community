@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

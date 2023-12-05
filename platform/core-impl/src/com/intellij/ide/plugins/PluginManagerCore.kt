@@ -27,6 +27,9 @@ import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -106,9 +109,9 @@ object PluginManagerCore {
 
   /**
    * Bundled plugins that were updated.
-   * When we update a bundled plugin, it becomes non-bundled, so it is more difficult for analytics to use that data.
+   * When we update a bundled plugin, it becomes non-bundled, so it is more challenging for analytics to use that data.
    */
-  private var shadowedBundledPlugins: Set<PluginId> = emptySet()
+  private var shadowedBundledPlugins: Set<PluginId> = persistentSetOf()
 
   private var isRunningFromSources: Boolean? = null
 
@@ -289,7 +292,7 @@ object PluginManagerCore {
       future.cancel(CancellationException("invalidatePlugins"))
     }
     invalidate()
-    shadowedBundledPlugins = emptySet()
+    shadowedBundledPlugins = persistentSetOf()
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableList()")
@@ -614,7 +617,7 @@ object PluginManagerCore {
     }
 
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
-    pluginLoadingErrors = pluginErrorsById
+    pluginLoadingErrors = pluginErrorsById.toPersistentMap()
 
     val errorList = preparePluginErrors(globalErrors)
     if (!errorList.isEmpty()) {
@@ -628,7 +631,7 @@ object PluginManagerCore {
       checkEssentialPluginsAreAvailable(idMap)
     }
 
-    val pluginSet = pluginSetBuilder.createPluginSet(loadingResult.getIncompleteIdMap().values)
+    val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = loadingResult.getIncompleteIdMap().values)
     ClassLoaderConfigurator(pluginSet = pluginSet, coreLoader = coreLoader).configure()
     pluginDescriptorDebugData = context.debugData
     return PluginManagerState(pluginSet = pluginSet, pluginIdsToDisable = pluginsToDisable.keys, pluginIdsToEnable = pluginsToEnable.keys)
@@ -818,7 +821,7 @@ object PluginManagerCore {
                                          parentActivity = tracerShim.getTraceActivity())
       pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
       pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
-      shadowedBundledPlugins = Java11Shim.INSTANCE.copyOf(loadingResult.shadowedBundledIds)
+      shadowedBundledPlugins = loadingResult.shadowedBundledIds.toPersistentSet()
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       nullablePluginSet = initResult.pluginSet
       initResult.pluginSet

@@ -3,6 +3,7 @@ package com.intellij.ide.trustedProjects
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -29,7 +30,7 @@ interface TrustedProjectsLocator {
   fun getProjectRoots(projectRoot: Path, project: Project?): List<Path>
 
   /**
-   * Represents main project properties for project trust check.
+   * Represents the main project properties for project trust check.
    */
   @ApiStatus.NonExtendable
   interface LocatedProject {
@@ -61,12 +62,14 @@ interface TrustedProjectsLocator {
       project: Project?,
       getProjectRoots: TrustedProjectsLocator.() -> List<Path>
     ): LocatedProject {
-      val projectRoots = LinkedHashSet<Path>()
+      val projectRoots = NioPathPrefixTreeFactory.createSet()
       EP_NAME.forEachExtensionSafe { locator ->
-        projectRoots.addAll(locator.getProjectRoots())
+        for (projectRoot in locator.getProjectRoots()) {
+          projectRoots.add(projectRoot)
+        }
       }
       return object : LocatedProject {
-        override val projectRoots = projectRoots.toList()
+        override val projectRoots = projectRoots.getRoots().toList()
         override val project = project
       }
     }

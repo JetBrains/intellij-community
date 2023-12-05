@@ -122,7 +122,7 @@ public abstract class MethodThrowsFix extends PsiBasedModCommandAction<PsiMethod
             return true;
           });
 
-        return new ModShowConflicts(conflicts, action);
+        return ModCommand.showConflicts(conflicts).andThen(action);
       }
       return action;
     }

@@ -639,9 +639,13 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
     yycolumn = 0;
     myReturnState = YYINITIAL;
 
+    prepareForNewDocument();
+    yybegin(YYINITIAL);
+  }
+
+  private void prepareForNewDocument() {
     myPrevElementIndent = 0;
     myPossiblePlainTextScalarContinue = false;
-    yybegin(YYINITIAL);
   }
 
   //-------------------------------------------------------------------------------------------------------------------
@@ -1337,7 +1341,8 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
           // fall through
           case 78: break;
           case 36:
-            { return DOCUMENT_MARKER;
+            { prepareForNewDocument();
+        return DOCUMENT_MARKER;
             }
           // fall through
           case 79: break;

@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
-  private final Map<String, IndexingContext> myContexts = new HashMap<>();
+  protected final Map<String, IndexingContext> myContexts = new HashMap<>();
   private final Indexer myIndexer;
   private final IndexUpdater myUpdater;
   private final Scanner myScanner;
@@ -132,6 +132,11 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     MavenServerProgressIndicator indicator = new MavenServerSideCancelledThrottler(remoteIndicator);
+    doUpdateIndex(mavenIndexId, multithreaded, indicator);
+  }
+
+  protected void doUpdateIndex(MavenIndexId mavenIndexId, boolean multithreaded, MavenServerProgressIndicator indicator)
+    throws MavenServerProcessCanceledException, MavenServerIndexerException {
     try {
       final IndexingContext context = getIndex(mavenIndexId);
       synchronized (context) {
@@ -154,7 +159,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
-  private void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
+  protected void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
     throws ComponentLookupException, IOException {
     Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
     ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, new WagonTransferListenerAdapter(indicator),
@@ -166,8 +171,9 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
   }
 
-  private void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context, boolean multithreaded) throws
-                                                                                                                  IOException {
+  protected void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context, boolean multithreaded)
+    throws
+    IOException {
 
     File repositoryDirectory = context.getRepository();
     if (repositoryDirectory == null || !repositoryDirectory.exists()) {
@@ -262,8 +268,8 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
 
   @Override
   public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId,
-                                                         @NotNull ArrayList<File> artifactFiles,
-                                                         MavenToken token) throws MavenServerIndexerException {
+                                                              @NotNull ArrayList<File> artifactFiles,
+                                                              MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext context = getIndex(indexId);
@@ -378,7 +384,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     if (updateResult.isFullUpdate()) {
       indicator.setText("Index for " + context.getRepositoryUrl() + " updated");
     }
-    else if (updateResult.getTimestamp().equals(currentTimestamp)) {
+    else if (updateResult.getTimestamp() != null && currentTimestamp != null && updateResult.getTimestamp().equals(currentTimestamp)) {
       indicator.setText("Index for " + context.getRepositoryUrl() + "is up to date!");
     }
     else {
@@ -429,7 +435,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     public void artifactDiscovered(ArtifactContext ac) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
-        if(scanned.incrementAndGet() %100 == 0) {
+        if (scanned.incrementAndGet() % 100 == 0) {
           p.setText("Scanned " + scanned.get() + " artifacts...");
         }
       }

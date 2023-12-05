@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -42,6 +43,11 @@ private class UiInfoUsageCollector : ApplicationUsagesCollector() {
 }
 
 @Suppress("EnumEntryName")
+private enum class UiType {
+  classic, new
+}
+
+@Suppress("EnumEntryName")
 private enum class NavBarType {
   visible, floating
 }
@@ -56,8 +62,9 @@ private enum class HidpiMode {
   per_monitor_dpi, system_dpi
 }
 
-private val GROUP = EventLogGroup("ui.info.features", 14)
+private val GROUP = EventLogGroup("ui.info.features", 15)
 private val orientationField = Enum("value", VisibilityType::class.java)
+private val UI_TYPE = GROUP.registerEvent("UI.type", Enum("value", UiType::class.java))
 private val NAV_BAR = GROUP.registerEvent("Nav.Bar", Enum("value", NavBarType::class.java))
 private val NAV_BAR_MEMBERS = GROUP.registerEvent("Nav.Bar.members", orientationField)
 private val TOOLBAR = GROUP.registerEvent("Toolbar", orientationField)
@@ -87,6 +94,7 @@ private val SCREEN_RESOLUTION = GROUP.registerEvent("Screen.Resolution", Int("di
 
 private suspend fun getDescriptors(): Set<MetricEvent> {
   val set = HashSet<MetricEvent>()
+  set.add(UI_TYPE.metric(if (NewUiValue.isEnabled()) UiType.new else UiType.classic))
   set.add(NAV_BAR.metric(if (navbar()) NavBarType.visible else NavBarType.floating))
   set.add(
     NAV_BAR_MEMBERS.metric(if (UISettings.getInstance().showMembersInNavigationBar) VisibilityType.visible else VisibilityType.hidden)

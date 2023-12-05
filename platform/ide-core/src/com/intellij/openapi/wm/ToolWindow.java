@@ -40,7 +40,7 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if the tool window isn't installed.
    */
   default void activate(@Nullable Runnable runnable) {
     activate(runnable, true, true);

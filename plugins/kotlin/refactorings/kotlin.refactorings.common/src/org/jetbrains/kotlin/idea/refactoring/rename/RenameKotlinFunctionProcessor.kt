@@ -14,7 +14,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -75,8 +74,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         checkConflictsAndReplaceUsageInfos(element, allRenames, result)
         result += SmartList<UsageInfo>().also { collisions ->
           checkRedeclarationConflicts(declaration, newName, collisions)
-          renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-          renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+          renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
         }
     }
 
@@ -233,8 +231,6 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
         }
         renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
-
-        element.renameFileIfSingleDeclaration(originalName, newName, allRenames)
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
@@ -287,24 +283,4 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         return processFoundReferences(element, references)
     }
 
-}
-
-@ApiStatus.Internal
-internal fun PsiElement.renameFileIfSingleDeclaration(
-    originalName: String,
-    newName: String,
-    allRenames: MutableMap<PsiElement, String>
-) {
-    val file = containingFile as? KtFile ?: return
-
-    if (file.declarations.singleOrNull() == this) {
-        file.virtualFile?.let { virtualFile ->
-            val nameWithoutExtensions = virtualFile.nameWithoutExtension
-            if (nameWithoutExtensions == originalName) {
-                val newFileName = newName + "." + virtualFile.extension
-                allRenames[file] = newFileName
-                RenamePsiElementProcessor.forElement(file).prepareRenaming(file, newFileName, allRenames)
-            }
-        }
-    }
 }

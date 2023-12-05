@@ -18,9 +18,11 @@ public final class InheritanceConstraint extends PackageConstraint{
     if (!super.test(node)) {
       return false;
     }
-    for (JvmNodeReferenceID s : myUtils.allSupertypes(((JvmClass)node).getReferenceID())) {
-      if (myRootClass.equals(s)) {
-        return false;
+    if (node instanceof JvmClass) {
+      for (JvmNodeReferenceID s : myUtils.allSupertypes(((JvmClass)node).getReferenceID())) {
+        if (myRootClass.equals(s)) {
+          return false;
+        }
       }
     }
     return true;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesL
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
 import com.intellij.openapi.externalSystem.autoimport.settings.*
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -351,8 +353,10 @@ class ProjectSettingsTracker(
       .build(backgroundExecutor)
 
     override fun supply(parentDisposable: Disposable, consumer: (Set<String>) -> Unit) {
-      supplier.supply(parentDisposable) {
-        consumer(it + settingsFilesStatus.get().oldCRC.keys)
+      project.trackActivityBlocking(ExternalSystemActivityKey) {
+        supplier.supply(parentDisposable) {
+          consumer(it + settingsFilesStatus.get().oldCRC.keys)
+        }
       }
     }
 

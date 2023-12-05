@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.intellij.vcs.log.data.index.VcsLogIndexUtils.isIndexingEnabled;
 import static com.intellij.vcs.log.data.index.VcsLogIndexUtils.isIndexingPausedFor;
 
 public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
@@ -91,7 +92,7 @@ public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
                                                @NotNull VcsLogData vcsLogData,
                                                @NotNull VirtualFile root) {
     if (presentation.isEnabled()) return null;
-    if (VcsLogData.isIndexSwitchedOnInRegistry() && !isIndexingPausedFor(root)) return null;
+    if (isIndexingEnabled(vcsLogData.getProject()) && !isIndexingPausedFor(root)) return null;
 
     HelpTooltip previousTooltip = presentation.getClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP);
     if (previousTooltip != null) return previousTooltip;
@@ -102,7 +103,7 @@ public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
     tooltip.setDescription(VcsLogBundle.message("action.help.tooltip.show.all.branches"));
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(vcsLogData.getProject(), Collections.singleton(vcsLogData.getLogProvider(root)));
     tooltip.setLink(VcsLogBundle.message("action.help.tooltip.link.show.all.branches", vcsDisplayName, root.getPresentableName()), () -> {
-      VcsLogIndexUtils.enableAndResumeIndexing(vcsLogData, Collections.singleton(root));
+      VcsLogIndexUtils.enableAndResumeIndexing(vcsLogData.getProject(), vcsLogData, Collections.singleton(root));
     });
     return tooltip;
   }

@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.*
 
 val objModuleType: ObjType<ObjModule> = ObjTypeImpl()
 
-open class ObjModuleImpl(override val name: String, override val explicitApiEnabled: Boolean) : ObjModule {
+open class ObjModuleImpl(override val name: String) : ObjModule {
   private val mutableDependencies: MutableList<ObjModule> = ArrayList()
   private val mutableTypes: MutableList<ObjClass<*>> = ArrayList()
   private val mutableAbstractTypes: MutableList<ValueType.AbstractClass<*>> = ArrayList()
@@ -41,7 +41,7 @@ open class ObjModuleImpl(override val name: String, override val explicitApiEnab
   override fun toString(): String = name
 }
 
-class CompiledObjModuleImpl(name: String, explicitApiEnabled: Boolean) : ObjModuleImpl(name, explicitApiEnabled), CompiledObjModule {
+class CompiledObjModuleImpl(name: String) : ObjModuleImpl(name), CompiledObjModule {
   override fun objClass(typeId: Int): ObjClass<*> = types[typeId]
 
   override fun <T : Obj, V> extField(

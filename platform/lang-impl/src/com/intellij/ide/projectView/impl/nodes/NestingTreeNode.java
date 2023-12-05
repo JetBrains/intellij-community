@@ -8,13 +8,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
-public final class NestingTreeNode extends PsiFileNode {
-  @NotNull private final Collection<? extends PsiFileNode> myChildNodes;
+public final class NestingTreeNode extends PsiFileNode implements FileNodeWithNestedFileNodes {
+  private final @NotNull Collection<? extends PsiFileNode> myNestedFileNodes;
 
-  public NestingTreeNode(@NotNull final PsiFileNode originalNode, @NotNull final Collection<? extends PsiFileNode> childNodes) {
-    super(originalNode.getProject(), originalNode.getValue(), originalNode.getSettings());
-    myChildNodes = childNodes;
+  public NestingTreeNode(@NotNull PsiFileNode originalNode, @NotNull Collection<? extends PsiFileNode> nestedFileNodes) {
+    super(originalNode.getProject(), Objects.requireNonNull(originalNode.getValue()), originalNode.getSettings());
+    myNestedFileNodes = nestedFileNodes;
   }
 
   @Override
@@ -28,20 +29,24 @@ public final class NestingTreeNode extends PsiFileNode {
   }
 
   @Override
-  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
-    final ArrayList<AbstractTreeNode<?>> result = new ArrayList<>(myChildNodes.size());
-    for (PsiFileNode node : myChildNodes) {
+  public @NotNull Collection<AbstractTreeNode<?>> getNestedFileNodes() {
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>(myNestedFileNodes.size());
+    for (PsiFileNode node : myNestedFileNodes) {
       PsiFile value = node.getValue();
       if (value != null) {
         result.add(new PsiFileNode(node.getProject(), value, node.getSettings()));
       }
     }
+    return result;
+  }
 
-    final Collection<AbstractTreeNode<?>> superChildren = super.getChildrenImpl();
+  @Override
+  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>(getNestedFileNodes());
+    Collection<AbstractTreeNode<?>> superChildren = super.getChildrenImpl();
     if (superChildren != null) {
       result.addAll(superChildren);
     }
-
     return result;
   }
 
@@ -49,7 +54,7 @@ public final class NestingTreeNode extends PsiFileNode {
   public boolean contains(@NotNull final VirtualFile file) {
     if (super.contains(file)) return true;
 
-    for (PsiFileNode node : myChildNodes) {
+    for (PsiFileNode node : myNestedFileNodes) {
       final PsiFile psiFile = node.getValue();
       if (psiFile != null && file.equals(psiFile.getVirtualFile())) {
         return true;

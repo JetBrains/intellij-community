@@ -29,8 +29,8 @@ import java.util.function.Supplier;
 
 /**
  * Toggles tool window visibility.
- * Usually shown in View|Tool-windows sub-menu.
- * Dynamically registered in Settings|Keymap for each newly-registered tool window.
+ * Usually shown in View|Tool-windows submenu.
+ * Dynamically registered in Settings|Keymap for each newly registered tool window.
  */
 public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
   private final String myToolWindowId;
@@ -52,18 +52,13 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
     String actionId = getActionIdForToolWindow(toolWindow.getId());
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
-      ActivateToolWindowAction newAction = new ActivateToolWindowAction(toolWindow.getId());
-      updatePresentation(newAction.getTemplatePresentation(), toolWindow);
-      actionManager.registerAction(actionId, newAction);
+      actionManager.registerAction(actionId, new ActivateToolWindowAction(toolWindow.getId()));
+      updateToolWindowActionPresentation(toolWindow);
     }
   }
 
   public static void unregister(@NotNull String id) {
-    String actionId = getActionIdForToolWindow(id);
-    ActionManager actionManager = ActionManager.getInstance();
-    if (actionManager.getAction(actionId) != null) {
-      actionManager.unregisterAction(actionId);
-    }
+    ActionManager.getInstance().unregisterAction(getActionIdForToolWindow(id));
   }
 
   public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
@@ -96,7 +91,8 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
       boolean available = toolWindow.isAvailable() || hasEmptyState(project);
       if (e.getPlace().equals(ActionPlaces.POPUP)) {
         presentation.setVisible(available);
-      } else {
+      }
+      else {
         presentation.setEnabled(available);
       }
 
@@ -111,9 +107,10 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   private static void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
     Supplier<@NlsContexts.TabTitle String> title = toolWindow.getStripeTitleProvider();
     presentation.setText(title);
-    presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
+    presentation.setDescription(() -> IdeBundle.message("action.activate.tool.window", title.get()));
+    Icon toolWindowIcon = toolWindow.getIcon();
     presentation.setIconSupplier(new SynchronizedClearableLazy<>(() -> {
-      Icon icon = toolWindow.getIcon();
+      Icon icon = toolWindowIcon;
       if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
         icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
         return icon;
@@ -161,15 +158,13 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
         createEmptyState(project);
       }
     }
+    else if (windowManager instanceof ToolWindowManagerImpl) {
+      ((ToolWindowManagerImpl)windowManager).hideToolWindow(myToolWindowId, false, true, false, source);
+    }
     else {
-      if (windowManager instanceof ToolWindowManagerImpl) {
-        ((ToolWindowManagerImpl)windowManager).hideToolWindow(myToolWindowId, false, true, false, source);
-      }
-      else {
-        ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
-        if (toolWindow != null) {
-          toolWindow.hide(null);
-        }
+      ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
+      if (toolWindow != null) {
+        toolWindow.hide(null);
       }
     }
   }
@@ -189,9 +184,8 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
 
   /**
    * @return mnemonic for action if it has Alt+digit/Meta+digit shortcut.
-   * Otherwise the method returns {@code -1}. Meta mask is OK for
-   * Mac OS X user, because Alt+digit types strange characters into the
-   * editor.
+   * Otherwise, the method returns {@code -1}.
+   * Meta-mask is OK for Mac OS X user, because Alt+digit types strange characters into the editor.
    */
   public static int getMnemonicForToolWindow(@NotNull String toolWindowId) {
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();

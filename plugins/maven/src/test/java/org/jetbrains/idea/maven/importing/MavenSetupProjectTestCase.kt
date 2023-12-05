@@ -19,7 +19,6 @@ import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -28,9 +27,6 @@ import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
 abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
-
-  override fun runInDispatchThread() = false
-
   fun generateProject(id: String): ProjectInfo {
     val name = "${System.currentTimeMillis()}-$id"
     createProjectSubFile("$name-external-module/pom.xml", MavenBuildFileBuilder("$name-external-module").generate())
@@ -98,11 +94,6 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
     val projectManager = MavenProjectsManager.getInstance(project)
     projectManager.initForTests()
-    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      projectManager.waitForReadingCompletion()
-      //projectManager.performScheduledImportInTests()
-      projectManager.waitForImportCompletion()
-    }
   }
 
   fun getGeneralSettings(project: Project): MavenGeneralSettings {

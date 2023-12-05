@@ -12,7 +12,9 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.ui.JBUI
+import com.jediterm.terminal.ui.AwtTransformers
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -23,7 +25,6 @@ class SimpleTerminalView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: TerminalSession,
-  eventsHandler: TerminalEventsHandler,
   private val withVerticalScroll: Boolean = true
 ) : Disposable {
   private val editor: EditorImpl
@@ -44,9 +45,10 @@ class SimpleTerminalView(
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
-    editor = createEditor()
-    controller = SimpleTerminalController(settings, session, editor, eventsHandler)
-    component = SimpleTerminalPanel()
+    val palette = session.colorPalette
+    editor = createEditor(palette)
+    controller = SimpleTerminalController(settings, session, editor)
+    component = SimpleTerminalPanel(palette)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         controller.isFocused = true
@@ -58,9 +60,10 @@ class SimpleTerminalView(
     })
   }
 
-  private fun createEditor(): EditorImpl {
+  private fun createEditor(palette: TerminalColorPalette): EditorImpl {
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    editor.backgroundColor = AwtTransformers.toAwtColor(palette.defaultBackground)!!
     editor.settings.isLineMarkerAreaShown = false
     editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
       JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
@@ -80,9 +83,9 @@ class SimpleTerminalView(
    * This wrapper is needed to provide the editor to the DataContext.
    * Editor is not proving it itself, because renderer mode is enabled ([EditorImpl.isRendererMode]).
    */
-  private inner class SimpleTerminalPanel : JPanel(), DataProvider {
+  private inner class SimpleTerminalPanel(palette: TerminalColorPalette) : JPanel(), DataProvider {
     init {
-      background = TerminalUi.terminalBackground
+      background = AwtTransformers.toAwtColor(palette.defaultBackground)
       border = JBUI.Borders.emptyLeft(TerminalUi.alternateBufferLeftInset)
       layout = BorderLayout()
       add(editor.component, BorderLayout.CENTER)

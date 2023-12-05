@@ -1,1 +1,1 @@
-type myType[T, U: str] = Union[T, U]
+type myType[T, U: str, *Ts, **P] = Union[T, U]

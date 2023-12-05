@@ -6,6 +6,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -79,7 +80,17 @@ interface TelemetryManager {
    * [Do not use this method in production code. Since it may be blocking.](https://opentelemetry.io/docs/specs/otel/performance/#shutdown-and-explicit-flushing-could-block)
    **/
   @TestOnly
-  fun forceFlushMetrics()
+  suspend fun forceFlushMetrics()
+
+  /**
+   * Blocking forceFlushMetrics function for test purposes.
+   *
+   * @see forceFlushMetrics
+   */
+  @TestOnly
+  fun forceFlushMetricsBlocking() = runBlocking {
+    forceFlushMetrics()
+  }
 }
 
 private val instance = SynchronizedClearableLazy {
@@ -109,7 +120,7 @@ private val instance = SynchronizedClearableLazy {
   instance
 }
 
-internal class NoopTelemetryManager : TelemetryManager {
+class NoopTelemetryManager : TelemetryManager {
   override var verboseMode: Boolean = false
 
   override fun getTracer(scope: Scope): IJTracer = IJNoopTracer
@@ -122,7 +133,7 @@ internal class NoopTelemetryManager : TelemetryManager {
     logger<NoopTelemetryManager>().info("Noop telemetry manager is in use. No metrics exporters are defined.")
   }
 
-  override fun forceFlushMetrics() {
+  override suspend fun forceFlushMetrics() {
     logger<NoopTelemetryManager>().info("Cannot force flushing metrics for Noop telemetry manager")
   }
 }

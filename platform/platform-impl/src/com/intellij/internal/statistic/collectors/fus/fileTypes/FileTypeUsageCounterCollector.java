@@ -194,7 +194,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
 
     @Override
-    public String getKey() {
+    public @NotNull String getKey() {
       return schema;
     }
   }

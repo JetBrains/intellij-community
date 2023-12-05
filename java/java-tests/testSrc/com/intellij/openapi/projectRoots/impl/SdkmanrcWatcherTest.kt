@@ -3,11 +3,11 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil.createFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.childScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 

@@ -5,12 +5,12 @@ import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.reportErrorAndAttachStorage
+import com.intellij.platform.workspace.storage.impl.ConsistencyCheckingDisabler
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.PathUtilRt
@@ -270,7 +270,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     orphanageBuilder.addDiff(squash(buildersWithLoadedState.map { it.orphanage }))
 
-    loadEntitiesTimeMs.addElapsedTimeMs(start)
+    loadEntitiesTimeMs.addElapsedTimeMillis(start)
     return sourcesToUpdate
   }
 
@@ -461,17 +461,15 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun squash(builders: List<MutableEntityStorage>): MutableEntityStorage {
-    var result = builders
+    val target = MutableEntityStorage.create()
 
-    while (result.size > 1) {
-      result = result.chunked(2) { list ->
-        val res = list.first()
-        if (list.size == 2) res.addDiff(list.last())
-        res
-      }
+    // Consistency check takes a lot of time when we make an "accumulator" storage.
+    // To avoid a huge impact on performance metrics, we turn off consistency check for this particular case.
+    // However, in general, this place should be refactored: instead of returning builders, we should return entities themselves.
+    ConsistencyCheckingDisabler.withDisabled {
+      builders.forEach { builder -> target.addDiff(builder) }
     }
-
-    return result.singleOrNull() ?: MutableEntityStorage.create()
+    return target
   }
 
   @TestOnly
@@ -604,7 +602,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       saveEntitiesBySerializer(it.key, it.value.mapValues { entitiesMapEntry -> entitiesMapEntry.value.toList() }, storage, writer)
     }
 
-    saveEntitiesTimeMs.addElapsedTimeMs(start)
+    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun saveEntities(affectedSources: Set<EntitySource>,
@@ -724,7 +722,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithSymbolicId)?.symbolicId})" }
             }
               """.trimMargin()
-            reportErrorAndAttachStorage(message)
+            LOG.error(message)
           }
           if (existingSerializers.isEmpty() || existingSerializers.any { it.internalEntitySource != actualFileSource }) {
             processNewlyAddedDirectoryEntities(entities, serializersToRun)

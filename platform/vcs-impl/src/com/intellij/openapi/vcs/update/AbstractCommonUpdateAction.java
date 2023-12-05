@@ -510,7 +510,6 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
         return;
       }

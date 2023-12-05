@@ -6,5 +6,5 @@ import com.intellij.platform.workspace.storage.impl.ConsistencyCheckingModeProvi
 
 class WorkspaceStorageConsistencyCheckingModeProviderForTests : ConsistencyCheckingModeProvider {
   override val mode: ConsistencyCheckingMode
-    get() = ConsistencyCheckingMode.SYNCHRONOUS
+    get() = ConsistencyCheckingMode.ENABLED
 }

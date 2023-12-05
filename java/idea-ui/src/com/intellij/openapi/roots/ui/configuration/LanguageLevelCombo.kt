@@ -35,14 +35,14 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     val ltsItems = items.filterAndAdd(LTS.toList())
 
     val otherItems = items.filterAndAdd(buildList {
-      LanguageLevel.values()
+      LanguageLevel.entries
         .sortedBy { it.toJavaVersion().feature }
         .filter { level: LanguageLevel -> level <= highestWithPreview && (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
         .forEach { level: LanguageLevel -> add(level) }
     })
 
     val experimentalItems = items.filterAndAdd(buildList {
-      for (level in LanguageLevel.values()) {
+      for (level in LanguageLevel.entries) {
         if (level > highestWithPreview) {
           add(level)
         }
@@ -144,6 +144,6 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
   }
 
   companion object {
-    private val LTS = arrayOf(LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
+    private val LTS = arrayOf(LanguageLevel.JDK_21, LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
   }
 }

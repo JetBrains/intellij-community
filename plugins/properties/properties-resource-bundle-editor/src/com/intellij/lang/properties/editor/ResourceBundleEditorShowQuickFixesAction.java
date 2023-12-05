@@ -33,10 +33,6 @@ import org.jetbrains.annotations.NotNull;
 public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   private final static Logger LOG = Logger.getInstance(ResourceBundleEditorShowQuickFixesAction.class);
 
-  public ResourceBundleEditorShowQuickFixesAction() {
-    super(ResourceBundleEditorBundle.messagePointer("resource.bundle.editor.show.quick.fixes.action.text"));
-  }
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final ResourceBundleEditor editor = getEditor(e);

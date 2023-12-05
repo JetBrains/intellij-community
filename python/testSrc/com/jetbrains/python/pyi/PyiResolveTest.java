@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
@@ -68,11 +70,14 @@ public class PyiResolveTest extends PyMultiFileResolveTestCase {
 
   public void testCanonicalName() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
-    PyClass exportedClass = PyClassNameIndex.findClass("pkg.mod.Exported", myFixture.getProject());
+    Project project = myFixture.getProject();
+    PyClass exportedClass = assertOneElement(PyClassNameIndex.findByQualifiedName("pkg.mod.Exported", project, 
+                                                                                  GlobalSearchScope.allScope(project)));
     QualifiedName exportedCanonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(exportedClass, null);
     assertEquals(QualifiedName.fromDottedString("pkg"), exportedCanonicalImportPath);
 
-    PyClass internalClass = PyClassNameIndex.findClass("pkg.mod.Internal", myFixture.getProject());
+    PyClass internalClass = assertOneElement(PyClassNameIndex.findByQualifiedName("pkg.mod.Internal", project, 
+                                                                                  GlobalSearchScope.allScope(project)));
     QualifiedName internalCanonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(internalClass, null);
     assertEquals(QualifiedName.fromDottedString("pkg.mod"), internalCanonicalImportPath);
   }

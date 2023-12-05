@@ -1,0 +1,22 @@
+<html>
+<body>
+<p>
+Informs you when bitwise operations can be replaced with the <code>Long.hashCode</code> method.
+  It detects instances of the pattern <code>(int)(x ^ (x >>> 32))</code> where <code>x</code> is a variable of type <code>long</code>.
+  This improves readability of code.
+</p>
+<p>
+  Example:
+</p>
+<pre><code>
+int result = (int)(var ^ (var >>> 32));
+</code></pre>
+After applying the quick-fix:
+<pre><code>
+int result = Long.hashCode(var);
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection only reports if the language level of the project or module is 8 or higher.
+<p><small>New in 2024.1</small></p>
+</body>
+</html>

@@ -15,10 +15,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
-import com.intellij.ui.TableCell;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
@@ -34,8 +32,6 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -90,23 +86,18 @@ public final class RevisionsList {
     table.getSelectionModel().setSelectionInterval(newIdx, newIdx);
   }
 
-  private void addSelectionListener(SelectionListener listener) {
-    table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      private final SelectionListener mySelectionListener = listener;
+  private void addSelectionListener(@NotNull SelectionListener listener) {
+    table.getSelectionModel().addListSelectionListener(e -> {
+      if (e.getValueIsAdjusting()) return;
 
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) return;
+      ListSelectionModel sm = table.getSelectionModel();
+      int selectedRow1 = sm.getMinSelectionIndex();
+      int selectedRow2 = sm.getMaxSelectionIndex();
 
-        ListSelectionModel sm = table.getSelectionModel();
-        int selectedRow1 = sm.getMinSelectionIndex();
-        int selectedRow2 = sm.getMaxSelectionIndex();
-
-        FilteringTableModel<?> model = getFilteringModel();
-        int origRow1 = model.getOriginalIndex(selectedRow1);
-        int origRow2 = model.getOriginalIndex(selectedRow2);
-        mySelectionListener.revisionsSelected(origRow1, origRow2);
-      }
+      FilteringTableModel<?> model = getFilteringModel();
+      int origRow1 = model.getOriginalIndex(selectedRow1);
+      int origRow2 = model.getOriginalIndex(selectedRow2);
+      listener.revisionsSelected(origRow1, origRow2);
     });
   }
 
@@ -169,7 +160,7 @@ public final class RevisionsList {
     restoreSelection(sel);
   }
 
-  private void restoreSelection(List<Object> sel) {
+  private void restoreSelection(@NotNull List<Object> sel) {
     ListSelectionModel sm = table.getSelectionModel();
     sm.clearSelection();
     for (Object o : sel) {
@@ -202,7 +193,7 @@ public final class RevisionsList {
     return (FilteringTableModel<?>)table.getModel();
   }
 
-  private static MyModel getMyModel(JTable table) {
+  private static MyModel getMyModel(@NotNull JTable table) {
     return ((MyModel)((FilteringTableModel<?>)table.getModel()).getOriginalModel());
   }
 
@@ -276,10 +267,7 @@ public final class RevisionsList {
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
     private final JBLabel myLabelLabel = new JBLabel();
 
-    private final ExpandableItemsHandler<TableCell> myToolTipHandler;
-
-    public MyCellRenderer(JBTable table) {
-      myToolTipHandler = table.getExpandableItemsHandler();
+    public MyCellRenderer(@NotNull JBTable table) {
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
       headersPanel.add(myPeriodLabel, BorderLayout.NORTH);
@@ -422,7 +410,7 @@ public final class RevisionsList {
       return StringUtil.isEmpty(s) ? " " : s;
     }
 
-    private static LabelsAndColor getLabelsAndColor(RevisionItem item) {
+    private static LabelsAndColor getLabelsAndColor(@NotNull RevisionItem item) {
       Revision r = item.revision;
 
       final Pair<List<String>, Integer> affected = r.getAffectedFileNames();
@@ -470,7 +458,8 @@ public final class RevisionsList {
         public String getAccessibleName() {
           if (myPeriodLabel.isVisible()) {
             return AccessibleContextUtil.getCombinedName(", ", myPeriodLabel, myTitleLabel, myFilesCountLabel, myDateLabel);
-          } else {
+          }
+          else {
             return AccessibleContextUtil.getCombinedName(", ", myTitleLabel, myFilesCountLabel, myDateLabel);
           }
         }
@@ -506,7 +495,7 @@ public final class RevisionsList {
       }
 
       @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      public void paintBorder(Component c, @NotNull Graphics g, int x, int y, int width, int height) {
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setColor(JBColor.border());
         g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{1}, 1));
@@ -533,7 +522,7 @@ public final class RevisionsList {
       }
 
       @Override
-      protected void paintComponent(Graphics g) {
+      protected void paintComponent(@NotNull Graphics g) {
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

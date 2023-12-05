@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.openapi.rd.util
 
 import com.intellij.openapi.application.ApplicationManager
@@ -17,12 +19,19 @@ import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-private val applicationThreadPool get() = RdCoroutineHost.applicationThreadPool
-private val processIODispatcher get() = RdCoroutineHost.processIODispatcher
-private val nonUrgentDispatcher get() = RdCoroutineHost.nonUrgentDispatcher
-private val uiDispatcher get() = RdCoroutineHost.instance.uiDispatcher
-private val uiDispatcherWithInlining get() = RdCoroutineHost.instance.uiDispatcherWithInlining
-private val uiDispatcherAnyModality get() = RdCoroutineHost.instance.uiDispatcherAnyModality
+private val applicationThreadPool: CoroutineDispatcher
+  get() = Dispatchers.IO
+private val processIODispatcher: ExecutorCoroutineDispatcher
+  get() = RdCoroutineHost.processIODispatcher
+
+private val nonUrgentDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(2)
+
+private val uiDispatcher: CoroutineContext
+  get() = RdCoroutineHost.instance.uiDispatcher
+private val uiDispatcherWithInlining: CoroutineDispatcher
+  get() = RdCoroutineHost.instance.uiDispatcherWithInlining
+private val uiDispatcherAnyModality: CoroutineContext
+  get() = RdCoroutineHost.instance.uiDispatcherAnyModality
 
 fun Lifetime.launchOnUi(
   context: CoroutineContext = EmptyCoroutineContext,

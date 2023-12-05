@@ -128,7 +128,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (LOG.isDebugEnabled()) {
           LOG.debug("contextFinishedCallback: " + context.tool() + "; toolId:" + context.tool().getShortName() + "; "+infos+"; "+context.elements().size()+" elements");
         }
-        highlightInfoUpdater.updateInspectionResult(holder.myToolWrapper, myHighlightingSession, infos, holder.getFile());
+        highlightInfoUpdater.updateInspectionResult(holder.myToolWrapper, myHighlightingSession, infos, holder.getFile(), myRestrictRange);
         fileInfos.addAll(infos);
       };
       InspectionRunner runner =

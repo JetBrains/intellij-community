@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +48,21 @@ final class JavaInspectionSuppressor implements InspectionSuppressor, RedundantS
     if (annotationOrTagElement != null) {
       int shiftInParent = annotationOrTagElement.getTextRange().getStartOffset() - elementWithSuppression.getTextRange().getStartOffset();
       if (shiftInParent < 0) {
-        return null; //non-normalized declaration
+        return getRangeFallback(elementWithSuppression, toolId); //non-normalized declaration
       }
       return Objects.requireNonNull(RedundantSuppressionDetector.super.getHighlightingRange(annotationOrTagElement, toolId))
         .shiftRight(shiftInParent);
+    }
+    return getRangeFallback(elementWithSuppression, toolId);
+  }
+
+  @Nullable
+  private TextRange getRangeFallback(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
+    if (elementWithSuppression instanceof PsiNameIdentifierOwner owner) {
+      PsiElement identifier = owner.getNameIdentifier();
+      if (identifier != null) {
+        return identifier.getTextRange().shiftLeft(elementWithSuppression.getTextRange().getStartOffset());
+      }
     }
     return RedundantSuppressionDetector.super.getHighlightingRange(elementWithSuppression, toolId);
   }

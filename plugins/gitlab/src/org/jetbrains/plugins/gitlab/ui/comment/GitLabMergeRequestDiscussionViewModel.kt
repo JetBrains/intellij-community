@@ -6,7 +6,7 @@ import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
@@ -58,7 +58,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
 
   override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, currentUser, discussion)
+      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, project, currentUser, discussion)
       else null
     }.modelFlow(cs, LOG)
 

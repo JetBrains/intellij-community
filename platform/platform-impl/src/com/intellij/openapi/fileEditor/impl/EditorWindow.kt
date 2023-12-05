@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -33,11 +34,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
@@ -334,7 +335,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
 
-      if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+      if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
         trimToSize(fileToIgnore = file, transferFocus = false)
       }
 
@@ -342,7 +343,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
 
     owner.updateFileColorAsync(composite.file)
-    if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+    if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
       if (options.selectAsCurrent) {
         setSelectedComposite(composite, options.requestFocus)
       }
@@ -351,9 +352,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
   }
 
-  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite) {
+  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite, requestFocus: Boolean) {
     composite.selectedEditor?.selectNotify()
-    setSelectedComposite(composite = composite, focusEditor = true)
+    setSelectedComposite(composite = composite, focusEditor = requestFocus)
     updateTabsVisibility()
     owner.validate()
   }
@@ -852,12 +853,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 
   fun isFilePinned(file: VirtualFile): Boolean {
-    return requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }.isPinned
+    return requireNotNull(getComposite(file)) { "file is not open: $file" }.isPinned
   }
 
   fun setFilePinned(file: VirtualFile, pinned: Boolean) {
-    val composite = requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }
-    setFilePinned(composite, pinned)
+    setFilePinned(composite = requireNotNull(getComposite(file)) { "file is not open: $file" }, pinned = pinned)
   }
 
   internal fun setFilePinned(composite: EditorComposite, pinned: Boolean) {

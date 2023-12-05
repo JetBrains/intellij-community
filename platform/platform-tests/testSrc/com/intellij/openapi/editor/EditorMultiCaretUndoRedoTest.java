@@ -26,20 +26,14 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
-  private CurrentEditorProvider mySavedCurrentEditorProvider;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    mySavedCurrentEditorProvider = getUndoManager().getEditorProvider();
-  }
-
   @Override
   public void tearDown() throws Exception {
     try {
-      getUndoManager().setEditorProvider(mySavedCurrentEditorProvider);
+      getUndoManager().setOverriddenEditorProvider(null);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -140,9 +134,9 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   private void init(String text) {
     init(text, PlainTextFileType.INSTANCE);
     setEditorVisibleSize(1000, 1000);
-    getUndoManager().setEditorProvider(new CurrentEditorProvider() {
+    getUndoManager().setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
-      public FileEditor getCurrentEditor() {
+      public FileEditor getCurrentEditor(@Nullable Project project) {
         return getTextEditor();
       }
     });

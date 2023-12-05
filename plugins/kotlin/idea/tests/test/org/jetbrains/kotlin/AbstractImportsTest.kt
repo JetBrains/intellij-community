@@ -16,6 +16,8 @@ import java.io.File
 abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    protected var userNotificationInfo: String? = null
+
     protected open fun doTest(unused: String) {
         val testPath = dataFilePath(fileName())
         configureCodeStyleAndRun(project) {
@@ -81,6 +83,12 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 } else {
                     TestCase.assertFalse(logFile.exists())
                 }
+            }
+
+            val message = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// WITH_MESSAGE: ")
+            if (message != null) {
+                assertNotNull("No user notification info was provided", userNotificationInfo)
+                assertEquals(message, userNotificationInfo)
             }
         }
     }

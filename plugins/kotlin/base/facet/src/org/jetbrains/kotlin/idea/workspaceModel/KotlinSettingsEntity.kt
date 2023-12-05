@@ -18,9 +18,6 @@ import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
 
 interface KotlinSettingsEntity : ModuleSettingsBase {
-    // Looks like useless for Kotlin facet,
-    // in that case should be removed during
-    // the process of implementing Maven import for workspace model
     val sourceRoots: List<String>
     val configFileItems: List<ConfigFileItem>
 
@@ -30,37 +27,25 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val useProjectSettings: Boolean
     val implementedModuleNames: List<String>
     val dependsOnModuleNames: List<String>
-
     val additionalVisibleModuleNames: Set<String>
-
     val productionOutputPath: String
     val testOutputPath: String
-
-
     val sourceSetNames: List<String>
     val isTestModule: Boolean
-
     val externalProjectId: String
-
     val isHmppEnabled: Boolean
         @Deprecated(message = "Use mppVersion.isHmppEnabled", ReplaceWith("mppVersion.isHmpp"))
         get
-
     val pureKotlinSourceFolders: List<String>
 
     //semi-trivial parameters (enums)
     val kind: KotlinModuleKind
 
     //non-trivial parameters
-    //TODO: remove?
-    val mergedCompilerArguments: String
     val compilerArguments: String
-
-    // Check weather it can be nullable (along with productionOutputPath and testOutputPath)
     val compilerSettings: CompilerSettingsData
 
     val targetPlatform: String
-    //externalSystemRunTasks
 
     override val symbolicId: KotlinSettingsId
         get() = KotlinSettingsId(name, moduleId)
@@ -87,7 +72,6 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         override var isHmppEnabled: Boolean
         override var pureKotlinSourceFolders: MutableList<String>
         override var kind: KotlinModuleKind
-        override var mergedCompilerArguments: String
         override var compilerArguments: String
         override var compilerSettings: CompilerSettingsData
         override var targetPlatform: String
@@ -114,7 +98,6 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             isHmppEnabled: Boolean,
             pureKotlinSourceFolders: List<String>,
             kind: KotlinModuleKind,
-            mergedCompilerArguments: String,
             compilerArguments: String,
             compilerSettings: CompilerSettingsData,
             targetPlatform: String,
@@ -138,7 +121,6 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             builder.isHmppEnabled = isHmppEnabled
             builder.pureKotlinSourceFolders = pureKotlinSourceFolders.toMutableWorkspaceList()
             builder.kind = kind
-            builder.mergedCompilerArguments = mergedCompilerArguments
             builder.compilerArguments = compilerArguments
             builder.compilerSettings = compilerSettings
             builder.targetPlatform = targetPlatform

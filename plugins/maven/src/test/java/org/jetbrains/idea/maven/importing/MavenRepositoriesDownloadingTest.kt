@@ -16,8 +16,7 @@ import org.junit.Test
 import java.io.File
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
 
@@ -104,7 +103,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pomPlugins())
-    projectsManager.waitForAfterImportJobs()
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
@@ -267,7 +265,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithDependencyLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pom()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
-      TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()}, 0, projectsManager.rootProjects[0].problems.size)
     }
   }
 
@@ -275,7 +273,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithPluginLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pomPlugins()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
-      TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()},0, projectsManager.rootProjects[0].problems.size)
     }
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     removeFromLocalRepository("org/mytest/myartifact/")
@@ -311,7 +309,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
 
     importProjectAsync(pomContent)
-    projectsManager.waitForAfterImportJobs()
     checks()
   }
 

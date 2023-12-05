@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.modcommand.ModCommand.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class CreateTypeParameterFromUsageFix extends PsiBasedModCommandAction<PsiJavaCodeReferenceElement> {
@@ -41,13 +42,13 @@ public class CreateTypeParameterFromUsageFix extends PsiBasedModCommandAction<Ps
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext actionContext, @NotNull PsiJavaCodeReferenceElement element) {
     Context context = Context.from(element, false);
-    if (context == null) return ModCommand.nop();
+    if (context == null) return nop();
     List<PsiNameIdentifierOwner> placesToAdd = context.placesToAdd;
 
-    return new ModChooseAction(QuickFixBundle.message("create.type.parameter.from.usage.chooser.title"),
-                               ContainerUtil.map(placesToAdd, place ->
-                                 ModCommand.psiUpdateStep(place, Objects.requireNonNull(place.getName()),
-                                                          (owner, updater) -> createTypeParameter(owner, context.typeName))));
+    return chooseAction(QuickFixBundle.message("create.type.parameter.from.usage.chooser.title"),
+                        ContainerUtil.map(placesToAdd, place ->
+                          psiUpdateStep(place, Objects.requireNonNull(place.getName()),
+                                        (owner, updater) -> createTypeParameter(owner, context.typeName))));
   }
 
   private static void createTypeParameter(@NotNull PsiElement methodOrClass, @NotNull String name) {

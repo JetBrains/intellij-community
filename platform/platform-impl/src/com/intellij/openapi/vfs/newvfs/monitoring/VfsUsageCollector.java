@@ -26,13 +26,21 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 15);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 16);
 
   private static final LongEventField FIELD_WAIT_MS = Long("wait_ms");  // -1 for synchronous refresh/events
 
   /* ================== EVENT_INITIAL_REFRESH: ====================================================== */
 
   private static final EventId1<Long> EVENT_INITIAL_REFRESH = GROUP_VFS.registerEvent("initial_refresh", DurationMs);
+
+  /* ================== EVENT_BACKGROUND_REFRESH: ====================================================== */
+
+  private static final RoundedIntEventField FIELD_BG_REFRESH_SESSIONS = RoundedInt("sessions");
+  private static final RoundedIntEventField FIELD_BG_REFRESH_EVENTS = RoundedInt("events");
+
+  private static final EventId3<Long, Integer, Integer> EVENT_BACKGROUND_REFRESH = GROUP_VFS.registerEvent(
+    "background_refresh", DurationMs, FIELD_BG_REFRESH_SESSIONS, FIELD_BG_REFRESH_EVENTS);
 
   /* ================== EVENT_REFRESH_SESSION: ====================================================== */
 
@@ -202,6 +210,12 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   public static void logInitialRefresh(Project project, long duration) {
     EVENT_INITIAL_REFRESH.log(project, duration);
+  }
+
+  public static void logBackgroundRefresh(long duration, int sessions, int events) {
+    if (duration > DURATION_THRESHOLD_MS) {
+      EVENT_BACKGROUND_REFRESH.log(duration, sessions, events);
+    }
   }
 
   public static void logRefreshSession(boolean recursive, int lfsRoots, int arcRoots, int otherRoots, boolean cancelled,

@@ -9,12 +9,15 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCache
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeaturesProvider.Fields.FILE_STATUS_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeaturesProvider.Fields.IS_CHANGED_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeaturesProvider.Fields.IS_IGNORED_DATA_KEY
 
 internal class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
-  companion object {
-    internal val IS_IGNORED_DATA_KEY = EventFields.Boolean("isIgnored")
-    internal val IS_CHANGED_DATA_KEY = EventFields.Boolean("isChanged")
-    internal val FILE_STATUS_DATA_KEY = EventFields.String(
+  object Fields {
+    val IS_IGNORED_DATA_KEY = EventFields.Boolean("isIgnored")
+    val IS_CHANGED_DATA_KEY = EventFields.Boolean("isChanged")
+    val FILE_STATUS_DATA_KEY = EventFields.String(
       "fileStatus",
       listOf(
         "NOT_CHANGED", "NOT_CHANGED_IMMEDIATE", "NOT_CHANGED_RECURSIVE",

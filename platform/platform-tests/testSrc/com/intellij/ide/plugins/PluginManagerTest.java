@@ -140,7 +140,7 @@ public class PluginManagerTest {
     assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.platform.freebsd"));
     assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.platform.solaris"));
     assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.platform.unix"));
-    assertEquals(SystemInfo.isXWindow, checkCompatibility("com.intellij.platform.xwindow"));
+    assertEquals(SystemInfo.isUnix && !SystemInfo.isMac, checkCompatibility("com.intellij.platform.xwindow"));
   }
 
   @Test

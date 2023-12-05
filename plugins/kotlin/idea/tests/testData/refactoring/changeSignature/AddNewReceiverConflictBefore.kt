@@ -11,4 +11,3 @@ class X(val k: Int) {
 fun test() {
     foo(2)
 }
-// IGNORE_K2

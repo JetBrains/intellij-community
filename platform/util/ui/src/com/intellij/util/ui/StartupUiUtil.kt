@@ -186,7 +186,15 @@ object StartupUiUtil {
 
   @JvmStatic
   fun isWaylandToolkit(): Boolean {
-    return "sun.awt.wl.WLToolkit" == Toolkit.getDefaultToolkit().javaClass.name
+    return SystemInfoRt.isLinux
+           && "sun.awt.wl.WLToolkit" == Toolkit.getDefaultToolkit().javaClass.name
+  }
+
+  @JvmStatic
+  fun isXToolkit(): Boolean {
+    return SystemInfoRt.isUnix
+           && !SystemInfoRt.isMac
+           &&  "sun.awt.X11.XToolkit" == Toolkit.getDefaultToolkit().javaClass.name
   }
 
   /**

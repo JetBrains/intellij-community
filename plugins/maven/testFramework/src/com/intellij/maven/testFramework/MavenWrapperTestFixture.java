@@ -60,7 +60,7 @@ public class MavenWrapperTestFixture {
 
   @NotNull
   protected URI createURI() throws Exception {
-    if(myMavenVersion.contains("4.0.0.")) {
+    if (myMavenVersion.contains("4.0.0.")) {
       return URI.create(MAVEN_4_URL_PATTERN.replace("$version$", myMavenVersion));
     }
     if (myMavenVersion.contains("SNAPSHOT")) {
@@ -79,16 +79,16 @@ public class MavenWrapperTestFixture {
       .toList();
     String timestamp = null;
     String build = null;
-    for(Element e: timestampAndBuild){
-      if("timestamp".equals(e.getName())) {
+    for (Element e : timestampAndBuild) {
+      if ("timestamp".equals(e.getName())) {
         timestamp = e.getValue();
       }
-      if("buildNumber".equals(e.getName())) {
+      if ("buildNumber".equals(e.getName())) {
         build = e.getValue();
       }
     }
 
-    if(build == null || timestamp == null){
+    if (build == null || timestamp == null) {
       throw new Exception("cannot find last version for " + myMavenVersion);
     }
     String versionWithoutSnapshot = myMavenVersion.replace("-SNAPSHOT", "");
@@ -102,7 +102,7 @@ public class MavenWrapperTestFixture {
 
   public void setUp() throws Exception {
     MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings()
-      .setMavenHomeNoFire(new MavenInSpecificPath(getMavenHome().getAbsolutePath()));
+      .setMavenHomeType(new MavenInSpecificPath(getMavenHome().getAbsolutePath()));
   }
 
   public void tearDown() throws Exception {

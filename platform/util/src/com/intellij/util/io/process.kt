@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.BufferedReader
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 
 /**
@@ -31,7 +33,8 @@ suspend fun Process.awaitExit(): Int {
  * Computes and returns result of the [action] which may block for an unforeseeable amount of time.
  *
  * The [action] does not inherit coroutine context from the calling coroutine, use [withContext] to install proper context if needed.
- * The [action] is executed on a special unlimited dispatcher to avoid starving [Dispatchers.IO].
+ * The [action] is executed on a special unlimited dispatcher to avoid starving [Dispatchers.IO], even if [context] is assigned
+ * to some other dispatcher.
  * The [action] is cancelled if the calling coroutine is cancelled,
  * but this function immediately resumes with CancellationException without waiting for completion of the [action],
  * which means that this function **breaks structured concurrency**.
@@ -42,8 +45,11 @@ suspend fun Process.awaitExit(): Int {
 @DelicateCoroutinesApi // require explicit opt-in
 @IntellijInternalApi
 @Internal
-suspend fun <T> computeDetached(action: suspend CoroutineScope.() -> T): T {
-  val deferred = GlobalScope.async(blockingDispatcher, block = action)
+suspend fun <T> computeDetached(
+  context: CoroutineContext = EmptyCoroutineContext,
+  action: suspend CoroutineScope.() -> T,
+): T {
+  val deferred = GlobalScope.async(blockingDispatcher + context, block = action)
   try {
     return deferred.await()
   }

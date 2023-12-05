@@ -14,7 +14,6 @@ open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
     companion object {
         fun isInplaceRenameAvailable(element: PsiElement): Boolean {
             return when (element) {
-                is KtTypeParameter -> true
                 is KtDestructuringDeclarationEntry -> true
                 is KtParameter -> element.isLoopParameter || element.isCatchParameter || element.isLambdaParameter
                 is KtLabeledExpression, is KtImportAlias -> true

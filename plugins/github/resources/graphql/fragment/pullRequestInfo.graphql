@@ -24,6 +24,12 @@ fragment pullRequestInfo on PullRequest {
     isFork
   }
 
+  baseRef {
+    refUpdateRule {
+      ...refUpdateRule
+    }
+  }
+
   headRefName
   headRefOid
   headRepository {

@@ -8,6 +8,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.Gradl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
@@ -65,20 +65,19 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             gradleVersion: String? = null,
             gradleHome: String? = null,
             useCompactProjectStructure: Boolean = false,
-            createResourceDirectories: Boolean = true,
-            filterTestSourcesets: Boolean = false
+            kotlinStdlib: LibraryOrderEntry? = null
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
                     wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
                     wizard.jdk = sdk
                     wizard.isCreatingNewProject = isProject
+                    wizard.stdlibForJps = kotlinStdlib
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
                         StructurePlugin.useCompactProjectStructure.reference.setValue(useCompactProjectStructure)
                         StructurePlugin.isCreatingNewProjectHierarchy.reference.setValue(isProject)
-                        KotlinPlugin.createResourceDirectories.reference.setValue(createResourceDirectories)
 
                         // If a local gradle installation was selected, we want to use the local gradle installation's
                         // version so that the wizard knows what kind of build scripts to generate
@@ -97,12 +96,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                         BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
                         applyProjectTemplate(ConsoleApplicationProjectTemplate(addSampleCode = addSampleCode))
-
-                        if (filterTestSourcesets) {
-                            KotlinPlugin.modules.settingValue.forEach { module ->
-                                module.sourceSets = module.sourceSets.filter { it.sourcesetType != SourcesetType.test }
-                            }
-                        }
                     }
                 }.commit(project, null, null)
         }

@@ -3,9 +3,10 @@ package org.jetbrains.jps.dependency.diff;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.impl.Containers;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
+
+import static org.jetbrains.jps.javac.Iterators.*;
 
 public interface Difference {
 
@@ -53,35 +54,13 @@ public interface Difference {
     }
 
     default boolean unchanged() {
-      return Iterators.isEmpty(added()) && Iterators.isEmpty(removed()) && Iterators.isEmpty(changed());
+      return isEmpty(added()) && isEmpty(removed()) && isEmpty(changed());
     }
   }
 
-  static <V> Specifier<V, ?> diff(@Nullable Iterable<V> past, @Nullable Iterable<V> now) {
-    var _past = Iterators.map(past, v -> DiffCapable.wrap(v));
-    var _now = Iterators.map(now, v -> DiffCapable.wrap(v));
-    var diff = deepDiff(_past, _now);
-    return new Specifier<>() {
-      @Override
-      public Iterable<V> added() {
-        return Iterators.map(diff.added(), adapter -> adapter.getValue());
-      }
-
-      @Override
-      public Iterable<V> removed() {
-        return Iterators.map(diff.removed(), adapter -> adapter.getValue());
-      }
-
-      @Override
-      public Iterable<Change<V, Difference>> changed() {
-        return Iterators.map(diff.changed(), c -> Change.create(c.getPast().getValue(), c.getNow().getValue(), c.getDiff()));
-      }
-    };
-  }
-
-  static <T extends DiffCapable<T, D>, D extends Difference> Specifier<T, D> deepDiff(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
-    if (Iterators.isEmpty(past)) {
-      if (Iterators.isEmpty(now)) {
+  static <T> Specifier<T, ?> diff(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
+    if (isEmpty(past)) {
+      if (isEmpty(now)) {
         return new Specifier<>() {
           @Override
           public boolean unchanged() {
@@ -101,7 +80,7 @@ public interface Difference {
         }
       };
     }
-    else if (Iterators.isEmpty(now)) {
+    else if (isEmpty(now)) {
       return new Specifier<>() {
         @Override
         public Iterable<T> removed() {
@@ -115,22 +94,80 @@ public interface Difference {
       };
     }
 
-    Set<T> pastSet = Collections.unmodifiableSet(Iterators.collect(past, Containers.createCustomPolicySet(T::isSame, T::diffHashCode)));
-    Set<T> nowSet = Collections.unmodifiableSet(Iterators.collect(now, Containers.createCustomPolicySet(T::isSame, T::diffHashCode)));
-    final Map<T, T> nowMap = Containers.createCustomPolicyMap(T::isSame, T::diffHashCode);
-    for (T s : nowSet) {
-      if (pastSet.contains(s)) {
-        nowMap.put(s, s);
+    Set<T> pastSet = past instanceof Set? (Set<T>)past : collect(past, new HashSet<>());
+    Set<T> nowSet = now instanceof Set? (Set<T>)now : collect(now, new HashSet<>());
+
+    Iterable<T> added = lazy(() -> collect(filter(nowSet, elem -> !pastSet.contains(elem)), new ArrayList<>()));
+    Iterable<T> removed = lazy(() -> collect(filter(pastSet, elem -> !nowSet.contains(elem)), new ArrayList<>()));
+
+    return new Specifier<>() {
+      private Boolean isUnchanged;
+      @Override
+      public Iterable<T> added() {
+        return added;
       }
+
+      @Override
+      public Iterable<T> removed() {
+        return removed;
+      }
+
+      @Override
+      public boolean unchanged() {
+        return isUnchanged != null? isUnchanged : (isUnchanged = pastSet.equals(nowSet)).booleanValue();
+      }
+    };
+  }
+
+  static <T extends DiffCapable<T, D>, D extends Difference> Specifier<T, D> deepDiff(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
+    if (isEmpty(past)) {
+      if (isEmpty(now)) {
+        return new Specifier<>() {
+          @Override
+          public boolean unchanged() {
+            return true;
+          }
+        };
+      }
+      return new Specifier<>() {
+        @Override
+        public Iterable<T> added() {
+          return now;
+        }
+
+        @Override
+        public boolean unchanged() {
+          return false;
+        }
+      };
+    }
+    else if (isEmpty(now)) {
+      return new Specifier<>() {
+        @Override
+        public Iterable<T> removed() {
+          return past;
+        }
+
+        @Override
+        public boolean unchanged() {
+          return false;
+        }
+      };
     }
 
-    Set<T> added = Containers.createCustomPolicySet(nowSet, T::isSame, T::diffHashCode);
-    added.removeAll(pastSet);
+    Set<T> pastSet = collect(past, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
+    Set<T> nowSet = collect(now, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
 
-    Set<T> removed = Containers.createCustomPolicySet(pastSet, T::isSame, T::diffHashCode);
-    removed.removeAll(nowSet);
+    Iterable<T> added = lazy(() -> collect(filter(nowSet, obj -> !pastSet.contains(obj)), new ArrayList<>()));
+    Iterable<T> removed = lazy(() -> collect(filter(pastSet, obj -> !nowSet.contains(obj)), new ArrayList<>()));
 
-    Iterable<Change<T, D>> changed = Iterators.lazy(() -> {
+    Iterable<Change<T, D>> changed = lazy(() -> {
+      final Map<T, T> nowMap = Containers.createCustomPolicyMap(T::isSame, T::diffHashCode);
+      for (T s : nowSet) {
+        if (pastSet.contains(s)) {
+          nowMap.put(s, s);
+        }
+      }
       final List<Change<T, D>> result = new ArrayList<>(0);
       for (T before : pastSet) {
         T after = nowMap.get(before);

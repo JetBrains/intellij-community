@@ -5,8 +5,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.getUserHomeProjectDir
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
+import com.intellij.ide.util.projectWizard.WebProjectSettingsStepWrapper
+import com.intellij.ide.util.projectWizard.WebProjectTemplate
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.joinSystemDependentPath
@@ -20,14 +23,20 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PythonProjectGenerator
+import com.jetbrains.python.newProject.PythonPromoProjectGenerator
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import java.io.File
+import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import java.util.*
 import javax.swing.JPanel
@@ -36,53 +45,73 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
                                            callback: AbstractNewProjectStep.AbstractCallback<T>)
   : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
 
-    private val propertyGraph = PropertyGraph()
-    private val projectName = propertyGraph.property("")
-    private val projectLocation = propertyGraph.property("")
-    private val locationHint = propertyGraph.property("").apply {
-      dependsOn(projectName, ::updateHint)
-      dependsOn(projectLocation, ::updateHint)
-    }
-    private val createRepository = propertyGraph.property(false)
-      .bindBooleanStorage("PyCharm.NewProject.Git")
-    private val createScript = propertyGraph.property(false)
-      .bindBooleanStorage("PyCharm.NewProject.Welcome")
+  private val propertyGraph = PropertyGraph()
+  private val projectName = propertyGraph.property("")
+  private val projectLocation = propertyGraph.property("")
+  private val locationHint = propertyGraph.property("").apply {
+    dependsOn(projectName, ::updateHint)
+    dependsOn(projectLocation, ::updateHint)
+  }
+  private val createRepository = propertyGraph.property(false)
+    .bindBooleanStorage("PyCharm.NewProject.Git")
+  private val createScript = propertyGraph.property(false)
+    .bindBooleanStorage("PyCharm.NewProject.Welcome")
 
-    private lateinit var projectNameFiled: JBTextField
-    lateinit var mainPanel: DialogPanel
+  private lateinit var projectNameFiled: JBTextField
+  lateinit var mainPanel: DialogPanel
   override fun createAndFillContentPanel(): JPanel {
+    if (myProjectGenerator is WebProjectTemplate) {
+      peer.buildUI(WebProjectSettingsStepWrapper(this))
+    }
     return createContentPanelWithAdvancedSettingsPanel()
   }
 
-  override fun getProjectLocation(): String {
-    return FileUtil.expandUserHome(projectLocation.joinSystemDependentPath(projectName).get())
-  }
+  /**
+   * Returns the project location that is either:
+   * - constructed using two parts (using the values from "Location" and "Name" fields) for Python project types ("Pure Python", "Django",
+   *   etc.);
+   * - specified directly in the single "Location" field for non-Python project types ("Angular CLI", "Bootstrap", etc.).
+   */
+  override fun getProjectLocation(): String =
+    if (interpreterPanel != null) {
+      FileUtil.expandUserHome(projectLocation.joinSystemDependentPath(projectName).get())
+    }
+    else {
+      super.getProjectLocation()
+    }
 
   override fun getRemotePath(): String? {
     return null
   }
 
-  private val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName))
+  private var interpreterPanel: PythonAddNewEnvironmentPanel? = null
 
   override fun createBasePanel(): JPanel {
-    if (myProjectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
-
-    myLocationField = TextFieldWithBrowseButton()
+    val projectGenerator = myProjectGenerator
+    if (projectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
+    if (projectGenerator is PythonPromoProjectGenerator) {
+      myCreateButton.isEnabled = false
+      myLocationField = TextFieldWithBrowseButton()
+      return projectGenerator.createPromoPanel()
+    }
 
     val nextProjectName = myProjectDirectory.get()
     projectName.set(nextProjectName.nameWithoutExtension)
     projectLocation.set(nextProjectName.parent)
 
-    mainPanel =  panel {
+    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName)).also { interpreterPanel = it }
+
+    mainPanel = panel {
       row(message("new.project.name")) {
         projectNameFiled = textField()
           .bindText(projectName)
           .component
       }
       row(message("new.project.location")) {
-        textFieldWithBrowseButton()
+        myLocationField = textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
           .bindText(projectLocation)
           .align(Align.FILL)
+          .component
       }
       row("") {
         comment("", maxLineLength = 60).bindText(locationHint)
@@ -97,12 +126,13 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
       }
     }
 
-    mainPanel.registerValidators(this)
+    mainPanel.registerValidators(this) { validations ->
+      val anyErrors = validations.entries.any { (key, value) -> key.isVisible && !value.okEnabled }
+      myCreateButton.isEnabled = !anyErrors
+    }
     myCreateButton.addActionListener { mainPanel.apply() }
     return mainPanel
   }
-
-
 
 
   override fun findSequentNonExistingUntitled(): File {
@@ -120,13 +150,23 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     return File(ProjectUtil.getBaseDir())
   }
 
-  private fun updateHint(): String {
-    return message("new.project.location.hint", Paths.get(projectLocation.get(), projectName.get()))
-  }
+  private fun updateHint(): String =
+    try {
+      val projectPath = Paths.get(projectLocation.get(), projectName.get())
+      message("new.project.location.hint", projectPath)
+    }
+    catch (e: InvalidPathException) {
+      ""
+    }
 
   override fun checkValid(): Boolean {
-    // todo add proper validation with custom component
-    return true
+    if (myProjectGenerator is WebProjectTemplate) {
+      return super.checkValid()
+    }
+    else {
+      // todo add proper validation with custom component
+      return true
+    }
   }
 
   override fun installFramework(): Boolean {
@@ -134,19 +174,29 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
   }
 
   override fun onPanelSelected() {
-    interpreterPanel.onShown()
+    interpreterPanel?.onShown()
   }
 
   override fun getSdk(): Sdk {
-    return PyLazySdk("Uninitialized environment") { interpreterPanel.getSdk() }
+    return PyLazySdk("Uninitialized environment") { interpreterPanel?.getSdk() }
   }
 
+
+  override fun getInterpreterInfoForStatistics(): InterpreterStatisticsInfo {
+    return interpreterPanel!!.createStatisticsInfo()
+  }
+
+  override fun registerValidators() {
+    if (myProjectGenerator is PythonProjectGenerator<*>) {
+      projectName.afterChange { (myProjectGenerator as PythonProjectGenerator<*>).locationChanged(it) }
+    }
+  }
 
   companion object {
     @JvmStatic
     fun initializeGit(project: Project, root: VirtualFile) {
       runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-            GitRepositoryInitializer.getInstance()?.initRepository(project, root, true)
+        GitRepositoryInitializer.getInstance()?.initRepository(project, root, true)
       }
     }
   }

@@ -67,7 +67,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
                 false
             }
             javaChangeInfos = ktCallableDeclaration.toLightMethods().map {
-                createJavaInfoForLightMethod(ktCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
+                createJavaInfoForLightMethod(ktCallableDeclaration as KtCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
             }
             changeInfo.putUserData(javaChangeInfoKey, javaChangeInfos)
         }
@@ -168,7 +168,10 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             }
             if (anno != null && !type.hasAnnotation(anno)) {
                 val nullabilityAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$anno", originalFunction)
-                type.annotate(TypeAnnotationProvider.Static.create(arrayOf(nullabilityAnno, *type.annotations)))
+                val annotationType = nullabilityAnno.resolveAnnotationType()
+                if (annotationType != null) {
+                    type.annotate(TypeAnnotationProvider.Static.create(arrayOf(nullabilityAnno, *type.annotations)))
+                } else type
             }
             else type
         }

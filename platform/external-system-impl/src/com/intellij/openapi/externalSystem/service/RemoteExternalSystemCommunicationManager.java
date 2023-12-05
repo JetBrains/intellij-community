@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.configurationStore.StorageUtilKt;
@@ -150,6 +150,12 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
         // we don't want to get EOFException because of that.
         params.getVMParametersList().addParametersString(
           "-Dsun.rmi.transport.connectionTimeout=" + TimeUnit.HOURS.toMillis(1)
+        );
+        // Context propagation depends on kotlinx.coroutines library.
+        // We don't want to pass it for context propagation only, so until there is a significant reason to do it,
+        // we would rather disable context propagation completely within the spawned process
+        params.getVMParametersList().addParametersString(
+          "-Dide.propagate.context=false"
         );
         final String debugPort = System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_REMOTE_COMMUNICATION_MANAGER_DEBUG_PORT);
         if (debugPort != null) {

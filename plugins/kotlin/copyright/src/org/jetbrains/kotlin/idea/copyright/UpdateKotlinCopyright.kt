@@ -13,40 +13,33 @@ import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens.SHEBANG_COMMENT
 import org.jetbrains.kotlin.psi.KtDeclaration
 
-class UpdateKotlinCopyright(
-    project: Project?,
-    module: Module?,
-    root: VirtualFile?,
-    copyrightProfile: CopyrightProfile?
-) : UpdatePsiFileCopyright(project, module, root, copyrightProfile) {
+class UpdateKotlinCopyright(project: Project?, module: Module?, root: VirtualFile?, copyrightProfile: CopyrightProfile?) :
+    UpdatePsiFileCopyright(project, module, root, copyrightProfile) {
 
     override fun accept(): Boolean =
         file.fileType === KotlinFileType.INSTANCE
 
     override fun scanFile() {
-        val firstChild: PsiElement? = file.firstChild
-        val comments = getExistentComments(file)
-        val anchor = if (firstChild.isShebangComment()) firstChild?.nextSibling else comments.lastOrNull()
-        checkComments(anchor, true, comments)
-    }
-
-    companion object {
-        fun getExistentComments(psiFile: PsiFile): List<PsiComment> =
-            SyntaxTraverser.psiTraverser(psiFile)
-                .withTraversal(TreeTraversal.LEAVES_DFS)
-                .traverse()
-                .skipWhile { element: PsiElement -> element.isShebangComment() }
-                .takeWhile { element: PsiElement ->
-                    (element is PsiComment && element.getParent() !is KtDeclaration) ||
-                            element is PsiWhiteSpace ||
-                            element.text.isEmpty() ||
-                            element.parent is KDoc
-                }
-                .map { element: PsiElement -> if (element.parent is KDoc) element.parent else element }
-                .filterIsInstance<PsiComment>()
-                .toList()
+        val comments = file.getExistingComments()
+        val anchor = if (file.firstChild?.isShebangComment() == true) file.firstChild?.nextSibling else comments.lastOrNull()
+        checkComments(/* last = */ anchor, /* commentHere = */ true, comments)
     }
 }
 
-private fun PsiElement?.isShebangComment(): Boolean =
+private fun PsiFile.getExistingComments(): List<PsiComment> =
+    SyntaxTraverser.psiTraverser(/* root = */ this)
+        .withTraversal(TreeTraversal.LEAVES_DFS)
+        .traverse()
+        .skipWhile { element: PsiElement -> element.isShebangComment() }
+        .takeWhile { element: PsiElement ->
+            (element is PsiComment && element.getParent() !is KtDeclaration) ||
+                    element is PsiWhiteSpace ||
+                    element.text.isEmpty() ||
+                    element.parent is KDoc
+        }
+        .map { element: PsiElement -> if (element.parent is KDoc) element.parent else element }
+        .filterIsInstance<PsiComment>()
+        .toList()
+
+private fun PsiElement.isShebangComment(): Boolean =
     this is PsiComment && tokenType === SHEBANG_COMMENT

@@ -56,7 +56,7 @@ internal open class StorageIndexes(
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
-      for ((id, _) in mappings.index) {
+      mappings.index.forEach { id, _ ->
         assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }
@@ -275,10 +275,6 @@ internal class MutableStorageIndexes(
       // TODO :: Avoid updating of all soft links for the dependent entity
       builder.indexes.updateSymbolicIdIndexes(builder, entity.createEntity(builder), editingBeforeSymbolicId, entity)
     }
-  }
-
-  fun removeExternalMapping(identifier: String) {
-    externalMappings[identifier]?.clearMapping()
   }
 
   fun toImmutable(): StorageIndexes {

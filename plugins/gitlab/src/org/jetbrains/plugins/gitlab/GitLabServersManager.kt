@@ -31,13 +31,15 @@ interface GitLabServersManager {
    * This means that when a GitLab server is updated while the IDE is running, we might not be
    * able to detect that a new server version is deployed. If the cache is timed, we might detect
    * a new version every so often. If no cache is used, we will request metadata from the server
-   * every time, but we know server version to be up to date.
+   * every time, but we know the server version to be up to date.
    *
-   * `null` an error occurred, metadata could not be fetched for whatever reason.
+   * @throws java.net.ConnectException when there is no usable internet connection.
+   * @throws com.intellij.collaboration.api.HttpStatusErrorException when the API request results
+   * in a non-successful status code.
    */
-  suspend fun getMetadataOrNull(
+  suspend fun getMetadata(
     api: GitLabApi
-  ): GitLabServerMetadata?
+  ): GitLabServerMetadata
 }
 
 internal class CachingGitLabServersManager(private val serviceCs: CoroutineScope) : GitLabServersManager {
@@ -57,20 +59,15 @@ internal class CachingGitLabServersManager(private val serviceCs: CoroutineScope
       }
     }.await()
 
-  override suspend fun getMetadataOrNull(api: GitLabApi)
-    : GitLabServerMetadata? =
+  override suspend fun getMetadata(api: GitLabApi): GitLabServerMetadata =
     withContext(Dispatchers.IO + CoroutineName("GitLab Server Tester")) {
       metadataCacheGuard.withLock {
         val existing = metadataCache[api.server]
         if (existing != null) return@withLock existing
 
-        val result = runCatching {
-          getServerMetadata(api)
-        }.getOrNull()
+        val result = getServerMetadata(api)
 
-        if (result != null) {
-          metadataCache[api.server] = result
-        }
+        metadataCache[api.server] = result
         result
       }
     }

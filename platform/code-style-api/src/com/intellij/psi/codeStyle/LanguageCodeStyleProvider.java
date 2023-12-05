@@ -52,6 +52,17 @@ public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactor
   }
 
   /**
+   * Allows to delegate common settings, including indentation,
+   * to base language common settings. Useful, when extended language
+   * requires some own, additional custom settings, but everything else is taken
+   * from the base language.
+   */
+  @ApiStatus.Experimental
+  default boolean useBaseLanguageCommonSettings() {
+    return false;
+  }
+
+  /**
    * Checks if formatter is allowed to enforce a leading space in the
    * line comment. Formatter will make a transformation like:
    * <pre>//comment</pre>  =>  <pre>// comment</pre>

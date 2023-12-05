@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -160,6 +161,11 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     else {
       updater.run();
     }
+  }
+
+  @Override
+  protected JBPopupFactory.ActionSelectionAid getAidMethod() {
+    return JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING;
   }
 
   @Override

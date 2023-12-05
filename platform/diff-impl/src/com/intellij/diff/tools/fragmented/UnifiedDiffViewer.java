@@ -332,9 +332,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
 
     final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
-    UnifiedFragmentBuilder builder = ReadAction.compute(() -> {
+    UnifiedDiffState builder = ReadAction.compute(() -> {
       indicator.checkCanceled();
-      return new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide).exec();
+      return new SimpleUnifiedFragmentBuilder(document1, document2, myMasterSide).exec(fragments);
     });
 
     return apply(builder, texts, indicator);
@@ -383,7 +383,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   }
 
   @NotNull
-  protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
+  protected Runnable apply(@NotNull UnifiedDiffState builder,
                            CharSequence @NotNull [] texts,
                            @NotNull ProgressIndicator indicator) {
     final DocumentContent content1 = getContent1();

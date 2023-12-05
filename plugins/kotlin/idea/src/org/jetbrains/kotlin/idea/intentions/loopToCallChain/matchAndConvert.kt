@@ -5,12 +5,13 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.PseudocodeUtil
-import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.*
 import org.jetbrains.kotlin.idea.project.builtIns

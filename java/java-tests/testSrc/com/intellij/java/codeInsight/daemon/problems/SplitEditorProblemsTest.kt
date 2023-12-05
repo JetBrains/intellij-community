@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
@@ -21,7 +22,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.childScope
 import javax.swing.SwingConstants
 
 internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {

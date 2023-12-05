@@ -39,6 +39,8 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
+    <plugin id="org.jetbrains.plugins.yaml"/>
+    <plugin id="com.intellij.modules.json"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -69,14 +71,8 @@
       implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
       implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.gitlab.ui.GitLabCiConfigIconProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
-
-    <statistics.applicationUsagesCollector
-      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
-    <statistics.counterUsagesCollector
-      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
-    <statistics.notificationIdsHolder
-      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
 
@@ -94,6 +90,19 @@
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>
     <registryKey defaultValue="true" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
+    <registryKey defaultValue="1000" description="Request polling interval in milliseconds" key="gitlab.request.polling.interval.millis"/>
+    <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.statistics">
+    <applicationUsagesCollector
+      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
+    <counterUsagesCollector
+      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+    <notificationIdsHolder
+      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
+    <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
+                                places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -164,6 +173,11 @@
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.action.GitLabMergeRequestTimelineShowEventsAction"/>
       <separator/>
       <reference id="GitLab.Merge.Request.Refresh"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
+      <reference id="GitLab.Merge.Request.Copy.Link"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Timeline.Error.Popup">
       <reference id="GitLab.Merge.Request.Open.Link"/>
       <reference id="GitLab.Merge.Request.Copy.Link"/>
     </group>

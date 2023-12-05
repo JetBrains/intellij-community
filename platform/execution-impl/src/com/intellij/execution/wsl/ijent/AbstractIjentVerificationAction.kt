@@ -19,7 +19,7 @@ import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.platform.ijent.fs.nio.asNioFileSystem
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.annotations.ApiStatus.Internal

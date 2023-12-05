@@ -44,6 +44,10 @@ public class GitStagingAreaHolder {
     myRepository = repository;
   }
 
+  /**
+   * @return Known tracked files in the repository, {@link GitFileStatus#isTracked()}
+   * @see git4idea.repo.GitUntrackedFilesHolder for ignored and unversioned files
+   */
   public @NotNull List<GitFileStatus> getAllRecords() {
     synchronized (LOCK) {
       return new ArrayList<>(myRecords);

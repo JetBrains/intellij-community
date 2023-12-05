@@ -7,13 +7,13 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logArtifactIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logGroupIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logVersionChanged
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
-import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID
@@ -44,7 +44,6 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
 
   final override val parentProperty = propertyGraph.lazyProperty(::suggestParentByPath)
   final override val groupIdProperty = propertyGraph.lazyProperty(::suggestGroupIdByParent)
-    .bindStorage(GROUP_ID_PROPERTY_NAME)
   final override val artifactIdProperty = propertyGraph.lazyProperty(::suggestArtifactIdByName)
   final override val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
 
@@ -99,6 +98,9 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID)
         .validationInfo { validateGroupId() }
         .whenTextChangedFromUi { logGroupIdChanged() }
+        .onApply {
+          setPersistentValue(GROUP_ID_PROPERTY_NAME, groupId)
+        }
     }
   }
 
@@ -188,10 +190,18 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
       override val location: String = ""
       override val icon: Nothing get() = throw UnsupportedOperationException()
       override val presentationName: String = "<None>"
-      override val groupId: String = "org.example"
+      override val groupId: String get() = getPersistentValue(GROUP_ID_PROPERTY_NAME, "org.example")
       override val version: String = "1.0-SNAPSHOT"
 
       override val isPresent: Boolean = false
+    }
+
+    private fun getPersistentValue(property: String, defaultValue: String): String {
+      return PropertiesComponent.getInstance().getValue(property, defaultValue)
+    }
+
+    private fun setPersistentValue(property: String, value: String?) {
+      return PropertiesComponent.getInstance().setValue(property, value)
     }
   }
 }

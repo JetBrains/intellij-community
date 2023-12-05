@@ -9,7 +9,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
 import com.intellij.openapi.project.DumbService
@@ -21,10 +20,14 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.checkin.*
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.mapWithProgress
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -71,20 +74,24 @@ class PostCommitChecksHandler(val project: Project) {
 
   private suspend fun runPostCommitChecks(commitInfo: StaticCommitInfo,
                                           commitChecks: List<CommitCheck>) {
-    withBackgroundProgressIndicator(project, VcsBundle.message("post.commit.checks.progress.text")) {
-      val postCommitInfo = prepareCommitsToCheck(commitInfo)
-
-      val problems = runCommitChecks(commitChecks, postCommitInfo)
-      if (problems.isEmpty()) {
-        LOG.debug("Post-commit checks succeeded")
-        pendingCommits.clear()
-        postCommitCheckErrorNotifications.clear()
-        lastCommitProblems = null
+    withBackgroundProgress(project, VcsBundle.message("post.commit.checks.progress.text")) {
+      val postCommitInfo = progressStep(0.2, VcsBundle.message("post.commit.checks.progress.step.collecting.commits.text")) {
+        prepareCommitsToCheck(commitInfo)
       }
-      else {
-        postCommitCheckErrorNotifications.clear()
-        reportPostCommitChecksFailure(problems)
-        lastCommitProblems = problems
+
+      progressStep(1.0) {
+        val problems = runCommitChecks(commitChecks, postCommitInfo)
+        if (problems.isEmpty()) {
+          LOG.debug("Post-commit checks succeeded")
+          pendingCommits.clear()
+          postCommitCheckErrorNotifications.clear()
+          lastCommitProblems = null
+        }
+        else {
+          postCommitCheckErrorNotifications.clear()
+          reportPostCommitChecksFailure(problems)
+          lastCommitProblems = problems
+        }
       }
     }
   }
@@ -95,8 +102,12 @@ class PostCommitChecksHandler(val project: Project) {
 
     if (lastCommitInfos.isNotEmpty()) {
       val mergedCommitInfo = withContext(Dispatchers.IO) {
-        coroutineToIndicator {
-          mergeCommitInfos(lastCommitInfos, commitInfo)
+        indeterminateStep {
+          withRawProgressReporter {
+            coroutineToIndicator {
+              mergeCommitInfos(lastCommitInfos, commitInfo)
+            }
+          }
         }
       }
       if (mergedCommitInfo != null) return mergedCommitInfo
@@ -107,8 +118,12 @@ class PostCommitChecksHandler(val project: Project) {
     }
 
     return withContext(Dispatchers.IO) {
-      coroutineToIndicator {
-        createPostCommitInfo(commitInfo)
+      indeterminateStep {
+        withRawProgressReporter {
+          coroutineToIndicator {
+            createPostCommitInfo(commitInfo)
+          }
+        }
       }
     }
   }
@@ -124,9 +139,9 @@ class PostCommitChecksHandler(val project: Project) {
       }
     }
 
-    for (commitCheck in commitChecks) {
-      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo) ?: continue
-    }
+    problems += commitChecks.mapWithProgress { commitCheck ->
+      AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo)
+    }.filterNotNull()
     return problems
   }
 

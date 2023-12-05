@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.ArrayUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -87,13 +87,15 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), GitTelemetrySpan.Log.LoadingDetails.name) { span ->
-      span.setAttribute("rootName", root.name)
+    TelemetryManager.getInstance().getTracer(VcsScope)
+      .spanBuilder(GitTelemetrySpan.Log.LoadingFullCommitDetails.name)
+      .useWithScopeBlocking { span ->
+        span.setAttribute("rootName", root.name)
 
-      val handlerListener = GitLogOutputSplitter(handler, parser, converter)
-      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
-      handlerListener.reportErrors()
-    }
+        val handlerListener = GitLogOutputSplitter(handler, parser, converter)
+        Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
+        handlerListener.reportErrors()
+      }
   }
 
   protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>

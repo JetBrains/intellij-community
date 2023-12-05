@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.createEntityId
 import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

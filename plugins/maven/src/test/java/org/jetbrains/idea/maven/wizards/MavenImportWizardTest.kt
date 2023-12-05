@@ -3,16 +3,10 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.maven.testFramework.assertWithinTimeout
-import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +18,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import java.nio.file.Path
-import java.util.List
 
 class MavenImportWizardTest : MavenProjectWizardTestCase() {
   override fun runInDispatchThread() = false
@@ -110,7 +103,6 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     val provider = MavenProjectImportProvider()
     val module = withContext(Dispatchers.EDT) { importProjectFrom(pom.toString(), null, provider) }
     val project = module.getProject()
-    waitForMavenImporting(project, LocalFileSystem.getInstance().findFileByNioFile(pom)!!)
     ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
     val modules = ModuleManager.getInstance(project).modules
     val imlFile = dir.resolve("$projectName.iml").toFile()
@@ -118,16 +110,6 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
       FileUtil.toSystemIndependentName(it.moduleFilePath) == FileUtil.toSystemIndependentName(imlFile.absolutePath)
     }
     TestCase.assertEquals(1, m.size)
-  }
-
-  private fun waitForMavenImporting(project: Project, file: VirtualFile) {
-    val manager = MavenProjectsManager.getInstance(project)
-    manager.waitForImportCompletion()
-    importMavenProjects(manager, List.of(file))
-    val promise = manager.waitForImportCompletion()
-    runInEdtAndWait {
-      PlatformTestUtil.waitForPromise(promise)
-    }
   }
 
   companion object {

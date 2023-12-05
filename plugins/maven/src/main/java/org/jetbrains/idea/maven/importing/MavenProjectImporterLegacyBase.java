@@ -52,7 +52,9 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
       if (modulePropertyManager instanceof ExternalSystemModulePropertyManagerBridge &&
           module instanceof ModuleBridge &&
           ((ModuleBridge)module).getDiff() == null) {
-        ((ExternalSystemModulePropertyManagerBridge)modulePropertyManager).setMavenized(mavenized, null, storageBuilder);
+        if (!(mavenized && modulePropertyManager.isMavenized())) {
+          ((ExternalSystemModulePropertyManagerBridge)modulePropertyManager).setMavenized(mavenized, null, storageBuilder);
+        }
       }
       else {
         modulePropertyManager.setMavenized(mavenized);

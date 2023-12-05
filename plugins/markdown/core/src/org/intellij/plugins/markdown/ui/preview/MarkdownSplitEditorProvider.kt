@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.split.SplitTextEditorProvider
+import org.jdom.Attribute
 import org.jdom.DataConversionException
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -22,15 +23,16 @@ class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorPr
 
   override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
     val underlyingState = readUnderlyingState(sourceElement, project, file)
-    val isVerticalSplit = sourceElement.getAttribute(VERTICAL_SPLIT)?.let {
-      try {
-        it.booleanValue
-      }
-      catch (ignored: DataConversionException) {
-        false
-      }
-    } ?: false
+    val isVerticalSplit = sourceElement.getAttribute(VERTICAL_SPLIT)?.booleanValue(false) ?: false
     return MarkdownEditorWithPreviewState(underlyingState, isVerticalSplit)
+  }
+
+  private fun Attribute.booleanValue(default: Boolean): Boolean {
+    try {
+      return booleanValue
+    } catch (ignored: DataConversionException) {
+      return default
+    }
   }
 
   override fun writeState(state: FileEditorState, project: Project, targetElement: Element) {
@@ -42,14 +44,7 @@ class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorPr
 
   private fun readLayoutState(sourceElement: Element, project: Project, file: VirtualFile): TextEditorWithPreview.Layout? {
     val value = readSplitLayoutState(sourceElement, project, file)
-    if (value != null) {
-      try {
-        return TextEditorWithPreview.Layout.valueOf(value)
-      }
-      catch (ignored: IllegalArgumentException) {
-      }
-    }
-    return null
+    return TextEditorWithPreview.Layout.entries.find { it.name == value }
   }
 
   private fun readUnderlyingState(sourceElement: Element, project: Project, file: VirtualFile): TextEditorWithPreview.MyFileEditorState {

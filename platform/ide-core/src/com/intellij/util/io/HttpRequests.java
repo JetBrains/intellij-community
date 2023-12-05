@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -67,6 +67,8 @@ public final class HttpRequests {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
   public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
   public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
+
+  public static final int CUSTOM_ERROR_CODE = 451;
 
   private static final int[] REDIRECTS = {
     // temporary redirects
@@ -653,7 +655,10 @@ public final class HttpRequests {
                                            RequestBuilderImpl builder,
                                            int responseCode) throws IOException {
     String message = null;
-    if (builder.myIsReadResponseOnError) {
+    if (responseCode == CUSTOM_ERROR_CODE) {
+      message = connection.getHeaderField("Error-Message");
+    }
+    if ((message == null || message.isEmpty()) && builder.myIsReadResponseOnError) {
       message = request.readError(connection);
     }
     if (message == null || message.isEmpty()) {

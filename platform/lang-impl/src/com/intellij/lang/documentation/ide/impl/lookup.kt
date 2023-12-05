@@ -95,7 +95,7 @@ internal fun lookupElementToRequestMapper(lookup: Lookup): suspend (LookupElemen
       }
       val file = PsiUtilBase.getPsiFileInEditor(editor, project)
                  ?: return@readAction null
-      ideTargetProvider.documentationTarget(editor, file, lookupElement)?.documentationRequest()
+      ideTargetProvider.documentationTargets(editor, file, lookupElement).firstOrNull()?.documentationRequest()
     }
   }
 }

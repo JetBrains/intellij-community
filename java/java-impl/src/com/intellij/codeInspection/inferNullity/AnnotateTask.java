@@ -7,16 +7,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import org.jetbrains.annotations.NotNull;
 
 class AnnotateTask implements SequentialTask {
   private final Project myProject;
   private final UsageInfo[] myInfos;
   private final SequentialModalProgressTask myTask;
   private int myCount;
+  private int myAdded = 0;
   private final int myTotal;
   private final NullableNotNullManager myNotNullManager;
 
-  AnnotateTask(Project project, SequentialModalProgressTask progressTask, UsageInfo[] infos) {
+  AnnotateTask(Project project, SequentialModalProgressTask progressTask, UsageInfo @NotNull [] infos) {
     myProject = project;
     myInfos = infos;
     myNotNullManager = NullableNotNullManager.getInstance(myProject);
@@ -36,8 +38,14 @@ class AnnotateTask implements SequentialTask {
       indicator.setFraction(((double)myCount) / myTotal);
     }
 
-    NullityInferrer.apply(myProject, myNotNullManager, myInfos[myCount++]);
+    if (NullityInferrer.apply(myProject, myNotNullManager, myInfos[myCount++])) {
+      myAdded++;
+    }
 
     return isDone();
+  }
+
+  int getAddedCount() {
+    return myAdded;
   }
 }

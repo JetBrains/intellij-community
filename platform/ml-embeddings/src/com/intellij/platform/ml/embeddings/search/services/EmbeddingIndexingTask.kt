@@ -20,6 +20,7 @@ sealed interface EmbeddingIndexingTask {
     }
   }
 
+  @Suppress("unused")
   class AddDiskSynchronized(
     private val ids: List<String>,
     private val texts: List<String>,
@@ -32,6 +33,7 @@ sealed interface EmbeddingIndexingTask {
     }
   }
 
+  @Suppress("unused")
   class DeleteDiskSynchronized(
     private val ids: List<String>,
     private val callback: () -> Unit = {}
@@ -42,6 +44,7 @@ sealed interface EmbeddingIndexingTask {
     }
   }
 
+  @Suppress("unused")
   class RenameDiskSynchronized(
     private val oldId: String,
     private val newId: String,

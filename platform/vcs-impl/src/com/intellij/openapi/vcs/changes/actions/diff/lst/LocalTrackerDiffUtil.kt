@@ -772,11 +772,13 @@ object LocalTrackerDiffUtil {
   }
 
 
-  abstract class LocalTrackerActionProvider(val viewer: DiffViewerBase,
-                                            val localRequest: LocalChangeListDiffRequest,
-                                            val allowExcludeChangesFromCommit: Boolean) {
-    abstract fun getSelectedTrackerChanges(e: AnActionEvent): List<LocalTrackerChange>?
-    abstract fun getSelectedTrackerLines(e: AnActionEvent): SelectedTrackerLine?
+  interface LocalTrackerActionProvider {
+    val viewer: DiffViewerBase
+    val localRequest: LocalChangeListDiffRequest
+    val allowExcludeChangesFromCommit: Boolean
+
+    fun getSelectedTrackerChanges(e: AnActionEvent): List<LocalTrackerChange>?
+    fun getSelectedTrackerLines(e: AnActionEvent): SelectedTrackerLine?
   }
 
   class SelectedTrackerLine(

@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asSafely
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -13,6 +13,7 @@ internal interface GitLabMergeRequestDetailsLoadingViewModel {
   val mergeRequestId: String
   val mergeRequestLoadingFlow: Flow<LoadingState>
 
+  fun reloadData()
   fun refreshData()
 
   sealed interface LoadingState {
@@ -32,6 +33,12 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
   override val mergeRequestLoadingFlow: Flow<LoadingState> = detailsVm.map { vmResult ->
     vmResult.map { LoadingState.Result(it) }.getOrElse { LoadingState.Error(it) }
   }.stateIn(scope, SharingStarted.Lazily, LoadingState.Loading)
+
+  override fun reloadData() {
+    scope.launch {
+      mergeRequestLoadingFlow.first().asSafely<LoadingState.Result>()?.detailsVm?.reloadData()
+    }
+  }
 
   override fun refreshData() {
     scope.launch {

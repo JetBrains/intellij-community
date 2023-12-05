@@ -19,11 +19,14 @@ import training.ui.LearningUiUtil
 import training.util.getFeedbackLink
 import javax.swing.JList
 
+/** should be the same as in the [JavaLangSupport] bean declaration in the plugin XML */
+const val javaLanguageId: String = "JAVA"
+
 internal class JavaLangSupport : JavaBasedLangSupport() {
   override val contentRootDirectoryName: String = "IdeaLearningProject"
   override val projectResourcePath: String = "learnProjects/java/LearnProject"
 
-  override val primaryLanguage: String = "JAVA"
+  override val primaryLanguage: String = javaLanguageId
 
   override val defaultProductName: String = "IDEA"
 

@@ -44,7 +44,7 @@ class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoring
 
   private fun PsiType.copyWithAnnotations(owner: PsiModifierListOwner, file: PsiFile): PsiType {
     val factory = PsiElementFactory.getInstance(file.project)
-    val annotations = JavaSuggestedRefactoringSupport.extractAnnotationsToCopy(this, owner, file)
+    val annotations = extractAnnotationsToCopy(this, owner, file)
     //TODO: it's a hack to workaround ChangeSignatureProcessor comparing types by presentable text without annotations
     return factory.createTypeFromText(this.annotate { annotations.toTypedArray() }.getCanonicalText(true), null)
   }

@@ -116,6 +116,7 @@
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.NavigationItemKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TypoKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TextKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.CalculatorKeyProvider"/>
 
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereActionsRankingModelLoader"/>

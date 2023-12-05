@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
@@ -308,7 +307,7 @@ public final class SearchEverywhereHeader {
         });
         onChanged.run();
       }
-    }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
+    }, new PreviewAction(), new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
     return new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
                      IdeBundle.message("searcheverywhere.allelements.tab.name"),
                      contributors, actions, filter);

@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoKt;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,6 +18,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.ColorUtil;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +40,11 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
                                 final EditorColorsScheme current,
                                 final EditorColorsScheme scheme,
                                 final boolean addScheme) {
-    group.add(new DumbAwareAction(scheme.getDisplayName(), "", scheme == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
+    var name = scheme.getDisplayName();
+    if (UIThemeLookAndFeelInfoKt.isDefaultForTheme(scheme, LafManager.getInstance().getCurrentUIThemeLookAndFeel())) {
+      name += " *";
+    }
+    group.add(new DumbAwareAction(name, "", scheme == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
@@ -116,6 +122,11 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
     if (onDone != null) {
       SwingUtilities.invokeLater(onDone);
     }
+  }
+
+  @Override
+  protected JBPopupFactory.ActionSelectionAid getAidMethod() {
+    return JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING;
   }
 
   @Override

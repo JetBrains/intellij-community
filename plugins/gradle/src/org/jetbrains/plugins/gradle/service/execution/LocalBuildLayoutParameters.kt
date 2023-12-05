@@ -97,7 +97,7 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     return getGradleSettings().serviceDirectoryPath ?: defaultGradleUserHome()
   }
 
-  private fun defaultGradleUserHome() = org.gradle.initialization.BuildLayoutParameters().gradleUserHomeDir.path
+  private fun defaultGradleUserHome() = gradleUserHomeDir().path
 
   companion object {
     private val log = logger<LocalGradleExecutionAware>()

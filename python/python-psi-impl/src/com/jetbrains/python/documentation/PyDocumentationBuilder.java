@@ -117,6 +117,16 @@ public class PyDocumentationBuilder {
       }
     }
 
+    for (PythonDocumentationQuickInfoProvider point : PythonDocumentationQuickInfoProvider.EP_NAME.getExtensionList()) {
+      final String info = point.getHoverAdditionalQuickInfo(myContext, outerElement);
+      if (info != null) {
+        myBody.br();
+        myBody.append(info);
+        break;
+      }
+    }
+
+
     if (myBody.isEmpty() && myContent.isEmpty()) {
       return null; // got nothing substantial to say!
     }

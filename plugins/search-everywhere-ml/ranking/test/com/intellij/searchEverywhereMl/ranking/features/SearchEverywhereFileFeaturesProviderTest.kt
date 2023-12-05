@@ -5,12 +5,12 @@ import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_BOOKMARK_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.REL_PATH_NAME_FEATURE_TO_FIELD
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.FILETYPE_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_BOOKMARK_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_DIRECTORY_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_EXACT_MATCH_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.REL_PATH_NAME_FEATURE_TO_FIELD
 
 
 internal class SearchEverywhereFileFeaturesProviderTest
@@ -39,7 +39,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testIsInFavorites() {
     val addFileToBookmarks = { file: PsiFileSystemItem ->
       val manager = BookmarksManager.getInstance(project)
-      val bookmark = LineBookmarkProvider.find(project)?.createBookmark(file.virtualFile)
+      val bookmark = LineBookmarkProvider.Util.find(project)?.createBookmark(file.virtualFile)
       if (manager != null && bookmark != null)
         manager.add(bookmark, com.intellij.ide.bookmark.BookmarkType.DEFAULT)
     }

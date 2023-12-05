@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomAnnotatorTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
 
   @Test
   fun testAnnotatePlugin() = runBlocking {

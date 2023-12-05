@@ -83,9 +83,8 @@ public class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdenti
             staticImportCopy.delete();
           });
         }
-        yield new ModChooseAction(JavaBundle.message("multiple.usages.of.static.import.found"),
-                                  List.of(new ExpandStaticImportAction(false),
-                                  new ExpandStaticImportAction(true)));
+        yield ModCommand.chooseAction(JavaBundle.message("multiple.usages.of.static.import.found"),
+                                      new ExpandStaticImportAction(false), new ExpandStaticImportAction(true));
       }
     };
   }

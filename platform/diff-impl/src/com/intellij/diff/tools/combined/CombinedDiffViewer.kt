@@ -114,8 +114,11 @@ class CombinedDiffViewer(
     private val currentBlock get() = blockState[currentIndex] ?: getCurrentBlockId()
 
     fun updateForBlock(blockId: CombinedBlockId) {
-      currentIndex = blockState.indexOf(blockId)
-      update()
+      val newIndex = blockState.indexOf(blockId)
+      if (currentIndex != newIndex) {
+        currentIndex = newIndex
+        update()
+      }
     }
 
     override fun getContentTitles(): List<String?> {
@@ -515,7 +518,7 @@ class CombinedDiffViewer(
   }
 
 
-  private val editors: List<Editor>
+  internal val editors: List<Editor>
     get() = diffViewers.values.flatMap { it.editors }
 
   private inner class FocusListener(disposable: Disposable) : FocusAdapter(), FocusChangeListener {
@@ -715,7 +718,7 @@ private val DiffViewer.currentEditor: Editor?
     else -> null
   }
 
-val DiffViewer.editors: List<Editor>
+internal val DiffViewer.editors: List<Editor>
   get() = when (this) {
     is EditorDiffViewer -> editors
     else -> emptyList()

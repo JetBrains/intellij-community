@@ -25,8 +25,7 @@ import java.io.File
 import java.util.*
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
-  override fun runInDispatchThread() = false
-  
+    
   @Test
   fun JavadocsAndSources() = runBlocking {
     importProjectAsync("""
@@ -283,8 +282,6 @@ ${VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)!!)}</url>
                         </plugins>
                       </build>
                       """.trimIndent())
-
-      resolvePlugins()
 
       val f = File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
 

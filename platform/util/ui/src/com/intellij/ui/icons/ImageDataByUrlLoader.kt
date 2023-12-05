@@ -9,7 +9,7 @@ import java.lang.ref.WeakReference
 import java.net.MalformedURLException
 import java.net.URL
 
-private val UNRESOLVED_URL = URL("file:///unresolved")
+private val UNRESOLVED_URL = URL("$FILE_SCHEME_PREFIX//unresolved")
 
 @ApiStatus.Internal
 internal class ImageDataByUrlLoader internal constructor(
@@ -152,7 +152,7 @@ private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?, origina
   }
 
   // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one.
-  if (path.startsWith("file:/")) {
+  if (path.startsWith(FILE_SCHEME_PREFIX)) {
     try {
       return ImageDataByFilePathLoader(path)
     }

@@ -10,7 +10,6 @@ class A<T extends String, K> {
 
         final A<?, ?> a = (A<?, ?>) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a1, a.a1)) return false;
 
         return true;

@@ -261,6 +261,10 @@ private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree
     // see kotlinx.coroutines.AbstractCoroutine.nameString
     null
   }
+  else if (job.javaClass.name == "com.intellij.util.ChildScope") {
+    // ChildScope already renders the name in its `toString()`
+    null
+  }
   else {
     context[CoroutineName]?.name
   }

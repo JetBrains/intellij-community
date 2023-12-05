@@ -175,7 +175,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   public void copyFrom(CodeStyleSettings from) {
     CommonCodeStyleSettings.copyPublicFields(from, this);
-    CommonCodeStyleSettings.copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
+    OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
     mySoftMargins.setValues(from.getDefaultSoftMargins());
     myExcludedFiles.setDescriptors(from.getExcludedFiles().getDescriptors());
     copyCustomSettingsFrom(from);

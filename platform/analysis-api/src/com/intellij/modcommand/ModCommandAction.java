@@ -19,6 +19,11 @@ import java.util.function.UnaryOperator;
  */
 public interface ModCommandAction extends CommonIntentionAction {
   /**
+   * Empty array constant for convenience
+   */
+  ModCommandAction[] EMPTY_ARRAY = new ModCommandAction[0];
+
+  /**
    * @param context context in which the action is executed
    * @return presentation if the action is available in the given context, and perform could be safely called;
    * null if the action is not available

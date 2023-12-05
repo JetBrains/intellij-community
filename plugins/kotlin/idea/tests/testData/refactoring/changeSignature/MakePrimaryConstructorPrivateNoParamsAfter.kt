@@ -1,2 +1,3 @@
 class X private constructor()
-// IGNORE_K2
+
+fun f(x: X)

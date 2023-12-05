@@ -9,12 +9,14 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider
+import com.intellij.searchEverywhereMl.semantics.SearchEverywhereSemanticPropertyProvider.Fields.SEMANTIC_EXPERIMENT_GROUP
+import com.intellij.searchEverywhereMl.semantics.SearchEverywhereSemanticPropertyProvider.Fields.SEMANTIC_SEARCH_ENABLED
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
 
 class SearchEverywhereSemanticPropertyProvider: SearchEverywhereSessionPropertyProvider() {
-  companion object {
-    private val SEMANTIC_EXPERIMENT_GROUP = EventFields.Int("semanticExperimentGroup")
-    private val SEMANTIC_SEARCH_ENABLED = EventFields.Boolean("semanticSearchEnabled")
+  object Fields {
+    val SEMANTIC_EXPERIMENT_GROUP = EventFields.Int("semanticExperimentGroup")
+    val SEMANTIC_SEARCH_ENABLED = EventFields.Boolean("semanticSearchEnabled")
   }
 
   override fun getDeclarations(): List<EventField<*>> = arrayListOf(

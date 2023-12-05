@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
@@ -102,10 +103,27 @@ internal fun KtClassOrObject.toPsiType(): PsiType {
     return PsiTypesUtil.getClassType(lightClass)
 }
 
+@ApiStatus.Internal
 fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
-    if (this is KtProperty && sourcePsi?.readWriteAccess()?.isWrite == true) {
-        with(getAccessorLightMethods()) {
-            (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
+    if (this is KtProperty) {
+        val readWriteAccess = sourcePsi?.readWriteAccess()
+        if (readWriteAccess != null) {
+            with(getAccessorLightMethods()) {
+                if (sourcePsi is KtBackingField ||
+                    (sourcePsi as? KtNameReferenceExpression)?.getReferencedName() == "field"
+                ) {
+                    backingField?.let { return it }
+                }
+                when {
+                    readWriteAccess.isWrite -> {
+                        (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
+                    }
+                    readWriteAccess.isRead -> {
+                        getter?.let { return it }
+                    }
+                    else -> {}
+                }
+            }
         }
     }
     return when (this) {

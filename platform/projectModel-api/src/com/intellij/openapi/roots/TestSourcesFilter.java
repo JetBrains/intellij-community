@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,7 +27,7 @@ public abstract class TestSourcesFilter {
   private static final ExtensionPointName<TestSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.testSourcesFilter");
 
   public static boolean isTestSources(@NotNull VirtualFile file, @NotNull Project project) {
-    for (TestSourcesFilter filter : EP_NAME.getExtensions()) {
+    for (TestSourcesFilter filter : EP_NAME.getExtensionList()) {
       if (filter.isTestSource(file, project)) {
         return true;
       }

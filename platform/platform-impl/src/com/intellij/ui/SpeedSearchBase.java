@@ -104,6 +104,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     setupListeners();
   }
 
+  @Override
+  public boolean supportsNavigation() {
+    return true;
+  }
+
   public void setupListeners() {
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override
@@ -124,13 +129,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        if (!keepEvenWhenFocusLost() && !isGotItShown()) {
+        if (!keepEvenWhenFocusLost()) {
           manageSearchPopup(null);
         }
-      }
-
-      private boolean isGotItShown() {
-        return mySearchPopup != null && GotItTooltip.isCurrentlyShownFor(mySearchPopup.mySearchField);
       }
 
       @Override
@@ -652,10 +653,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @NotNull String @NotNull [] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
       for (String id : actionIds) {
         switch (id) {
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP -> {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP, IdeActions.ACTION_FIND_PREVIOUS -> {
             return KeyEvent.VK_UP;
           }
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN -> {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, IdeActions.ACTION_FIND_NEXT -> {
             return KeyEvent.VK_DOWN;
           }
           case IdeActions.ACTION_EDITOR_MOVE_LINE_START -> {
@@ -679,7 +680,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected final class SearchField extends ExtendableTextField {
     SearchField() {
       setFocusable(false);
-      getCaret().setVisible(true); // we still want it blinking even though the field isn't focusable
       ExtendableTextField.Extension leftExtension = new Extension() {
         @Override
         public Icon getIcon(boolean hovered) {
@@ -704,6 +704,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         addExtension(rightExtension);
       }
       getEmptyText().setText(ApplicationBundle.message("editorsearch.search.hint"));
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      getCaret().setVisible(true); // we still want it blinking even though the field isn't focusable
+    }
+
+    @Override
+    public void removeNotify() {
+      getCaret().setVisible(false); // doesn't happen automatically for some reason and causes Timer leaks
+      super.removeNotify();
     }
 
     @Override
@@ -756,7 +768,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         return;
       }
 
+      if (e.getID() == KeyEvent.KEY_TYPED && !UIUtil.isReallyTypedEvent(e)) {
+        // Stuff like Ctrl+N / Ctrl+P is processed on KEY_PRESSED, and the subsequent KEY_TYPED screws it up.
+        return;
+      }
+
       super.processKeyEvent(e);
+
+      if (!e.isConsumed() && getNavigationKeyCode(e) != 0) {
+        // Some navigation action shortcuts aren't consumed by the field, e.g. if these are custom shortcuts the text field doesn't understand.
+        e.consume();
+      }
+
       if (i == KeyEvent.VK_BACK_SPACE) {
         e.consume();
       }
@@ -765,8 +788,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     protected void processFocusEvent(FocusEvent e) {
       super.processFocusEvent(e);
-      getCaret().setVisible(true); // we want to keep it blinking even if the focus is lost
-      // (never happens in practice, though, as the field isn't focusable, so this is just a precaution)
+      if (isShowing()) {
+        getCaret().setVisible(true); // we want to keep it blinking even if the focus is lost
+        // (never happens in practice, though, as the field isn't focusable, so this is just a precaution)
+      }
     }
   }
 

@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +39,15 @@ public final class BuilderProcessor extends AbstractClassProcessor {
 
   private static AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
     return LombokProcessorManager.getInstance().getAllArgsConstructorProcessor();
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(BuilderHandler.TO_BUILDER_METHOD_NAME) ||
+           nameHint.equals(psiClass.getName()) ||
+           nameHint.equals(getBuilderHandler().getBuilderMethodName(psiAnnotation));
   }
 
   @Override
@@ -72,7 +82,8 @@ public final class BuilderProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     if (!psiClass.isRecord()) {
       if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
         LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.NO_ARGS_CONSTRUCTOR)) {

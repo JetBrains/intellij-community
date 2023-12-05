@@ -76,6 +76,8 @@ public final class GitCommand {
   public static final @NonNls String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
   public static final @NonNls String SSH_ASKPASS_REQUIRE_ENV = "SSH_ASKPASS_REQUIRE";
   public static final @NonNls String DISPLAY_ENV = "DISPLAY";
+  public static final @NonNls String GIT_SSH_ENV = "GIT_SSH";
+  public static final @NonNls String GIT_SSH_COMMAND_ENV = "GIT_SSH_COMMAND";
   /**
    * Marker-ENV, that lets git hooks to detect us if needed.
    */

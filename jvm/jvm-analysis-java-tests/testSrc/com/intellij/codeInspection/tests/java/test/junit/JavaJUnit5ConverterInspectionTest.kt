@@ -40,12 +40,12 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
       
       import java.util.*;
 
-      public class Qualified {
+      class Qualified {
         @BeforeEach
         public void setUp() {}
         
         @Test
-        public void testMethodCall() throws Exception {
+        void testMethodCall() throws Exception {
           Assertions.assertArrayEquals(new Object[] {}, null);
           Assertions.assertArrayEquals(new Object[] {}, null, "message");
           Assertions.assertEquals("Expected", "actual");
@@ -55,7 +55,7 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
         }
 
         @Test
-        public void testMethodRef() {
+        void testMethodRef() {
           List<Boolean> booleanList = new ArrayList<>();
           booleanList.add(true);
           booleanList.forEach(Assertions::assertTrue);
@@ -95,9 +95,9 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
 
       import java.util.*;
 
-      public class UnQualified {
+      class UnQualified {
         @Test
-        public void testMethodCall() throws Exception {
+        void testMethodCall() throws Exception {
           Assertions.assertArrayEquals(new Object[] {}, null);
           Assertions.assertArrayEquals(new Object[] {}, null, "message");
           Assertions.assertEquals("Expected", "actual");
@@ -107,11 +107,35 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
         }
 
         @Test
-        public void testMethodRef() {
+        void testMethodRef() {
           List<Boolean> booleanList = new ArrayList<>();
           booleanList.add(true);
           booleanList.forEach(Assertions::assertTrue);
         }
+      }
+    """.trimIndent(), "Migrate to JUnit 5")
+  }
+
+  fun `test remove public modifier`() {
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
+      import org.junit.Test;
+      
+      public class Presen<caret>ter {
+        @Test
+        public void testJUnit4() {}
+
+        @org.junit.jupiter.api.Test
+        public void testJUnit5() {}
+      }
+    """.trimIndent(), """
+      import org.junit.jupiter.api.Test;
+      
+      class Presenter {
+        @Test
+        void testJUnit4() {}
+
+        @org.junit.jupiter.api.Test
+        void testJUnit5() {}
       }
     """.trimIndent(), "Migrate to JUnit 5")
   }

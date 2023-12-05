@@ -277,7 +277,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     DebugProcessImpl process = (DebugProcessImpl)debugProcess;
     if (shouldCreateRequest(process, true)) {
       long timeMs = TimeoutUtil.measureExecutionTime(() -> createRequestForPreparedClass(process, classType));
-      StatisticsStorage.add(debugProcess, new BreakpointInstallStatistic(this), timeMs, 1);
+      StatisticsStorage.addBreakpointInstall(debugProcess, this, timeMs);
       updateUI();
     }
   }

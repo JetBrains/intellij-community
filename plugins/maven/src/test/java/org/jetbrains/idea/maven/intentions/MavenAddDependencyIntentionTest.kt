@@ -9,6 +9,8 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenAddDependencyIntentionTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("<groupId>test</groupId>" +

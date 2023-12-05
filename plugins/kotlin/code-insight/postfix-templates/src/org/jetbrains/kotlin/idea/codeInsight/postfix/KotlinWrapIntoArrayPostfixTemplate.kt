@@ -22,7 +22,7 @@ internal class KotlinWrapIntoArrayPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "arrayOf",
         /* example = */ "arrayOf(expr)",
-        /* selector = */ allExpressions(ValuedFilter),
+        /* selector = */ allExpressions(ValuedFilter, NonPackageAndNonImportFilter),
         /* provider = */ provider
     )
 

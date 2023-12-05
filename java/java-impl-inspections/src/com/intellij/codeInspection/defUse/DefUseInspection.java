@@ -117,7 +117,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor5"));
         }
         else if (REPORT_FOR_EACH_PARAMETER && context instanceof PsiForeachStatement foreachStatement &&
-                  foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null &&
+                 foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null &&
                  //case is covered with `Java | Declaration redundancy | Unused declaration`
                  info.isWriteOutsideDeclaration()) {
           holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor6"));

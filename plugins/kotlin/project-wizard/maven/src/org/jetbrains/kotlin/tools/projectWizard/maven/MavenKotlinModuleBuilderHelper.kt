@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.maven
 
-import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.GitSilentFileAdderProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.model.MavenArchetype
@@ -15,13 +17,12 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenModuleBuilderHelper
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import java.io.IOException
+import java.nio.file.Path
 import java.util.*
 
 class MavenKotlinModuleBuilderHelper(
@@ -33,8 +34,9 @@ class MavenKotlinModuleBuilderHelper(
     archetype: MavenArchetype?,
     propertiesToCreateByArtifact: Map<String, String>?,
     commandName: @NlsContexts.Command String,
-    private val selectedJdkJvmTarget: String,
-    private val kotlinPluginWizardVersion: String
+    private val kotlinPluginWizardVersion: String,
+    private val outputDirectory: String,
+    private val filesToOpen: List<String>
 ) : MavenModuleBuilderHelper(
     projectId,
     aggregatorProject,
@@ -48,7 +50,8 @@ class MavenKotlinModuleBuilderHelper(
 
     override fun configure(project: Project, root: VirtualFile, isInteractive: Boolean) {
 
-        val psiFiles = if (myAggregatorProject != null) arrayOf(getPsiFile(project, myAggregatorProject.file)) else PsiFile.EMPTY_ARRAY
+        val aggregatorProject = myAggregatorProject
+        val psiFiles = if (aggregatorProject != null) arrayOf(getPsiFile(project, aggregatorProject.file)) else PsiFile.EMPTY_ARRAY
 
         val pom =
             WriteCommandAction.writeCommandAction(project, *psiFiles).withName(myCommandName).compute<VirtualFile?, RuntimeException> {
@@ -92,13 +95,17 @@ class MavenKotlinModuleBuilderHelper(
                 showError(project, RuntimeException("Project is not valid"))
                 return@invokeLater
             }
-            OpenFileAction.openFile(pom, project)
+            val fileEditorManager = FileEditorManager.getInstance(project)
+            fileEditorManager.openFile(pom)
+            for (path in filesToOpen) {
+                val virtualFile = Path.of(outputDirectory).getResolvedPath(path).refreshAndFindVirtualFile() ?: continue
+                fileEditorManager.openFile(virtualFile)
+            }
         }
     }
 
     private fun getConditions(project: Project): Properties {
         val conditions = Properties()
-        conditions.setProperty("KOTLIN_COMPILER_JVM_TARGET", selectedJdkJvmTarget)
         conditions.setProperty("KOTLIN_PLUGIN_WIZARD_VERSION", kotlinPluginWizardVersion)
         conditions.setProperty("MAVEN_SUREFIRE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.SUREFIRE.text)
         conditions.setProperty("MAVEN_FAILSAFE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.FAILSAFE.text)

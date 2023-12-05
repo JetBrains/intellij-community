@@ -2,15 +2,17 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll.Companion.runAll
-import com.intellij.util.ThrowableRunnable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -20,9 +22,6 @@ import org.junit.Test
 
 class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
   private var myBuilder: AbstractMavenModuleBuilder? = null
-
-  override fun runInDispatchThread() = false
-
 
   override fun setUp() {
     super.setUp()
@@ -43,6 +42,9 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     assertModules(id.artifactId!!)
 
     updateAllProjects()
+    withContext(Dispatchers.EDT){
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
   }
 
   @Test
@@ -372,7 +374,5 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
       myBuilder!!.createModule(model)
       model.commit()
     }
-
-    resolveDependenciesAndImport()
   }
 }

@@ -56,8 +56,9 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     Presentation presentation = e.getPresentation();
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
 
-    myActionGroup.update(e);
- 
+    Presentation groupPresentation = e.getUpdateSession().presentation(myActionGroup);
+    e.getPresentation().copyFrom(groupPresentation, splitButton);
+
     if (presentation.isVisible()) {
       AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
       if (action != null) {

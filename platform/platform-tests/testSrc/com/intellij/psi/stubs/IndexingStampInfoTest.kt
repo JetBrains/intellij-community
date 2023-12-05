@@ -13,25 +13,22 @@ class IndexingStampInfoTest {
                                                private val indexingByteLength: Long,
                                                private val indexingCharLength: Int,
                                                private val isBinary: Boolean) {
-    val maxTimestamp: Long = 0x0ff_ff_ff_ff_ff_ffL // 48 bits
-    val maxByteLength: Int = 0x7f_ff_ff_ff;
+    val maxTimestamp: Long = Long.MAX_VALUE
+    val maxByteLength: Long = Int.MAX_VALUE.toLong();
     fun toInfoObject(): IndexingStampInfo {
       return IndexingStampInfo(indexingFileStamp, indexingByteLength, indexingCharLength, isBinary)
     }
 
     fun toDeserializedInfoObject(): IndexingStampInfo {
-      val deserializedBytesLength = indexingByteLength.coerceAtMost(maxByteLength.toLong())
+      val deserializedBytesLength = indexingByteLength.coerceAtMost(maxByteLength)
       val deserializedCharLength = if (isBinary) {
         -1
       }
       else {
-        indexingCharLength.toLong()
-          .coerceIn(deserializedBytesLength + Short.MIN_VALUE, deserializedBytesLength + Short.MAX_VALUE)
-          .coerceIn(0, Int.MAX_VALUE.toLong())
-          .toInt()
+        indexingCharLength
       }
 
-      return IndexingStampInfo(indexingFileStamp and 0x0_ff_ff_ff_ff_ff_ffL /* 48 bits */,
+      return IndexingStampInfo(indexingFileStamp,
                                deserializedBytesLength,
                                deserializedCharLength,
                                isBinary)
@@ -39,7 +36,7 @@ class IndexingStampInfoTest {
   }
 
   @Test
-  fun testToInt3() {
+  fun testToInt4() {
     val seed = System.currentTimeMillis()
     println("Seed: $seed")
     val rnd = Random(seed)
@@ -60,8 +57,8 @@ class IndexingStampInfoTest {
           interestingBoolValues.forEach { isBinary ->
             val validIndexingCharLength = if (isBinary) -1 else indexingCharLength
             val template = IndexingStampInfoTemplate(indexingFileStamp, indexingByteLength, validIndexingCharLength, isBinary)
-            val int3 = template.toInfoObject().toInt3()
-            val deserialized = IndexingStampInfo.fromInt3(int3)
+            val int3 = template.toInfoObject().toInt4()
+            val deserialized = IndexingStampInfo.fromInt4(int3)
             val expected = template.toDeserializedInfoObject()
             assertEquals(expected, deserialized, "template: $template")
           }

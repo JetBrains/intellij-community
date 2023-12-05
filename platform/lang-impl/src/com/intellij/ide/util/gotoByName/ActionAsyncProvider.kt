@@ -13,116 +13,65 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
-import java.util.function.Predicate
+import kotlin.coroutines.coroutineContext
 
-private val LOG = Logger.getInstance(ActionAsyncProvider::class.java)
-
-private const val DEFAULT_CHANNEL_CAPACITY = 30
+private val LOG = logger<ActionAsyncProvider>()
 
 class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
   private val myActionManager: ActionManager = ActionManager.getInstance()
   private val myIntentions = ConcurrentHashMap<String, ApplyIntentionAction>()
 
-  fun processActions(pattern: String, ids: Set<String>, consumer: Predicate<in MatchedValue>): Unit = runBlockingCancellable {
-    withContext(Dispatchers.Default) {
-      runUpdateSessionForActionSearch(myModel.dataContext, ActionPlaces.ACTION_SEARCH) { presentationProvider ->
-        myModel.buildGroupMappings()
-
-        val matchedActionsFlowDeferred = async { matchedActionsAndStubsFlow(pattern, ids, presentationProvider) }
-        val unmatchedStubsFlowDeferred = async { unmatchedStubsFlow(pattern, ids, presentationProvider) }
-
-        launch {
-          sendResults(matchedActionsFlowDeferred.await(), consumer)
-          sendResults(unmatchedStubsFlowDeferred.await(), consumer)
-        }
-      }
-    }
+  fun processActions(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation, pattern: String,
+                     ids: Set<String>, consumer: suspend (MatchedValue) -> Boolean) {
+    scope.flowCollector(matchedActionsAndStubsFlow(pattern, ids, presentationProvider))
+      .then(unmatchedStubsFlow(pattern, ids, presentationProvider))
+      .collect(consumer)
   }
 
-  fun filterElements(pattern: String, consumer: Predicate<in MatchedValue>) {
+  fun filterElements(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation,
+                     pattern: String, consumer: suspend (MatchedValue) -> Boolean) {
     if (pattern.isEmpty()) return
 
-    try {
-      runBlockingCancellable {
-        withContext(Dispatchers.Default) {
-          runUpdateSessionForActionSearch(myModel.dataContext, ActionPlaces.ACTION_SEARCH) { presentationProvider ->
-            LOG.debug("Start actions searching ($pattern)")
+    LOG.debug("Start actions searching ($pattern)")
 
-            myModel.buildGroupMappings()
-            val actionIds = (myActionManager as ActionManagerImpl).actionIds
+    val actionIds = (myActionManager as ActionManagerImpl).actionIds
 
-            val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
-            val abbreviationsPromise = async { abbreviationsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-            val matchedActionsFlowDeferred = async { matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider) }
-            val unmatchedStubsFlowDeferred = async { unmatchedStubsFlow(pattern, actionIds, presentationProvider) }
-            val topHitsPromise = async { topHitsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-            val intentionsPromise = async { intentionsFlow(pattern).let { collectAndSort(it, comparator) } }
-            val optionsPromise = async { optionsFlow(pattern).let { collectAndSort(it, comparator) } }
+    val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
 
-            launch {
-              sendResults(abbreviationsPromise.await(), consumer, "abbreviations")
-              sendResults(matchedActionsFlowDeferred.await(), consumer)
-              sendResults(unmatchedStubsFlowDeferred.await(), consumer)
-              sendResults(topHitsPromise.await(), consumer, "topHits")
-              sendResults(intentionsPromise.await(), consumer, "intentions")
-              sendResults(optionsPromise.await(), consumer, "options")
-            }
-          }
-        }
-      }
-      LOG.debug("Finish actions processing")
-    }
-    catch (e: SearchFinishedException) {
-      LOG.debug("Search finished with reason:", e)
-    }
+    scope.flowCollector(abbreviationsFlow(pattern, presentationProvider).sorted(comparator))
+      .then(matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider))
+      .then(unmatchedStubsFlow(pattern, actionIds, presentationProvider))
+      .then(topHitsFlow(pattern, presentationProvider).sorted(comparator))
+      .then(intentionsFlow(pattern, presentationProvider).sorted(comparator))
+      .then(optionsFlow(pattern, presentationProvider).sorted(comparator))
+      .collect(consumer)
   }
 
-  private suspend fun <T> collectAndSort(flow: Flow<T>, comparator: Comparator<in T>): List<T> {
-    val list = flow.toSet().toMutableList()
-    list.sortWith(comparator)
-    return list
-  }
-
-  private suspend fun CoroutineScope.sendResults(list: List<MatchedValue>, consumer: Predicate<in MatchedValue>, name: String) {
-    LOG.debug("Sending results ($name)")
-    for (value in list) {
-      if (!isActive) {
-        LOG.debug("Sending results: coroutine is not active any more")
-        return
-      }
-
-      if (!coroutineToIndicator { consumer.test(value) }) {
-        LOG.debug("Sending results: consumer returned false")
-        throw SearchFinishedException()
-      }
+  private fun <T> Flow<T>.sorted(comparator: Comparator<in T>): Flow<T> {
+    val sourceFlow = this
+    return flow {
+      val list = sourceFlow.catch { e -> LOG.error("Error while collecting actions.", e) }
+        .toSet()
+        .toMutableList()
+      list.sortWith(comparator)
+      list.forEach { emit(it) }
     }
-    LOG.debug("Sending results ($name) - done")
-  }
-
-  private suspend fun sendResults(flow: Flow<MatchedValue>, consumer: Predicate<in MatchedValue>) {
-    flow.onEach {
-      val collected = coroutineToIndicator { consumer.test(it) } //this wrapper is only to avoid a problem with semantic search
-      if (!collected) {
-        LOG.debug("Sending results: consumer returned false")
-        throw SearchFinishedException()
-      }
-    }.collect()
   }
 
   private fun abbreviationsFlow(pattern: String, presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
@@ -131,51 +80,35 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     val actionIds = AbbreviationManager.getInstance().findActions(pattern)
 
     return actionIds.asFlow()
-      .mapNotNull { myActionManager.getAction(it) }
+      .mapNotNull { loadAction(it) }
+      .buffer(RENDEZVOUS)
       .map {
         val presentation = presentationProvider(it)
         val wrapper: ActionWrapper = wrapAnAction(it, presentation)
         val degree = matcher.matchingDegree(pattern)
         abbreviationMatchedValue(wrapper, pattern, degree)
       }
-      .buffer(actionIds.size)
   }
 
-  private suspend fun matchedActionsAndStubsFlow(pattern: String, allIds: Collection<String>,
+  private fun matchedActionsAndStubsFlow(pattern: String, allIds: Collection<String>,
                                                  presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
-    val matcher = GotoActionItemProvider.buildMatcher(pattern)
     val weightMatcher = buildWeightMatcher(pattern)
 
-    val fromIdsFlow = allIds.asFlow().mapNotNull {
-      val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
-      if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
+    return flow {
+      val list = collectMatchedActions(pattern, allIds, weightMatcher)
+      LOG.debug("List is collected")
 
-      return@mapNotNull action
-    }
-
-    val additionalActionsFlow = myModel.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.asFlow() ?: emptyFlow<AnAction>()
-
-    val actionsWithWeightsFlow = merge(fromIdsFlow, additionalActionsFlow).transform {
-      val mode = myModel.actionMatches(pattern, matcher, it)
-      if (mode != MatchMode.NONE) {
-        val weight = GotoActionItemProvider.calcElementWeight(it, pattern, weightMatcher)
-        emit(MatchedAction(it, mode, weight))
-      }
-    }
-
-    val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
-
-    val list = collectAndSort(actionsWithWeightsFlow, comparator)
-    LOG.debug("List is collected")
-    return list.asFlow().buffer(list.size)
-      .transform {
+      list.forEach {
         val action = it.action
         if (action is ActionStubBase) {
-          myActionManager.getAction(action.id)?.let { loaded -> emit(MatchedAction(loaded, it.mode, it.weight)) }
-        } else {
+          loadAction(action.id)?.let { loaded -> emit(MatchedAction(loaded, it.mode, it.weight)) }
+        }
+        else {
           emit(it)
         }
       }
+    }
+      .buffer(RENDEZVOUS)
       .map {
         val presentation = presentationProvider(it.action)
         wrapAnAction(it.action, presentation, it.mode)
@@ -183,26 +116,57 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       .map { matchItem(it, weightMatcher, pattern, MatchedValueType.ACTION) }
   }
 
+  private suspend fun collectMatchedActions(pattern: String, allIds: Collection<String>, weightMatcher: MinusculeMatcher): List<MatchedAction> = coroutineScope {
+    val matcher = buildMatcher(pattern)
+
+    val mainActions: List<AnAction> = allIds.mapNotNull {
+      val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
+      if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
+
+      return@mapNotNull action
+    }
+    val extendedActions: List<AnAction> = myModel.dataContext.getData(QuickActionProvider.KEY)?.getActions(true) ?: emptyList<AnAction>()
+    val actions = (mainActions + extendedActions).mapNotNull {
+      runCatching {
+        val mode = myModel.actionMatches(pattern, matcher, it)
+        if (mode != MatchMode.NONE) {
+          val weight = calcElementWeight(it, pattern, weightMatcher)
+          return@runCatching(MatchedAction(it, mode, weight))
+        }
+        return@runCatching null
+      }.getOrLogException(LOG)
+    }
+
+    val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
+    return@coroutineScope actions.sortedWith(comparator)
+  }
+
   private fun unmatchedStubsFlow(pattern: String, allIds: Collection<String>,
-                        presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
-    val matcher = GotoActionItemProvider.buildMatcher(pattern)
+                                 presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
+    val matcher = buildMatcher(pattern)
     val weightMatcher = buildWeightMatcher(pattern)
 
-    return allIds.asFlow().buffer(allIds.size)
+    return allIds.asFlow()
       .mapNotNull {
         val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
         if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
         action
       }
-      .filter { (it is ActionStubBase) && myModel.actionMatches(pattern, matcher, it) == MatchMode.NONE }
-      .transform {
-        val action = myActionManager.getAction((it as ActionStubBase).id)
-        val mode = myModel.actionMatches(pattern, matcher, action)
-        if (mode != MatchMode.NONE) {
-          val weight = GotoActionItemProvider.calcElementWeight(action, pattern, weightMatcher)
-          emit(MatchedAction(action, mode, weight))
-        }
+      .filter {
+        runCatching { (it is ActionStubBase) && myModel.actionMatches(pattern, matcher, it) == MatchMode.NONE }
+          .getOrLogException(LOG) == true
       }
+      .transform {
+        runCatching {
+          val action = loadAction((it as ActionStubBase).id) ?: return@runCatching
+          val mode = myModel.actionMatches(pattern, matcher, action)
+          if (mode != MatchMode.NONE) {
+            val weight = calcElementWeight(action, pattern, weightMatcher)
+            emit(MatchedAction(action, mode, weight))
+          }
+        }.getOrLogException(LOG)
+      }
+      .buffer(RENDEZVOUS)
       .map {
         val presentation = presentationProvider(it.action)
         wrapAnAction(it.action, presentation, it.mode)
@@ -211,7 +175,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   }
 
   private fun topHitsFlow(pattern: String,
-                                  presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
+                          presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
     LOG.debug("Create TopHits flow ($pattern)")
     val project = myModel.project
     val commandAccelerator = SearchTopHitProvider.getTopHitAccelerator()
@@ -240,12 +204,12 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       }
     }
       .map { matchItem(it, matcher, pattern, MatchedValueType.TOP_HIT) }
-      .buffer(DEFAULT_CHANNEL_CAPACITY)
   }
 
-  private fun intentionsFlow(pattern: String): Flow<MatchedValue> {
+  private fun intentionsFlow(pattern: String,
+                             presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
     LOG.debug("Create intentions flow ($pattern)")
-    val matcher = GotoActionItemProvider.buildMatcher(pattern)
+    val matcher = buildMatcher(pattern)
     val weightMatcher = buildWeightMatcher(pattern)
 
     return channelFlow {
@@ -253,13 +217,12 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         for ((text, action) in getIntentionsMap()) {
           if (myModel.actionMatches(pattern, matcher, action) != MatchMode.NONE) {
             val groupMapping = GroupMapping.createFromText(text, false)
-            send(ActionWrapper(action, groupMapping, MatchMode.INTENTION, myModel))
+            send(ActionWrapper(action, groupMapping, MatchMode.INTENTION, myModel, presentationProvider(action)))
           }
         }
       }
     }
       .map { matchItem(it, weightMatcher, pattern, MatchedValueType.INTENTION) }
-      .buffer(DEFAULT_CHANNEL_CAPACITY)
   }
 
   private suspend fun getIntentionsMap(): Map<String, ApplyIntentionAction> {
@@ -273,7 +236,8 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     return myIntentions
   }
 
-  private fun optionsFlow(pattern: String): Flow<MatchedValue> {
+  private fun optionsFlow(pattern: String,
+                          presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
     LOG.debug("Create options flow ($pattern)")
 
     val weightMatcher = buildWeightMatcher(pattern)
@@ -304,7 +268,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         }
       }
       if (!Strings.isEmptyOrSpaces(pattern)) {
-        val matcher = GotoActionItemProvider.buildMatcher(pattern)
+        val matcher = buildMatcher(pattern)
         if (optionDescriptions == null) {
           optionDescriptions = HashSet()
         }
@@ -327,18 +291,22 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
           for (converter in ActionFromOptionDescriptorProvider.EP.extensionList) {
             val action = converter.provide(description)
             if (action != null) {
-              send(ActionWrapper(action, null, MatchMode.NAME, myModel))
+              send(ActionWrapper(action, null, MatchMode.NAME, myModel, presentationProvider(action)))
             }
           }
           send(description)
         }
       }
-    }.buffer(DEFAULT_CHANNEL_CAPACITY)
+    }
       .map { matchItem(it, weightMatcher, pattern, MatchedValueType.TOP_HIT) }
   }
 
+  private suspend fun loadAction(id: String): AnAction? = withContext(coroutineContext) {
+     async { myActionManager.getAction(id) }.await()
+  }
+
   private fun matchItem(item: Any, matcher: MinusculeMatcher, pattern: String, matchType: MatchedValueType): MatchedValue {
-    val weight = GotoActionItemProvider.calcElementWeight(item, pattern, matcher)
+    val weight = calcElementWeight(item, pattern, matcher)
     return if (weight == null) MatchedValue(item, pattern, matchType) else MatchedValue(item, pattern, weight, matchType)
   }
 
@@ -365,5 +333,41 @@ private fun abbreviationMatchedValue(wrapper: ActionWrapper, pattern: String, de
 
 private data class MatchedAction(val action: AnAction, val mode: MatchMode, val weight: Int?)
 
-private class SearchFinishedException : Exception("Found items limit reached")
+private fun <I> CoroutineScope.flowCollector(flow: Flow<I>): FlowsSequenceCollector<I> = FlowsSequenceCollector<I>(this).apply { then(flow) }
 
+private class FlowsSequenceCollector<I>(private val scope: CoroutineScope) {
+
+  private val flows = mutableListOf<Flow<I>>()
+
+  fun then(flow: Flow<I>): FlowsSequenceCollector<I> {
+    flows.add(flow)
+    return this
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun collect(collector: suspend (I) -> Boolean) {
+    scope.launch {
+      val channel = scope.produce {
+        var prevJob: Job? = null
+        for (flow in flows) {
+          val waitForJob = prevJob
+          prevJob = launch {
+            flow.collect {
+              waitForJob?.join()
+              send(it)
+            }
+          }
+        }
+      }
+
+      try {
+        for (i in channel) {
+          if (!collector(i)) return@launch
+        }
+      }
+      finally {
+        channel.cancel()
+      }
+    }
+  }
+}

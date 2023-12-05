@@ -15,6 +15,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       }
       try {
         if (transparentPopup) {
-          g2d.setComposite(AlphaComposite.Src);
+          // Not sure why this is necessary
+          g2d.setComposite(AlphaComposite.SrcOver);
         }
         UIUtil.drawImage(g2d, myImage, insets.left, insets.top, null);
       }
@@ -80,7 +82,13 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent = component;
     myComponent.add(myRendererPane);
     myComponent.validate();
-    myPopup = new MovablePopup(myComponent, myTipComponent);
+    var popup = new MovablePopup(myComponent, myTipComponent);
+    // On Wayland, heavyweight popup might get automatically displaced
+    // by the server if they appear to cross the screen boundary, which
+    // is not what we want in this case.
+    popup.setHeavyWeight(!StartupUiUtil.isWaylandToolkit());
+    myPopup = popup;
+
 
     MouseEventHandler dispatcher = new MouseEventHandler() {
       @Override

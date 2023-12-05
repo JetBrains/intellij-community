@@ -31,6 +31,11 @@ interface IjentApi : AutoCloseable {
   val coroutineScope: CoroutineScope
 
   /**
+   * Returns basic info about the process that doesn't change during the lifetime of the process.
+   */
+  suspend fun info(): Info
+
+  /**
    * Explicitly terminates the process on the remote machine.
    */
   override fun close() {
@@ -43,6 +48,9 @@ interface IjentApi : AutoCloseable {
   /**
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
    * stdin, stdout and stderr of the process are always forwarded, if there are.
+   *
+   * Every successfully started process MUST be destroyed later with [IjentChildProcess.close].
+   * Otherwise, it can cause memory leaks on the remote side.
    *
    * Beware that processes with [pty] don't have stderr.
    *
@@ -88,6 +96,21 @@ interface IjentApi : AutoCloseable {
    * ```
    */
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
+
+  /**
+   * On Unix-like OS, PID is int32. On Windows, PID is uint32. The type of Long covers both PID types, and a separate class doesn't allow
+   * to forget that fact and misuse types in APIs.
+   */
+  data class Pid(val value: Long) {
+    override fun toString(): String = value.toString()
+  }
+
+  /**
+   * [remotePid] is a process ID of IJent running on the remote machine.
+   */
+  data class Info(
+    val remotePid: Pid,
+  )
 
   data class ListenOnUnixSocketResult(
     val unixSocketPath: String,

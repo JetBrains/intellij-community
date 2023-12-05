@@ -3,6 +3,7 @@ package com.intellij.util
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.platform.util.coroutines.requireNoJob
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
@@ -34,15 +35,5 @@ fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCorou
         action()
       }
     }
-  }
-}
-
-/**
- * Same as [awaitCancellationAndInvoke], but suitable for Java clients.
- */
-@ApiStatus.Internal
-fun CoroutineScope.awaitCancellationAndRun(action: Runnable) {
-  awaitCancellationAndInvoke {
-    action.run()
   }
 }

@@ -1,0 +1,13 @@
+// NEW_NAME: A
+// RENAME: member
+package rename
+
+open class A
+
+class C: A() {
+    class <caret>A
+
+    val a : rename.A = rename.A()
+    val d: A = A()
+}
+// IGNORE_K1

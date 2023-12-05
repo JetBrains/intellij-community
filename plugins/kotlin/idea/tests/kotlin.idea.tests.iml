@@ -136,5 +136,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
   </component>
 </module>

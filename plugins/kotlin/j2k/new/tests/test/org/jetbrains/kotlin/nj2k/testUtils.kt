@@ -32,7 +32,7 @@ fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel =
         override fun getSdk(): Sdk? {
             val sdk = descriptor.sdk ?: return null
             runWriteAction {
-                val modificator: SdkModificator = (sdk.clone() as Sdk).sdkModificator
+                val modificator: SdkModificator = sdk.clone().sdkModificator
                 JavaSdkImpl.attachJdkAnnotations(modificator)
                 modificator.commitChanges()
             }

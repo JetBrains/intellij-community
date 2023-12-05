@@ -8,7 +8,9 @@ import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
@@ -49,7 +51,7 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
   }
 }
 
-class ProjectToolbarWidgetAction : ExpandableComboAction() {
+class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
     val step = createStep(createActionGroup(event), event.dataContext, widget)
@@ -82,7 +84,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     val project = e.project
     val projectName = project?.name ?: ""
     e.presentation.setText(projectName, false)
-    e.presentation.description = projectName
+    e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
   }
 

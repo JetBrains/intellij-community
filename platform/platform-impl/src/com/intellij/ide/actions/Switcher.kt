@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -380,12 +379,9 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     private fun updatePathLabel() {
-      fun getTitle2Text(fullText: String?): @NlsSafe String? {
-        return if (Strings.isEmpty(fullText)) " " else fullText
-      }
-
       val values = selectedList?.selectedValuesList
-      pathLabel.text = values?.singleOrNull()?.let { getTitle2Text(it.statusText) } ?: " "
+      val statusText = values?.singleOrNull()?.statusText
+      pathLabel.text = if (statusText.isNullOrEmpty()) " " else statusText
     }
 
     private fun updateMnemonics(windows: List<SwitcherToolWindow>, showMnemonics: Boolean) {

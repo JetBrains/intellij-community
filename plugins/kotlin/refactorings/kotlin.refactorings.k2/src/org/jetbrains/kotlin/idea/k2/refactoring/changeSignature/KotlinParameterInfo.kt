@@ -85,7 +85,7 @@ class KotlinParameterInfo(
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
-    fun requiresExplicitType(inheritedCallable: KtCallableDeclaration?): Boolean {
+    fun requiresExplicitType(inheritedCallable: KtElement?): Boolean {
         if (inheritedCallable is KtFunctionLiteral) {
             allowAnalysisFromWriteAction {
                 allowAnalysisOnEdt {
@@ -99,12 +99,12 @@ class KotlinParameterInfo(
         return true
     }
 
-    private fun getOriginalParameter(inheritedCallable: KtCallableDeclaration?): KtParameter? {
-        val indexInVariableParameters = oldIndex - (if (inheritedCallable?.receiverTypeReference != null) 1 else 0)
-        return inheritedCallable?.valueParameters?.getOrNull(indexInVariableParameters)
+    private fun getOriginalParameter(inheritedCallable: KtDeclaration?): KtParameter? {
+        val indexInVariableParameters = oldIndex - (if ((inheritedCallable as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0)
+        return (inheritedCallable as? KtCallableDeclaration)?.valueParameters?.getOrNull(indexInVariableParameters)
     }
 
-    private fun buildNewParameter(inheritedCallable: KtCallableDeclaration?, baseFunction: PsiElement, isInherited: Boolean): KtParameter {
+    private fun buildNewParameter(inheritedCallable: KtDeclaration?, baseFunction: PsiElement, isInherited: Boolean): KtParameter {
         val psiFactory = KtPsiFactory(context.project)
 
         val buffer = StringBuilder()
@@ -113,10 +113,17 @@ class KotlinParameterInfo(
             buffer.append(valOrVar).append(' ')
         }
 
-        buffer.append(getInheritedName(inheritedCallable.takeIf { isInherited }))
+        buffer.append(getInheritedName((inheritedCallable as? KtCallableDeclaration)?.takeIf { isInherited }))
 
         if (requiresExplicitType(inheritedCallable)) {
-            buffer.append(": ").append(psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE).getTypeText())
+            buffer.append(": ")
+            buffer.append(
+                try {
+                    psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE).getTypeText()
+                } catch (_: Throwable) {
+                    typeText
+                }
+            )
         }
 
         if (!isInherited) {
@@ -126,7 +133,7 @@ class KotlinParameterInfo(
         return psiFactory.createParameter(buffer.toString())
     }
 
-    fun getDeclarationSignature(inheritedCallable: KtCallableDeclaration?, baseFunction: PsiElement, isInherited: Boolean): KtParameter {
+    fun getDeclarationSignature(inheritedCallable: KtDeclaration?, baseFunction: PsiElement, isInherited: Boolean): KtParameter {
         val originalParameter = getOriginalParameter(inheritedCallable)
             ?: return buildNewParameter(inheritedCallable, baseFunction, isInherited)
 
@@ -137,7 +144,7 @@ class KotlinParameterInfo(
             newParameter.setValOrVar(valOrVar)
         }
 
-        val newName = getInheritedName(inheritedCallable.takeIf { isInherited })
+        val newName = getInheritedName((inheritedCallable as? KtCallableDeclaration)?.takeIf { isInherited })
         if (newParameter.name != newName) {
             newParameter.setName(newName.quoteIfNeeded())
         }
@@ -155,10 +162,16 @@ class KotlinParameterInfo(
     }
 }
 
-fun defaultValOrVar(callableDescriptor: KtCallableDeclaration): KotlinValVar {
+fun defaultValOrVar(callableDescriptor: KtDeclaration): KotlinValVar {
     if (callableDescriptor is KtConstructor<*>) {
         val classOrObject = callableDescriptor.getContainingClassOrObject()
         if (classOrObject.isAnnotation() || classOrObject.isData() && callableDescriptor is KtPrimaryConstructor) {
+            return KotlinValVar.Val
+        }
+    }
+
+    if (callableDescriptor is KtClass) {
+        if (callableDescriptor.isAnnotation() || callableDescriptor.isData()) {
             return KotlinValVar.Val
         }
     }

@@ -9,6 +9,7 @@ import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.Keymap;
@@ -132,7 +133,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     CustomShortcutSet quickdocShortcuts = new CustomShortcutSet(keymap.getShortcuts(IdeActions.ACTION_QUICK_JAVADOC));
-    EmptyAction.registerWithShortcutSet("CommittedChanges.Details", quickdocShortcuts, this);
+    ActionUtil.wrap("CommittedChanges.Details").registerCustomShortcutSet(quickdocShortcuts, this);
 
     myCopyProvider = new TreeCopyProvider(myChangesTree);
     myTreeExpander = new DefaultTreeExpander(myChangesTree);

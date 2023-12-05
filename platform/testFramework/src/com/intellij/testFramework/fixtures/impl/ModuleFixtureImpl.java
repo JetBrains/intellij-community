@@ -2,6 +2,8 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import org.jetbrains.annotations.NotNull;
 

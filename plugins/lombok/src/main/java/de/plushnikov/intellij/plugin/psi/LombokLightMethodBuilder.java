@@ -3,12 +3,16 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider;
 import icons.LombokIcons;
@@ -30,6 +34,8 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
   // used to simplify comparing of returnType in equal method
   private String myReturnTypeAsText;
   private Function<LombokLightMethodBuilder, String> myBuilderBodyFunction;
+
+  private boolean myReadWriteAccess = false;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
@@ -120,11 +126,23 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return this;
   }
 
-  public LombokLightMethodBuilder withContract(@NotNull String parameters) {
-    putUserData(LombokInferredAnnotationProvider.CONTRACT_ANNOTATION,
-                JavaPsiFacade.getElementFactory(getProject())
-                  .createAnnotationFromText('@' + JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + parameters + ")",
-                                            this));
+  public LombokLightMethodBuilder withPureContract() {
+    Project project = myManager.getProject();
+    PsiAnnotation annotation = CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      CachedValueProvider.Result.create(JavaPsiFacade.getElementFactory(project).
+          createAnnotationFromText('@' + JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(pure=true)", null),
+        ModificationTracker.NEVER_CHANGED));
+    putUserData(LombokInferredAnnotationProvider.CONTRACT_ANNOTATION, annotation);
+    return this;
+  }
+
+  public LombokLightMethodBuilder withMutatesThisContract() {
+    Project project = myManager.getProject();
+    PsiAnnotation annotation = CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      CachedValueProvider.Result.create(JavaPsiFacade.getElementFactory(project).
+          createAnnotationFromText('@' + JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(mutates=\"this\")", null),
+        ModificationTracker.NEVER_CHANGED));
+    putUserData(LombokInferredAnnotationProvider.CONTRACT_ANNOTATION, annotation);
     return this;
   }
 
@@ -137,6 +155,15 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     final PsiModifierList modifierList = getModifierList();
     annotations.forEach(modifierList::addAnnotation);
     return this;
+  }
+
+  public LombokLightMethodBuilder withWriteAccess() {
+    myReadWriteAccess = true;
+    return this;
+  }
+
+  public boolean hasWriteAccess() {
+    return myReadWriteAccess;
   }
 
   // add Parameter as is, without wrapping with LightTypeParameter

@@ -5,8 +5,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
-import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.*
@@ -27,32 +26,29 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.*
-import com.intellij.ui.*
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
-import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.SLRUMap
 import com.intellij.util.io.*
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
+import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.format.DateTimeFormatter
@@ -63,7 +59,6 @@ import java.util.function.BiConsumer
 import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
-import javax.swing.*
 import kotlin.concurrent.Volatile
 import kotlin.system.exitProcess
 
@@ -103,6 +98,10 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
+  launch {
+    Java11Shim.INSTANCE = Java11ShimImpl()
+  }
+
   val appInfoDeferred = async {
     mainClassLoaderDeferred?.await()
     span("app info") {
@@ -168,10 +167,6 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   launch {
-    Java11Shim.INSTANCE = Java11ShimImpl()
-  }
-
-  launch {
     initLafJob.join()
 
     if (!isHeadless) {
@@ -210,7 +205,16 @@ fun CoroutineScope.startApplication(args: List<String>,
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = async {
-    if (isHeadless || !configImportNeededDeferred.await()) {
+    if (isHeadless) {
+      if (configImportNeededDeferred.await()) {
+        // make sure we lock the dir before writing
+        lockSystemDirsJob.join()
+        enableNewUi(logDeferred)
+      }
+      return@async null
+    }
+
+    if (AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
       return@async null
     }
 
@@ -225,16 +229,16 @@ fun CoroutineScope.startApplication(args: List<String>,
     )
 
     if (ConfigImportHelper.isNewUser()) {
-      if (System.getProperty("ide.experimental.ui") == null) {
-        runCatching {
-          EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
-        }.getOrLogException(log)
-      }
+      enableNewUi(logDeferred)
 
-      log.info("Will enter initial app wizard flow.")
-      val result = CompletableDeferred<Boolean>()
-      isInitialStart = result
-      result
+      if (isIdeStartupWizardEnabled) {
+        log.info("Will enter initial app wizard flow.")
+        val result = CompletableDeferred<Boolean>()
+        isInitialStart = result
+        result
+      } else {
+        null
+      }
     }
     else {
       null
@@ -303,7 +307,9 @@ fun CoroutineScope.startApplication(args: List<String>,
     this@startApplication.launch {
       val isInitialStart = configImportDeferred.await()
       // appLoaded not only provides starter, but also loads app, that's why it is here
+      IdeStartupWizardCollector.logExperimentState()
       if (isInitialStart != null) {
+        LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_READY)
         val log = logDeferred.await()
         runCatching {
           span("startup wizard run") {
@@ -335,6 +341,20 @@ fun CoroutineScope.startApplication(args: List<String>,
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
       appStarter.start(InitAppContext(appRegistered = appRegisteredJob, appLoaded = appLoaded))
+    }
+  }
+}
+
+private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
+  if (System.getProperty("ide.experimental.ui") == null) {
+    try {
+      EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logDeferred.await().error(e)
     }
   }
 }
@@ -478,7 +498,7 @@ private suspend fun importConfig(args: List<String>,
                                  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   span("screen reader checking") {
     runCatching {
-      withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
+      enableScreenReaderSupportIfNecessary()
     }.getOrLogException(log)
   }
 
@@ -664,8 +684,9 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
     "JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
   log.info("PID: ${ProcessHandle.current().pid()}")
-  if (SystemInfoRt.isXWindow) {
+  if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
     log.info("desktop: ${System.getenv("XDG_CURRENT_DESKTOP")}")
+    log.info("toolkit: ${Toolkit.getDefaultToolkit().javaClass.name}")
   }
 
   try {
@@ -700,16 +721,14 @@ private fun logEnvVar(log: Logger, variable: String) {
 }
 
 private fun logPath(path: String): String {
-  try {
+  return try {
     val configured = Path.of(path)
     val real = configured.toRealPath()
-    return if (configured == real) path else "${path} -> ${real}"
+    if (configured == real) path else "${path} -> ${real}"
   }
-  catch (_: IOException) {
+  catch (e: Exception) {
+    "${path} -> ${e.javaClass.name}: ${e.message}"
   }
-  catch (_: InvalidPathException) {
-  }
-  return "${path} -> ?"
 }
 
 interface AppStarter {
@@ -724,17 +743,3 @@ interface AppStarter {
   fun importFinished(newConfigDir: Path) {}
 }
 
-@VisibleForTesting
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-class Java11ShimImpl : Java11Shim {
-  override fun <K, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
-
-  override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
-
-  override fun <E> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
-  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
-    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
-  }
-
-  override fun <E> setOf(collection: Array<E>): Set<E> = java.util.Set.of(*collection)
-}

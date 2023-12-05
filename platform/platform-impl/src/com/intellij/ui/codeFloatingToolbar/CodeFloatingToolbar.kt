@@ -4,7 +4,9 @@ package com.intellij.ui.codeFloatingToolbar
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Toggleable
@@ -14,7 +16,6 @@ import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
@@ -33,7 +34,9 @@ import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.awt.Dimension
+import java.awt.IllegalComponentStateException
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
@@ -51,13 +54,15 @@ class CodeFloatingToolbar(
 
     private var TEMPORARILY_DISABLED = false
 
-    private var activeMenuPopup: JBPopup? = null
-
     @JvmStatic
     fun getToolbar(editor: Editor?): CodeFloatingToolbar? {
       return editor?.getUserData(FLOATING_TOOLBAR)
     }
 
+    /**
+     * Temporarily enables or disables a specific floating toolbar. Can be used to hide the toolbar when it conflicts with another popup.
+     * @see hideOnPopupConflict
+     */
     @JvmStatic
     fun temporarilyDisable(disable: Boolean = true) {
       TEMPORARILY_DISABLED = disable
@@ -73,6 +78,8 @@ class CodeFloatingToolbar(
     editor.putUserData(FLOATING_TOOLBAR, this)
     Disposer.register(this) { editor.putUserData(FLOATING_TOOLBAR, null) }
   }
+
+  private var activeMenuPopup: JBPopup? = null
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
     return !element.isWritable || TemplateManager.getInstance(element.project).getActiveTemplate(editor) != null
@@ -195,11 +202,15 @@ class CodeFloatingToolbar(
   }
 
   fun attachPopupToButton(button: ActionButton, popup: JBPopup) {
+    editor.scrollingModel.addVisibleAreaListener( {
+      alignButtonPopup(popup)
+    }, popup)
     popup.addListener(object : JBPopupListener {
 
       override fun beforeShown(event: LightweightWindowEvent) {
         activeMenuPopup = popup
         alignButtonPopup(popup)
+        HelpTooltip.setMasterPopupOpenCondition(button) { true }
         toggleButton(button, true)
       }
 
@@ -211,16 +222,11 @@ class CodeFloatingToolbar(
   }
 
   override fun onHintShown() {
-    CodeFloatingToolbarCollector.toolbarShown()
-  }
-
-  override fun onSelectionChanged(model: SelectionModel) {
+    val model = editor.selectionModel
     val start = model.leadSelectionOffset
     val end = if (model.selectionStart == start) model.selectionEnd else model.selectionStart
-    CodeFloatingToolbarCollector.codeSelected(
-      start, end,
-      model.editor.document.run { getLineNumber(model.selectionEnd) - getLineNumber(model.selectionStart) + 1 }
-    )
+    val linesCount = model.editor.document.run { getLineNumber(model.selectionEnd) - getLineNumber(model.selectionStart) + 1 }
+    CodeFloatingToolbarCollector.toolbarShown(start, end, linesCount)
   }
 
   private fun toggleButton(button: ActionButton, toggled: Boolean) {
@@ -247,6 +253,47 @@ class CodeFloatingToolbar(
     }
     point.translate(1, 1)
     popup.setLocation(point)
+  }
+
+  /**
+   * Hides the toolbar if it intersects another popup. Should be called when popup is visible already.
+   */
+  fun hideOnPopupConflict(popup: JBPopup){
+    val toolbarBounds = getScreenBounds(hintComponent) ?: return
+    val popupBounds = getScreenBounds(popup.content) ?: return
+    if (!toolbarBounds.intersects(popupBounds)) return
+    val wasVisible = isShown()
+    val wasDisabled = TEMPORARILY_DISABLED
+    val disposable = getPopupDisposable(popup)
+    temporarilyDisable(true)
+    scheduleHide()
+    Disposer.register(disposable) {
+      temporarilyDisable(wasDisabled)
+      if (wasVisible) {
+        allowInstantShowing()
+      }
+    }
+  }
+
+  private fun getScreenBounds(component: JComponent?): Rectangle? {
+    try {
+      val location = component?.locationOnScreen ?: return null
+      val size = component.size ?: return null
+      return Rectangle(location.x, location.y, size.width, size.height)
+    } catch (e: IllegalComponentStateException) { //thrown if component is not visible
+      return null
+    }
+  }
+
+  private fun getPopupDisposable(popup: JBPopup): Disposable {
+    val disposable = Disposer.newDisposable()
+    Disposer.register(popup, disposable)
+    popup.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        Disposer.dispose(disposable)
+      }
+    })
+    return disposable
   }
 
   private fun showMenuPopupOnMouseHover(button: ActionButton) {

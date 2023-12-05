@@ -147,11 +147,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       child = doFindChildInArray(name, isCaseSensitive);
       if (child != null) return child; // including NULL_VIRTUAL_FILE
       if (allChildrenLoaded()) {
-        return null;
+        return null;//all children loaded, but child not found -> not exist
       }
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      ChildInfo childInfo = getPersistence().findChildInfo(this, name, fs);
+      PersistentFS pfs = getPersistence();
+      ChildInfo childInfo = pfs.findChildInfo(this, name, fs);
       if (childInfo == null) {
         myData.addAdoptedName(name, isCaseSensitive);
         return null;
@@ -168,8 +169,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       int nameId = childInfo.getNameId(); // the name can change if file record was created
       int id = childInfo.getId();
-      int attributes = getPersistence().getFileAttributes(id);
-      boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !getPersistence().mayHaveChildren(id);
+      int attributes = pfs.getFileAttributes(id);
+      //TODO RC: check isDeleted(attributes) before .mayHaveChildren() call,
+      //         otherwise 'already deleted' exception is thrown sometimes (EA-933381)?
+      boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pfs.mayHaveChildren(id);
 
       child = createChildImpl(id, nameId, attributes, isEmptyDirectory);
 

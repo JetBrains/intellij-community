@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl
 
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
@@ -9,8 +10,7 @@ import java.util.*
  */
 public enum class ConsistencyCheckingMode {
   DISABLED,
-  ASYNCHRONOUS,
-  SYNCHRONOUS;
+  ENABLED;
 
   internal companion object {
     internal val current by lazy {
@@ -26,4 +26,22 @@ public enum class ConsistencyCheckingMode {
  */
 public interface ConsistencyCheckingModeProvider {
   public val mode: ConsistencyCheckingMode
+}
+
+/** Only for limited usages in the platform */
+@ApiStatus.Internal
+public object ConsistencyCheckingDisabler {
+  public val forceDisableConsistencyCheck: ThreadLocal<Boolean> = ThreadLocal<Boolean>().also { it.set(false) }
+
+  public inline fun <T> withDisabled(action: () -> T): T {
+    forceDisableConsistencyCheck.set(true)
+    try {
+      return action()
+    }
+    finally {
+      forceDisableConsistencyCheck.set(false)
+    }
+  }
+
+  internal fun isDisabled(): Boolean = forceDisableConsistencyCheck.get() ?: false
 }

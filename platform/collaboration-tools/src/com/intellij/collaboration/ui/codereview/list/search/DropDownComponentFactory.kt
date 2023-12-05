@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.openapi.ui.addKeyboardAction
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.FilterComponent
 import com.intellij.util.ui.UIUtil
@@ -71,9 +71,9 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              items: List<T>,
              onSelect: () -> Unit,
              valuePresenter: (T) -> @Nls String = Any::toString): JComponent =
-    create(vmScope, filterName, valuePresenter) { point->
+    create(vmScope, filterName, valuePresenter) { point ->
       val selectedItem = ChooserPopupUtil.showChooserPopup(point, items, presenter = { popupItem ->
-        ChooserPopupUtil.PopupItemPresentation.Simple(valuePresenter(popupItem))
+        PopupItemPresentation.Simple(valuePresenter(popupItem))
       })
       if (selectedItem != null) {
         onSelect()
@@ -86,7 +86,7 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              items: List<T>,
              onSelect: () -> Unit,
              valuePresenter: (T) -> @Nls String = Any::toString,
-             popupItemPresenter: (T) -> ChooserPopupUtil.PopupItemPresentation): JComponent =
+             popupItemPresenter: (T) -> PopupItemPresentation): JComponent =
     create(vmScope, filterName, valuePresenter) { point ->
       val selectedItem = ChooserPopupUtil.showChooserPopup(point, items, popupItemPresenter)
       if (selectedItem != null) {

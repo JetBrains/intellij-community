@@ -4,12 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.page.SequentialListLoader
-import com.intellij.collaboration.async.asResultFlow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -90,18 +91,23 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         .filter { requestedId -> requestedId == iid }
         .withInitial(iid)
         .map { mrId ->
-          // TODO: create from cached details
-          val mrData: GitLabMergeRequestDTO = loadMergeRequest(mrId)
-          val commits: List<GitLabCommitRestDTO> = if (mrData.commits == null) {
-            api.rest.getMergeRequestCommits(projectMapping.repository, mrId).body() ?: listOf()
+          runCatchingUser {
+            // TODO: create from cached details
+            val mrData: GitLabMergeRequestDTO = loadMergeRequest(mrId)
+            val commits: List<GitLabCommitRestDTO> = if (mrData.commits == null) {
+              api.rest.getMergeRequestCommits(projectMapping.repository, mrId).body() ?: listOf()
+            }
+            else {
+              listOf()
+            }
+            MergeRequestData(mrData, commits)
           }
-          else {
-            listOf()
+        }
+        .transformConsecutiveSuccesses {
+          mapScoped { (mrData, commits) ->
+            LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, mrData, commits)
           }
-          MergeRequestData(mrData, commits)
-        }.mapScoped { (mrData, commits) ->
-          LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, mrData, commits)
-        }.asResultFlow().shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+        }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed
     }
   }
@@ -131,7 +137,8 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         error(CollaborationToolsBundle.message("graphql.errors", "empty response"))
       }
       if (body.sourceProject == null) {
-        throw GitLabMergeRequestDataException.EmptySourceProject(GitLabBundle.message("merge.request.source.project.not.found"), body.webUrl)
+        throw GitLabMergeRequestDataException.EmptySourceProject(GitLabBundle.message("merge.request.source.project.not.found"),
+                                                                 body.webUrl)
       }
       body
     }

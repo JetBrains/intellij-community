@@ -16,7 +16,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
   fun `test nonblocking jdk resolution (java home)`() {
     val sdk = TestSdkGenerator.createNextSdk()
     environment.withVariables(JAVA_HOME to null) { assertSdkInfo(SdkInfo.Undefined, USE_JAVA_HOME) }
-    environment.withVariables(JAVA_HOME to sdk.homePath) { assertSdkInfo(sdk.versionString, sdk.homePath, USE_JAVA_HOME) }
+    environment.withVariables(JAVA_HOME to sdk.homePath) { assertSdkInfo(sdk.versionString!!, sdk.homePath!!, USE_JAVA_HOME) }
   }
 
   fun `test nonblocking jdk resolution (internal jdk)`() {

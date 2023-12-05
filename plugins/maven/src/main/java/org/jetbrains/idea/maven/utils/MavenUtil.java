@@ -612,10 +612,15 @@ public class MavenUtil {
     return handler;
   }
 
+  /**
+   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
+   * use {@link MavenUtil#getMavenHomeFile(org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
+   */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
+      //noinspection HardCodedStringLiteral
       return MavenUtil.getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
     }
 
@@ -849,7 +854,7 @@ public class MavenUtil {
   private static String getMavenLibVersion(final File file) {
     WSLDistribution distribution = WslPath.getDistributionByWindowsUncPath(file.getPath());
     File fileToRead = Optional.ofNullable(distribution)
-      .map(it -> distribution.getWslPath(file.getPath()))
+      .map(it -> distribution.getWslPath(file.toPath()))
       .map(it -> distribution.resolveSymlink(it))
       .map(it -> distribution.getWindowsPath(it))
       .map(it -> new File(it))
@@ -910,11 +915,17 @@ public class MavenUtil {
     return new File(SystemProperties.getUserHome(), DOT_M2_DIR);
   }
 
+  /**
+   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
+   * use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
+   * or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead
+   */
   @NotNull
   @Deprecated(forRemoval = true)
   public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,
                                             @Nullable String overriddenMavenHome,
                                             @Nullable String overriddenUserSettingsFile) {
+    //noinspection HardCodedStringLiteral
     MavenHomeType type = resolveMavenHomeType(overriddenMavenHome);
     if (type instanceof StaticResolvedMavenHomeType st) {
       return resolveLocalRepository(overriddenLocalRepository, st, overriddenUserSettingsFile);

@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -57,7 +57,7 @@ class TextEditorBackgroundHighlighter(private val project: Project, private val 
       return emptyList()
     }
 
-    HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation").useWithScope { span ->
+    HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation").useWithScopeBlocking { span ->
       val startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation")
       var cancelled = false
       try {

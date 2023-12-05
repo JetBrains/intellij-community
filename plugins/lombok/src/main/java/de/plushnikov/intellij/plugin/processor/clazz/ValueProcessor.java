@@ -14,6 +14,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,6 +50,17 @@ public final class ValueProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(getStaticConstructorNameValue(psiAnnotation)) ||
+           getNoArgsConstructorProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation) ||
+           getToStringProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation) ||
+           getEqualsAndHashCodeProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation) ||
+           getGetterProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation);
+  }
+
+  @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     Collection<String> result = new ArrayList<>();
 
@@ -81,7 +93,7 @@ public final class ValueProcessor extends AbstractClassProcessor {
   }
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
       builder.addErrorMessage("inspection.message.value.only.supported.on.class.type");
       builder.markFailed();
     }
@@ -90,10 +102,10 @@ public final class ValueProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
 
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.GETTER)) {
-      target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC, nameHint));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.EQUALS_AND_HASHCODE)) {
       target.addAll(getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));

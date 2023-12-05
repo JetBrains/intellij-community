@@ -26,6 +26,7 @@ import org.junit.Test
 import java.io.File
 
 class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
   @Test
   fun testResolvingProjectAttributes() = runBlocking {
     importProjectAsync("""

@@ -359,19 +359,19 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantGetter/onlyReturnFieldBody.kt");
         }
 
-        @TestMetadata("withAnnotaionAndNonTrivialBlockBody.kt")
-        public void testWithAnnotaionAndNonTrivialBlockBody() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndNonTrivialBlockBody.kt");
+        @TestMetadata("withAnnotationAndNonTrivialBlockBody.kt")
+        public void testWithAnnotationAndNonTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotationAndNonTrivialBlockBody.kt");
         }
 
-        @TestMetadata("withAnnotaionAndTrivialBlockBody.kt")
-        public void testWithAnnotaionAndTrivialBlockBody() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndTrivialBlockBody.kt");
+        @TestMetadata("withAnnotationAndTrivialBlockBody.kt")
+        public void testWithAnnotationAndTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotationAndTrivialBlockBody.kt");
         }
 
-        @TestMetadata("withAnnotaionAndTrivialExpressionBody.kt")
-        public void testWithAnnotaionAndTrivialExpressionBody() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndTrivialExpressionBody.kt");
+        @TestMetadata("withAnnotationAndTrivialExpressionBody.kt")
+        public void testWithAnnotationAndTrivialExpressionBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotationAndTrivialExpressionBody.kt");
         }
     }
 
@@ -1132,6 +1132,54 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("simple2.kt")
         public void testSimple2() throws Exception {
             runTest("../testData/inspectionsLocal/removeSetterParameterType/simple2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/replacePrintlnWithLogging")
+    public static class ReplacePrintlnWithLogging extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alias.kt")
+        public void testAlias() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/alias.kt");
+        }
+
+        @TestMetadata("fqnPrintln.kt")
+        public void testFqnPrintln() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/fqnPrintln.kt");
+        }
+
+        @TestMetadata("printInteger.kt")
+        public void testPrintInteger() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/printInteger.kt");
+        }
+
+        @TestMetadata("printString.kt")
+        public void testPrintString() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/printString.kt");
+        }
+
+        @TestMetadata("printlnString.kt")
+        public void testPrintlnString() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/printlnString.kt");
+        }
+
+        @TestMetadata("separateClass.kt")
+        public void testSeparateClass() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/separateClass.kt");
+        }
+
+        @TestMetadata("separateClassImplicitThis.kt")
+        public void testSeparateClassImplicitThis() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/separateClassImplicitThis.kt");
+        }
+
+        @TestMetadata("topLevelPrintFun.kt")
+        public void testTopLevelPrintFun() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/topLevelPrintFun.kt");
         }
     }
 

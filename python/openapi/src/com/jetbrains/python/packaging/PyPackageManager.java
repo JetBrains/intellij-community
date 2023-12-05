@@ -14,7 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-
+/**
+ * @deprecated use {@link com.jetbrains.python.packaging.management.PythonPackageManager}
+ */
+@Deprecated(forRemoval = true)
 public abstract class PyPackageManager implements Disposable {
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 

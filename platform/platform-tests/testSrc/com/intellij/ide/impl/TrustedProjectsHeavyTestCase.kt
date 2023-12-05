@@ -6,9 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.modules
-import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
@@ -38,17 +35,20 @@ import kotlin.time.Duration.Companion.milliseconds
 abstract class TrustedProjectsHeavyTestCase {
 
   @TestDisposable
-  lateinit var testDisposable: Disposable
+  private lateinit var testDisposable: Disposable
 
   private lateinit var fileFixture: TempDirTestFixture
   private lateinit var testRoot: VirtualFile
+  private lateinit var testPath: Path
 
   @BeforeEach
   fun setUp() {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = Path.of(fileFixture.tempDirPath).refreshAndGetVirtualDirectory()
+
+    testPath = Path.of(fileFixture.tempDirPath)
+    testRoot = testPath.refreshAndGetVirtualDirectory()
   }
 
   @AfterEach
@@ -91,16 +91,15 @@ abstract class TrustedProjectsHeavyTestCase {
 
   suspend fun generateProjectAsync(
     project: Project,
-    numProjects: Int,
     numModules: Int,
     numContentRoots: Int
   ): Project {
     val projectName = project.name
     writeAction {
       val entityStorage = MutableEntityStorage.create()
-      generateModulesAsync(project, entityStorage, "project", numModules, numContentRoots)
-      repeat(numProjects - 1) { index ->
-        generateModulesAsync(project, entityStorage, "project-$index", numModules, numContentRoots)
+      generateModuleAsync(project, entityStorage, "project", numContentRoots)
+      repeat(numModules - 1) { index ->
+        generateModuleAsync(project, entityStorage, "module-$index", numContentRoots)
       }
       WorkspaceModel.getInstance(project).updateProjectModel("Generate project $projectName") {
         it.addDiff(entityStorage)
@@ -109,28 +108,14 @@ abstract class TrustedProjectsHeavyTestCase {
     return project
   }
 
-  private fun generateModulesAsync(
-    project: Project,
-    entityStorage: MutableEntityStorage,
-    relativeProjectRoot: String,
-    numModules: Int,
-    numContentRoots: Int
-  ) {
-    val projectRoot = testRoot.findOrCreateDirectory(relativeProjectRoot)
-    generateModuleAsync(project, entityStorage, projectRoot, numContentRoots)
-    repeat(numModules - 1) {
-      val moduleRoot = projectRoot.createDirectory(projectRoot.name + "-module-$it")
-      generateModuleAsync(project, entityStorage, moduleRoot, numContentRoots)
-    }
-  }
-
   private fun generateModuleAsync(
     project: Project,
     entityStorage: MutableEntityStorage,
-    moduleRoot: VirtualFile,
+    relativePath: String,
     numContentRoots: Int
   ) {
     val contentRoots = ArrayList<VirtualFile>()
+    val moduleRoot = testRoot.findOrCreateDirectory(relativePath)
     contentRoots.add(moduleRoot)
     repeat(numContentRoots - 1) {
       contentRoots.add(moduleRoot.createDirectory("contentRoot-$it"))
@@ -153,15 +138,27 @@ abstract class TrustedProjectsHeavyTestCase {
     entityStorage.addEntity(moduleEntity)
   }
 
-  fun assertProjectRoots(
-    project: Project,
-    vararg relativeRoots: String
-  ) {
+  fun assertProjectRoots(project: Project, vararg relativeRoots: String) {
     val locatedProject = TrustedProjectsLocator.locateProject(project)
     Assertions.assertEquals(
-      relativeRoots.map { testRoot.toNioPath().getResolvedPath(it) }.toSet(),
+      relativeRoots.map { testPath.getResolvedPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
+  }
+
+  fun generatePaths(relativePath: String, numPaths: Int): List<Path> {
+    return generatePaths(listOf(testPath), relativePath, numPaths)
+  }
+
+  fun generatePaths(roots: List<Path>, relativePath: String, numPaths: Int): List<Path> {
+    val paths = ArrayList<Path>()
+    for (root in roots) {
+      paths.add(root.getResolvedPath(relativePath))
+      repeat(numPaths - 1) { index ->
+        paths.add(root.getResolvedPath("$relativePath-$index"))
+      }
+    }
+    return paths
   }
 
   inline fun <R> testPerformance(name: String, maxDuration: Duration? = null, action: () -> R): R {
@@ -169,28 +166,15 @@ abstract class TrustedProjectsHeavyTestCase {
     val result = action()
     val end = System.currentTimeMillis()
     val duration = (end - start).milliseconds
+    println("$name duration is $duration")
     if (maxDuration != null && maxDuration < duration) {
       val percentage = duration.inWholeMilliseconds * 100 / maxDuration.inWholeMilliseconds - 100
       throw AssertionError("Execution time exceeded by $percentage% ($duration instead $maxDuration).")
     }
-    println("$name duration is $duration")
     return result
   }
 
-  class TestTrustedProjectsLocator : TrustedProjectsLocator {
-
-    override fun getProjectRoots(project: Project): List<Path> {
-      val index = NioPathPrefixTreeFactory.createSet()
-      for (module in project.modules) {
-        for (contentRoot in module.rootManager.contentRoots) {
-          index.add(contentRoot.toNioPath())
-        }
-      }
-      return index.getRoots().toList()
-    }
-
-    override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> {
-      return emptyList()
-    }
+  fun registerProjectLocator(projectLocator: TrustedProjectsLocator) {
+    TrustedProjectsLocator.EP_NAME.point.registerExtension(projectLocator, testDisposable)
   }
 }

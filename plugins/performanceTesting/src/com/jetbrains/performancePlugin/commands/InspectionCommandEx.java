@@ -153,8 +153,8 @@ public class InspectionCommandEx extends AbstractCommand {
             final InspectionResultsView view = getView();
 
             if (view != null) {
-              ExportToXMLAction.Companion.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
-                                                    view.getGlobalInspectionContext(), tempDirectory.toPath());
+              ExportToXMLAction.Util.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
+                                               view.getGlobalInspectionContext(), tempDirectory.toPath());
 
               File[] files = tempDirectory.listFiles();
               if (files != null) {

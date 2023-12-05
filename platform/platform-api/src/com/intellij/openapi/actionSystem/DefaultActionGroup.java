@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -277,12 +278,10 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final synchronized void remove(@NotNull AnAction action, @Nullable String id) {
-    boolean removed = mySortedChildren.remove(action);
-    removed = removed || mySortedChildren.removeIf(
-      o -> o instanceof ActionStubBase && ((ActionStubBase)o).getId().equals(id));
-    removed = removed || myPendingActions.removeIf(
-      o -> o.equals(action) || (o instanceof ActionStubBase && ((ActionStubBase)o).getId().equals(id)));
-    myConstraints.remove(action);
+    Predicate<AnAction> matchesAction = o -> o.equals(action) || (o instanceof ActionStubBase stub && stub.getId().equals(id));
+    boolean removed = mySortedChildren.removeIf(matchesAction);
+    removed = removed || myPendingActions.removeIf(matchesAction);
+    myConstraints.keySet().removeIf(matchesAction);
     if (removed) {
       incrementModificationStamp();
     }

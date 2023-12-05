@@ -40,7 +40,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
             fixture.doHighlighting()
             fixture.completeBasic()
           }
-        }.assertTiming()
+        }.assertTiming(GradleHighlightingPerformanceTest::testPerformance)
       }
     }
   }
@@ -70,7 +70,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
           val rangeMarkers = ArrayList<RangeMarker>()
           document.asSafely<DocumentEx>()?.processRangeMarkers { rangeMarkers.add(it) }
           rangeMarkers.forEach { marker -> document.asSafely<DocumentEx>()?.removeRangeMarker(marker as RangeMarkerEx) }
-        }.usesAllCPUCores().assertTiming()
+        }.usesAllCPUCores().assertTiming(GradleHighlightingPerformanceTest::testCompletionPerformance)
       }
     }
   }

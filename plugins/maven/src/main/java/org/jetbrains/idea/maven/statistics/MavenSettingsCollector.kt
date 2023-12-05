@@ -5,8 +5,8 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.Companion.JRE_TYPE_FIELD
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsageFields
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsageFields.JRE_TYPE_FIELD
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
@@ -76,8 +76,8 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(DOWNLOAD_SOURCES_AUTOMATICALLY.metric(importingSettings.isDownloadSourcesAutomatically))
     usages.add(CUSTOM_DEPENDENCY_TYPES.metric(MavenImportingSettings.DEFAULT_DEPENDENCY_TYPES != importingSettings.dependencyTypes))
 
-    usages.add(JDK_TYPE_FOR_IMPORTER.metric(ExternalSystemUsagesCollector.getJreType(importingSettings.jdkForImporter)))
-    usages.add(JDK_VERSION_FOR_IMPORTER.metric(ExternalSystemUsagesCollector.getJreVersion(project, importingSettings.jdkForImporter)))
+    usages.add(JDK_TYPE_FOR_IMPORTER.metric(ExternalSystemUsageFields.getJreType(importingSettings.jdkForImporter)))
+    usages.add(JDK_VERSION_FOR_IMPORTER.metric(ExternalSystemUsageFields.getJreVersion(project, importingSettings.jdkForImporter)))
     usages.add(HAS_VM_OPTIONS_FOR_IMPORTER.metric(importingSettings.vmOptionsForImporter.isNotBlank()))
 
     // Ignored Files page
@@ -87,8 +87,8 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     // Runner page
     val runnerSettings = MavenRunner.getInstance(project).settings
     usages.add(DELEGATE_BUILD_RUN.metric(runnerSettings.isDelegateBuildToMaven))
-    usages.add(RUNNER_JRE_TYPE.metric(ExternalSystemUsagesCollector.getJreType(runnerSettings.jreName)))
-    usages.add(RUNNER_JRE_VERSION.metric(ExternalSystemUsagesCollector.getJreVersion(project, runnerSettings.jreName)))
+    usages.add(RUNNER_JRE_TYPE.metric(ExternalSystemUsageFields.getJreType(runnerSettings.jreName)))
+    usages.add(RUNNER_JRE_VERSION.metric(ExternalSystemUsageFields.getJreVersion(project, runnerSettings.jreName)))
     usages.add(HAS_RUNNER_VM_OPTIONS.metric(runnerSettings.vmOptions.isNotBlank()))
     usages.add(HAS_RUNNER_ENV_VARIABLES.metric(!runnerSettings.environmentProperties.isEmpty()))
     usages.add(PASS_PARENT_ENV.metric(runnerSettings.isPassParentEnv))
@@ -128,7 +128,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   private val SKIP_TESTS = GROUP.registerEvent("skipTests", EventFields.Enabled)
   private val HAS_RUNNER_MAVEN_PROPERTIES = GROUP.registerEvent("hasRunnerMavenProperties", EventFields.Enabled)
 
-  private val VERSION_FIELD = EventFields.StringValidatedByRegexp("value", "version")
+  private val VERSION_FIELD = EventFields.StringValidatedByRegexpReference("value", "version")
 
   private val CHECKSUM_POLICY = GROUP.registerEvent("checksumPolicy", EventFields.Enum("value",
                                                                                        MavenExecutionOptions.ChecksumPolicy::class.java) { it.name.lowercase() })

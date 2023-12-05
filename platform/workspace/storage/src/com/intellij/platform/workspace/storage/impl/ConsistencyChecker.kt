@@ -35,6 +35,8 @@ internal fun AbstractEntityStorage.assertConsistency() {
     if (!connectionId.isParentNullable) {
       checkStrongConnection(this, map.keys, connectionId.childClass, connectionId.parentClass, connectionId)
     }
+
+    map.assertConsistency()
   }
 
   refs.oneToOneContainer.forEach { (connectionId, map) ->

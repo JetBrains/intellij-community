@@ -22,6 +22,7 @@ public class InlinePatternVariableTest extends LightJavaCodeInsightTestCase {
   public void testSimple() { doTest(); }
   public void testSimpleAtRef() { doTest(); }
   public void testTernary() { doTest(); }
+  public void testInNestedCondition() { doTest(); }
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {

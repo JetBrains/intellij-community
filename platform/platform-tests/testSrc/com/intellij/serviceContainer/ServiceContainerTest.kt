@@ -1,16 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.progress.assertInstanceOf
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.instanceContainer.CycleInitializationException
+import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
-import org.junit.jupiter.api.assertThrows
-import java.lang.reflect.InvocationTargetException
 
 class ServiceContainerTest {
   @Test
@@ -25,20 +21,24 @@ class ServiceContainerTest {
       componentManager.registerService(C1::class.java, C1::class.java, pluginDescriptor, override = false)
       componentManager.registerService(C2::class.java, C2::class.java, pluginDescriptor, override = false)
       if (useInstanceContainer) {
-        val outer = assertThrows<Throwable> {
+        try {
           componentManager.getService(C1::class.java)
         }
-        assertInstanceOf<CycleInitializationException>( // C1 getService
-          assertInstanceOf<InvocationTargetException>( // C2 constructor
-            assertInstanceOf<PluginException>( // C2 getService
-              assertInstanceOf<InvocationTargetException>( // C1 constructor
-                assertInstanceOf<PluginException>( // C1 getService
-                  outer
-                ).cause
-              ).cause
-            ).cause
-          ).cause
-        )
+        catch (e: Throwable) {
+          val stringBuilder = StringBuilder()
+          var cause = e
+          while (true) {
+            stringBuilder.append(cause.javaClass.simpleName).append(" " + cause.message).appendLine()
+            val newCause = cause.cause
+            if (newCause !== cause) {
+              cause = newCause ?: break
+            }
+          }
+          assertThat(stringBuilder).isEqualToIgnoringWhitespace("""
+            PluginException [com.intellij.serviceContainer.C1, com.intellij.serviceContainer.C2] [Plugin: test]
+            CycleInitializationException [com.intellij.serviceContainer.C1, com.intellij.serviceContainer.C2]
+          """.trimIndent())
+        }
       }
       else {
         assertThatThrownBy {

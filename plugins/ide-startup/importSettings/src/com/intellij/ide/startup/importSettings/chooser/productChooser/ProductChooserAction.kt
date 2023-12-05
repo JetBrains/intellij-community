@@ -2,7 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserItemAction
-import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
@@ -28,18 +28,12 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
   abstract fun getChildren(e: AnActionEvent?): Array<AnAction>
 
-  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, callback: (PageProvider) -> Unit): List<AnAction> {
+  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, callback: ImportSettingsController): List<AnAction> {
     return products.map { pr -> SettingChooserItemAction(pr, provider, callback) }
   }
 
   override fun actionPerformed(event: AnActionEvent) {
     val comp: JComponent = event.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
-
-    val children = actionGroup.getChildren(event)
-    if(children.size == 1) {
-      children.firstOrNull()?.actionPerformed(event)
-      return
-    }
 
     val step = createStep(actionGroup, event.dataContext, comp)
     createPopup(step).show(RelativePoint(comp, Point(0, comp.height + JBUI.scale(4))))
@@ -50,7 +44,17 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
     e.presentation.putClientProperty(UiUtils.POPUP, ch.size != 1)
 
     if (ch.size == 1) {
-      ch.firstOrNull()?.update(e)
+      e.presentation.text = null
+      e.presentation.icon = null
+      e.presentation.description = null
+      ch.firstOrNull()?.let {
+        it.update(e)
+        e.presentation.text = e.presentation.text ?: it.templateText
+        e.presentation.icon = e.presentation.icon ?: it.templatePresentation.icon
+        e.presentation.getClientProperty(UiUtils.DESCRIPTION)?.let { descr ->
+          e.presentation.description =  descr
+        }
+      }
       return
     }
   }

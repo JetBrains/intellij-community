@@ -40,11 +40,11 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
         )
     }
 
-    override fun getTemplates() = templateSet
+    override fun getTemplates(): Set<PostfixTemplate> = templateSet
 
-    override fun isTerminalSymbol(currentChar: Char) = currentChar == '.' || currentChar == '!'
+    override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '!'
 
-    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int) = copyFile
+    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int): PsiFile = copyFile
 
     override fun preExpand(file: PsiFile, editor: Editor) {}
     override fun afterExpand(file: PsiFile, editor: Editor) {}

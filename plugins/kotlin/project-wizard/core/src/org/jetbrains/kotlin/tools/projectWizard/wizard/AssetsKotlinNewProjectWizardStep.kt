@@ -9,8 +9,15 @@ import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 
+private const val generatedFileName = "Main.kt"
+
 abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
-    fun withKotlinSampleCode(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
+    fun withKotlinSampleCode(
+        sourceRootPath: String,
+        packageName: String?,
+        generateOnboardingTips: Boolean,
+        shouldOpenFile: Boolean = true
+    ) {
         val renderedOnboardingTips = shouldRenderOnboardingTips()
         val templateName = when {
             !generateOnboardingTips -> "KotlinSampleCode"
@@ -18,7 +25,7 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
             else -> "KotlinSampleCodeWithOnboardingTips"
         }
 
-        val sourcePath = "$sourceRootPath/Main.kt"
+        val sourcePath = "$sourceRootPath/$generatedFileName"
         addTemplateAsset(sourcePath, templateName, buildMap {
             packageName?.let {
                 put("PACKAGE_NAME", it)
@@ -56,11 +63,13 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
                 }
             }
         })
-        addFilesToOpen(sourcePath)
+        if (shouldOpenFile) {
+            addFilesToOpen(sourcePath)
+        }
     }
 
-    fun prepareTipsInEditor(project: Project) {
-        prepareTipsInEditor(project, "KotlinSampleCode") { charsSequence ->
+    fun prepareOnboardingTips(project: Project) {
+        prepareOnboardingTips(project, "KotlinSampleCode", generatedFileName) { charsSequence ->
             charsSequence.indexOf("println(\"i").takeIf { it >= 0 }
         }
     }

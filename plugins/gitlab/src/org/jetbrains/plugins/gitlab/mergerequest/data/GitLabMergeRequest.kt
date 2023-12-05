@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitStandardRemoteBranch
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
@@ -19,8 +22,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
-import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<GitLabMergeRequest>()
 
@@ -44,6 +47,11 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   // NOT a great place for it, but placing it in VM layer is a pain in the neck
   val draftReviewText: MutableStateFlow<String>
+
+  /**
+   * Sends a signal to fully reload the details and timeline of the merge request.
+   */
+  fun reloadData()
 
   /**
    * Sends a signal to reload the details and check for other data changes
@@ -105,6 +113,8 @@ internal class LoadedGitLabMergeRequest(
   override val author: GitLabUserDTO = mergeRequest.author
 
   private val mergeRequestRefreshRequest = MutableSharedFlow<Unit>()
+  private val mergeRequestReloadRequest = MutableSharedFlow<Unit>()
+  private val stateEventsRefreshRequest = MutableSharedFlow<Unit>()
 
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
     MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest, backupCommits))
@@ -115,38 +125,32 @@ internal class LoadedGitLabMergeRequest(
       GitLabMergeRequestChangesImpl(project, this, api, projectMapping, it)
     }.modelFlow(cs, LOG)
 
-  private val stateEventsLoader =
-    GitLabETagUpdatableListLoader<GitLabResourceStateEventDTO>(getMergeRequestStateEventsUri(glProject, iid)
-    ) { uri, eTag ->
-      api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
-        GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
-      )
-    }
-  override val stateEvents = stateEventsLoader.batches.collectBatches()
-    .asResultFlow()
-    .modelFlow(cs, LOG)
+  override val stateEvents =
+    mergeRequestReloadRequest.withInitial(Unit).combine(stateEventsRefreshRequest.withInitial(Unit)) { _, _ -> }.flatMapLatest {
+      GitLabETagUpdatableListLoader(getMergeRequestStateEventsUri(glProject, iid), mergeRequestRefreshRequest) { uri, eTag ->
+        api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
+          GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
+        )
+      }.events
+    }.modelFlow(cs, LOG)
 
-  private val labelEventsLoader =
-    GitLabETagUpdatableListLoader<GitLabResourceLabelEventDTO>(getMergeRequestLabelEventsUri(glProject, iid)
-    ) { uri, eTag ->
-      api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
-        GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
-      )
-    }
-  override val labelEvents = labelEventsLoader.batches.collectBatches()
-    .asResultFlow()
-    .modelFlow(cs, LOG)
+  override val labelEvents =
+    mergeRequestReloadRequest.withInitial(Unit).flatMapLatest {
+      GitLabETagUpdatableListLoader(getMergeRequestLabelEventsUri(glProject, iid), mergeRequestRefreshRequest) { uri, eTag ->
+        api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
+          GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
+        )
+      }.events
+    }.modelFlow(cs, LOG)
 
-  private val milestoneEventsLoader =
-    GitLabETagUpdatableListLoader<GitLabResourceMilestoneEventDTO>(getMergeRequestMilestoneEventsUri(glProject, iid)
-    ) { uri, eTag ->
-      api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
-        GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
-      )
-    }
-  override val milestoneEvents = milestoneEventsLoader.batches.collectBatches()
-    .asResultFlow()
-    .modelFlow(cs, LOG)
+  override val milestoneEvents =
+    mergeRequestReloadRequest.withInitial(Unit).flatMapLatest {
+      GitLabETagUpdatableListLoader(getMergeRequestMilestoneEventsUri(glProject, iid), mergeRequestRefreshRequest) { uri, eTag ->
+        api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
+          GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
+        )
+      }.events
+    }.modelFlow(cs, LOG)
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isLoading: SharedFlow<Boolean> = _isLoading.asSharedFlow()
@@ -155,10 +159,13 @@ internal class LoadedGitLabMergeRequest(
   override val draftReviewText: MutableStateFlow<String> = MutableStateFlow("")
 
   init {
-    mergeRequestRefreshRequest
-      .mapLatest { refreshDataNow() }
-      .catch { LOG.info("Error occurred while loading merge request data", it) }
-      .launchNowIn(cs)
+    cs.launch {
+      mergeRequestRefreshRequest
+        .collect {
+          runCatchingUser { refreshDataNow() }
+            .onFailure { LOG.info("Error occurred while loading merge request data", it) }
+        }
+    }
 
     cs.launch {
       val repository = projectMapping.gitRepository
@@ -200,13 +207,19 @@ internal class LoadedGitLabMergeRequest(
     return remoteMrBranchHash.asString() == knownHead
   }
 
+  override fun reloadData() {
+    cs.launch {
+      mergeRequestReloadRequest.emit(Unit)
+      mergeRequestRefreshRequest.emit(Unit)
+
+      discussionsContainer.requestDiscussionsReload()
+    }
+  }
+
   override fun refreshData() {
     cs.launch {
       mergeRequestRefreshRequest.emit(Unit)
 
-      stateEventsLoader.checkForUpdates()
-      labelEventsLoader.checkForUpdates()
-      milestoneEventsLoader.checkForUpdates()
       discussionsContainer.requestDiscussionsReload()
     }
   }
@@ -219,21 +232,12 @@ internal class LoadedGitLabMergeRequest(
 
   private suspend fun updateData() {
     mergeRequestRefreshRequest.emit(Unit)
-    stateEventsLoader.checkForUpdates()
-    labelEventsLoader.checkForUpdates()
-    milestoneEventsLoader.checkForUpdates()
     discussionsContainer.checkUpdates()
   }
 
   override suspend fun merge(commitMessage: String) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      val mergeRequest = mergeRequestDetailsState.value
-      val updatedMergeRequest = api.graphQL.mergeRequestAccept(glProject,
-                                                               iid,
-                                                               commitMessage,
-                                                               mergeRequest.commits.first().sha, // First from the list -- last commit from review
-                                                               withSquash = false).getResultOrThrow()
-      updateMergeRequestData(updatedMergeRequest)
+      runMerge(commitMessage, withSquash = false)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.MERGE)
@@ -241,13 +245,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun squashAndMerge(commitMessage: String) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      val mergeRequest = mergeRequestDetailsState.value
-      val updatedMergeRequest = api.graphQL.mergeRequestAccept(glProject,
-                                                               iid,
-                                                               commitMessage,
-                                                               mergeRequest.commits.first().sha, // First from the list -- last commit from review
-                                                               withSquash = true).getResultOrThrow()
-      updateMergeRequestData(updatedMergeRequest)
+      runMerge(commitMessage, withSquash = true)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
@@ -255,13 +253,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun rebase() {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      api.rest.mergeRequestRebase(glProject, iid)
-      do {
-        val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
-        updateMergeRequestData(updatedMergeRequest)
-        delay(1.seconds)
-      }
-      while (updatedMergeRequest.rebaseInProgress)
+      runRebase()
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REBASE)
@@ -296,7 +288,7 @@ internal class LoadedGitLabMergeRequest(
       val updatedMergeRequest = api.graphQL.mergeRequestUpdate(glProject, iid, GitLabMergeRequestNewState.CLOSED)
         .getResultOrThrow()
       updateMergeRequestData(updatedMergeRequest)
-      stateEventsLoader.checkForUpdates()
+      stateEventsRefreshRequest.emit(Unit)
     }
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CLOSE)
   }
@@ -306,7 +298,7 @@ internal class LoadedGitLabMergeRequest(
       val updatedMergeRequest = api.graphQL.mergeRequestUpdate(glProject, iid, GitLabMergeRequestNewState.OPEN)
         .getResultOrThrow()
       updateMergeRequestData(updatedMergeRequest)
-      stateEventsLoader.checkForUpdates()
+      stateEventsRefreshRequest.emit(Unit)
     }
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REOPEN)
   }
@@ -355,11 +347,22 @@ internal class LoadedGitLabMergeRequest(
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
   override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes
   override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> = discussionsContainer.draftNotes
+
   override val canAddNotes: Boolean = discussionsContainer.canAddNotes
+  override val canAddDraftNotes: Boolean = discussionsContainer.canAddDraftNotes
+  override val canAddPositionalDraftNotes: Boolean = discussionsContainer.canAddPositionalDraftNotes
 
-  override suspend fun addNote(body: String, asDraft: Boolean) = discussionsContainer.addNote(body, asDraft)
+  override suspend fun addNote(body: String) =
+    discussionsContainer.addNote(body)
 
-  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String, asDraft: Boolean) = discussionsContainer.addNote(position, body, asDraft)
+  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) =
+    discussionsContainer.addNote(position, body)
+
+  override suspend fun addDraftNote(body: String) =
+    discussionsContainer.addDraftNote(body)
+
+  override suspend fun addDraftNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) =
+    discussionsContainer.addDraftNote(position, body)
 
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
 
@@ -373,5 +376,35 @@ internal class LoadedGitLabMergeRequest(
     return GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest, commits).also {
       mergeRequestDetailsState.value = it
     }
+  }
+
+  private suspend fun runMerge(commitMessage: String, withSquash: Boolean) {
+    var attempts = 0
+    val mergeRequest = mergeRequestDetailsState.value
+    val sha = mergeRequest.commits.first().sha // First from the list -- last commit from review
+    api.graphQL.mergeRequestAccept(glProject, iid, commitMessage, sha, withSquash).getResultOrThrow()
+    do {
+      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
+      updateMergeRequestData(updatedMergeRequest)
+      delay(GitLabRegistry.getRequestPollingIntervalMillis().toLong())
+      attempts++
+    }
+    while (updatedMergeRequest.state != GitLabMergeRequestState.MERGED || attempts == REQUEST_ATTEMPTS_LIMIT_NUMBER)
+  }
+
+  private suspend fun runRebase() {
+    var attempts = 0
+    api.rest.mergeRequestRebase(glProject, iid)
+    do {
+      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
+      updateMergeRequestData(updatedMergeRequest)
+      delay(GitLabRegistry.getRequestPollingIntervalMillis().toLong())
+      attempts++
+    }
+    while (updatedMergeRequest.rebaseInProgress || attempts == REQUEST_ATTEMPTS_LIMIT_NUMBER)
+  }
+
+  companion object {
+    private val REQUEST_ATTEMPTS_LIMIT_NUMBER = GitLabRegistry.getRequestPollingAttempts()
   }
 }

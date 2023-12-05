@@ -139,7 +139,7 @@ public class LocalHistoryFacade {
     return new ByteContent(false, entry.getContent().getBytesIfAvailable());
   }
 
-  public List<RecentChange> getRecentChanges(RootEntry root) {
+  public @NotNull List<RecentChange> getRecentChanges(RootEntry root) {
     List<RecentChange> result = new ArrayList<>();
 
     for (ChangeSet c : myChangeList.iterChanges()) {

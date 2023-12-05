@@ -255,6 +255,7 @@
       "special_else_if_treatment": true,
       "static_field_name_suffix": "_s",
       "subclass_name_suffix": "Impl",
+      "switch_expressions_wrap": "normal",
       "tab_width": 4,
       "ternary_operation_signs_on_next_line": false,
       "ternary_operation_wrap": "off",
@@ -276,7 +277,8 @@
       "wrap_comments": false,
       "wrap_first_method_in_call_chain": false,
       "wrap_long_lines": false,
-      "wrap_on_typing": true
+      "wrap_on_typing": true,
+      "wrap_semicolon_after_call_chain": false
     }
   }
 }

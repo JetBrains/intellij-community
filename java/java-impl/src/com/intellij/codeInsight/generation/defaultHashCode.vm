@@ -2,7 +2,7 @@ public int hashCode() {
 #if (!$superHasHashCode && $fields.size() == 1)
   #set($field = $fields.get(0))
   #if ($field.primitive)
-#addTempForOneField($field)
+    #addTempForOneField($field)
     return #addPrimitiveFieldHashCode($field);
   #else
     return #addFieldHashCode($field, false);
@@ -46,16 +46,32 @@ public int hashCode() {
 #macro (addPrimitiveFieldHashCode $field)
   #set ($fName = $field.accessor)
   #if ($field.byte || $field.short || $field.char)
-    (int) $fName##
+    $fName##
   #elseif ($field.long)
-    (int)($fName ^ ($fName >>> 32))##
+    #if ($java_version < 8)
+      (int)($fName ^ ($fName >>> 32))##
+    #else
+      java.lang.Long.hashCode($fName)##
+    #end
   #elseif ($field.boolean)
-    ($fName ? 1 : 0)##
+    #if ($java_version < 8)
+      ($fName ? 1 : 0)##
+    #else
+      java.lang.Boolean.hashCode($fName)##
+    #end
   #elseif ($field.float)
-    ($fName != 0.0f ? java.lang.Float.floatToIntBits($fName) : 0)##
+    #if ($java_version < 8)
+      java.lang.Float.floatToIntBits($fName)##
+    #else
+      java.lang.Float.hashCode($fName)##
+    #end
   #elseif ($field.double)
-    #set($tempName = "#getTempVarName()")
-    (int) ($tempName ^ ($tempName >>> 32))##
+    #if ($java_version < 8)
+      #set($tempName = "#getTempVarName()")
+      (int) ($tempName ^ ($tempName >>> 32))##
+    #else
+      java.lang.Double.hashCode($fName)##
+    #end
   #elseif ($field.void)
     0##
   #else
@@ -68,17 +84,17 @@ public int hashCode() {
 #end
 ##
 #macro(addTempForOneField $field)
-  #if ($field.double)
+  #if ($field.double && $java_version < 8)
     #if ($settings.generateFinalLocals)
-    final ##
+      final ##
     #end
-  #set($tempName = "#getTempVarName()")
-  long $tempName = java.lang.Double.doubleToLongBits($field.accessor);
+    #set($tempName = "#getTempVarName()")
+    long $tempName = java.lang.Double.doubleToLongBits($field.accessor);
   #end
 #end
 ##
 #macro(adjustHashCodeToArrays $field)
-   #if ($field.array && $java_version > 4)
+  #if ($field.array && $java_version > 4)
     #if ($field.nestedArray)
       java.util.Arrays.deepHashCode($field.accessor)##
     #else
@@ -99,7 +115,7 @@ public int hashCode() {
 ##
 #macro(addTempDeclaration $resultDeclarationCompleted)
   #foreach($field in $fields)
-    #if ($field.double)
+    #if ($field.double && $java_version < 8)
       #if (!$resultDeclarationCompleted)
         ;
       #end
@@ -112,16 +128,16 @@ public int hashCode() {
 #end
 ##
 #macro(addTempAssignment $field)
-  #if ($field.double)
+  #if ($field.double && $java_version < 8)
     #set($tempName = "#getTempVarName()")
     $tempName = java.lang.Double.doubleToLongBits($field.accessor);
   #end
 #end
 ##
 #macro(addFieldHashCode $field $brace)
-#set($name = $field.accessor)
-#if ($field.notNull)#adjustHashCodeToArrays($field)
-#elseif ($field.array && $java_version > 4)#adjustHashCodeToArrays($field)
+  #set($name = $field.accessor)
+  #if ($field.notNull)#adjustHashCodeToArrays($field)
+  #elseif ($field.array && $java_version > 4)#adjustHashCodeToArrays($field)
   #else
     #if ($brace)(##
     #end

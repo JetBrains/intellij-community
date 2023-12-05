@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
@@ -47,7 +48,6 @@ import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
 import java.nio.file.Path
@@ -521,16 +521,6 @@ internal class WorkspaceProjectImporter(
     }
   }
 
-  private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
-    if (e is ControlFlowException) {
-      ExceptionUtil.rethrowAllAsUnchecked(e)
-    }
-    if (e is CancellationException) {
-      throw e
-    }
-    MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
-  }
-
   private fun configLegacyFacets(mavenProjectsWithModules: List<MavenProjectWithModulesData<Module>>,
                                  moduleNameByProject: Map<MavenProject, String>,
                                  postTasks: List<MavenProjectsProcessorTask>,
@@ -676,18 +666,17 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
                                            private val appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) : MavenProjectsProcessorTask {
   override fun perform(project: Project,
                        embeddersManager: MavenEmbeddersManager,
-                       console: MavenConsole,
-                       indicator: MavenProgressIndicator) {
+                       indicator: ProgressIndicator) {
     runImportActivitySync(project, MavenUtil.SYSTEM_ID, AfterImportConfiguratorsTask::class.java) {
       doPerform(project, indicator)
     }
   }
 
-  private fun doPerform(project: Project, indicator: MavenProgressIndicator) {
+  private fun doPerform(project: Project, indicator: ProgressIndicator) {
     val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
       override val project = project
       override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
-      override val mavenProgressIndicator = indicator
+      override val progressIndicator = indicator
     }
     for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
       indicator.checkCanceled()
@@ -695,7 +684,7 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
         configurator.afterImport(context)
       }
       catch (e: Exception) {
-        MavenLog.LOG.error("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
+        logErrorIfNotControlFlow("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
       }
     }
   }
@@ -704,8 +693,7 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
 private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
   override fun perform(project: Project,
                        embeddersManager: MavenEmbeddersManager,
-                       console: MavenConsole,
-                       indicator: MavenProgressIndicator) {
+                       indicator: ProgressIndicator) {
     val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
 
     val showNotification = {
@@ -729,6 +717,16 @@ private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
 
     ApplicationManager.getApplication().invokeLater(showNotification, project.disposed)
   }
+}
+
+private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
+  if (e is ControlFlowException) {
+    ExceptionUtil.rethrowAllAsUnchecked(e)
+  }
+  if (e is CancellationException) {
+    throw e
+  }
+  MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
 }
 
 private class ModuleWithTypeData<M>(

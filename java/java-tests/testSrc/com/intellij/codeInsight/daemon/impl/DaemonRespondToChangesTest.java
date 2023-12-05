@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
@@ -18,6 +18,7 @@ import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -184,6 +185,16 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] {
+      new FieldCanBeLocalInspection(),
+      new RequiredAttributesInspectionBase(),
+      new CheckDtdReferencesInspection(),
+      new AccessStaticViaInstance(),
+    };
+  }
+
+  @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
     // treat listeners added there as not leaks
@@ -226,8 +237,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(getFile().getTextRange(), dirty); // have to rehighlight whole file in case no PSI events have come
   }
 
-  public void testRenameClass() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+  public void testRenameClass() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
@@ -240,8 +255,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testTypingSpace() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+  public void testTypingSpace() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
 
@@ -257,8 +276,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testTypingSpaceInsideError() throws Exception {
-    configureByFile(BASE_PATH + "Error.java");
+  public void testTypingSpaceInsideError() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass {
+        {
+          toString(0,<caret>0);
+        }
+      }
+    """);
     assertOneElement(highlightErrors());
 
     for (int i = 0; i < 100; i++) {
@@ -268,27 +293,30 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testBackSpaceInsideError() throws Exception {
-    configureByFile(BASE_PATH + "BackError.java");
+  public void testBackSpaceInsideError() {
+    configureByText(JavaFileType.INSTANCE, """
+      class E {
+           void fff() {
+               int i = <caret>
+           }
+       }
+    """);
     assertOneElement(highlightErrors());
 
     backspace();
     assertOneElement(highlightErrors());
   }
 
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {
-      new FieldCanBeLocalInspection(),
-      new RequiredAttributesInspectionBase(),
-      new CheckDtdReferencesInspection(),
-      new AccessStaticViaInstance(),
-    };
-  }
-
-
-  public void testUnusedFieldUpdate() throws Exception {
-    configureByFile(BASE_PATH + "UnusedField.java");
+  public void testUnusedFieldUpdate() {
+    configureByText(JavaFileType.INSTANCE, """
+     class Unused {
+       private int ffff;
+       void foo(int p) {
+         if (p==0) return;
+         <caret>
+       }
+     }
+    """);
     Document document = getDocument(getFile());
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(1, infos.size());
@@ -338,8 +366,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(getFile().getText(), errors);
   }
 
-  public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+  public void testDaemonIgnoresNonPhysicalEditor() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     assertEmpty(highlightErrors());
 
     EditorFactory editorFactory = EditorFactory.getInstance();
@@ -360,9 +392,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testDaemonIgnoresConsoleActivities() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
-    doHighlighting(HighlightSeverity.WARNING);
+  public void testDaemonIgnoresConsoleActivities() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
+
+    assertEmpty(highlightErrors());
 
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(getProject()).getConsole();
 
@@ -1149,8 +1186,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testModificationInsideCodeBlockDoesNotAffectErrorMarkersOutside() throws Exception {
-    configureByFile(BASE_PATH + "ErrorMark.java");
+  public void testModificationInsideCodeBlockDoesNotAffectErrorMarkersOutside() {
+    configureByText(JavaFileType.INSTANCE, """
+      class SSSSS {
+          public static void suite() {
+              <caret>
+              new Runnable() {
+                  public void run() {
+            
+                  }
+              };
+          }
+      
+      """);
     HighlightInfo error = assertOneElement(highlightErrors());
     assertEquals("'}' expected", error.getDescription());
 
@@ -2192,7 +2240,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       boolean savedValue = settings.isCollapseMethods();
       try {
         settings.setCollapseMethods(true);
-        CodeFoldingConfigurable.applyCodeFoldingSettingsChanges();
+        CodeFoldingConfigurable.Util.applyCodeFoldingSettingsChanges();
         waitForDaemon();
         checkFoldingState("[FoldRegion +(22:27), placeholder='{}']");
       }
@@ -3675,5 +3723,27 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     finally {
       stallMs.set(0);
     }
+  }
+
+  public void testModificationInsideCommentDoesNotAffectNearbyInspectionWarning() {
+    enableInspectionTool(new ConstantValueInspection());
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass {
+        public int foo() {
+          //<caret>
+          if (this == null) return 0;
+          return 1;
+        }
+      }
+    """);
+
+    assertEmpty(highlightErrors());
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    HighlightInfo error = ContainerUtil.find(infos, e->e.getDescription().contains("always 'false'"));
+    assertNotNull(infos.toString(), error);
+    type("d");
+    List<HighlightInfo> infos2 = doHighlighting(HighlightSeverity.WARNING);
+    HighlightInfo error2 = ContainerUtil.find(infos2, e->e.getDescription().contains("always 'false'"));
+    assertNotNull(infos2.toString(), error2);
   }
 }

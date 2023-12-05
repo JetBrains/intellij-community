@@ -4,25 +4,32 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.util.OverflowSemaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import java.awt.Color
 import java.awt.Dimension
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 
 /**
  * Call [shutdown] when the tree is no longer needed.
  */
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 abstract class AsyncChangesTree : ChangesTree {
   companion object {
     private val LOG = logger<AsyncChangesTree>()
@@ -32,9 +39,10 @@ abstract class AsyncChangesTree : ChangesTree {
 
   val scope = CoroutineScope(SupervisorJob())
 
-  private val _requests = MutableSharedFlow<Request>()
-  private val _model = MutableStateFlow(Model(-1, TreeModelBuilder.buildEmpty(), null))
+  private val updateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private val _callbacks = Channel<PendingCallback>(capacity = Int.MAX_VALUE)
+  private val _pendingColors = MutableSharedFlow<ChangesBrowserNode<*>>(extraBufferCapacity = 100,
+                                                                        onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val lastFulfilledRequestId = MutableStateFlow(-1)
   private val lastRequestId = AtomicInteger()
@@ -105,7 +113,9 @@ abstract class AsyncChangesTree : ChangesTree {
     val refreshGrouping = grouping
     val requestId = lastRequestId.incrementAndGet()
     scope.launch {
-      _requests.emit(Request(requestId, refreshGrouping, treeStateStrategy))
+      updateSemaphore.withPermit {
+        refreshTreeModel(requestId, refreshGrouping, treeStateStrategy)
+      }
     }
 
     if (onRefreshed != null) {
@@ -125,26 +135,15 @@ abstract class AsyncChangesTree : ChangesTree {
     result.exceptionOrNull()?.let { LOG.error(it) }
   }
 
+  private val treeEdtContext get() = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   private fun start() {
-    scope.launch {
-      _requests.asyncCollectLatest(scope) { request ->
-        handleRequest(request)
-      }
-    }
-
-    val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
-    scope.launch(edtContext) {
+    scope.launch(treeEdtContext) {
       _busy.collectLatest {
         updatePaintBusy(it)
       }
     }
-    scope.launch(edtContext) {
-      _model.collectLatest { model ->
-        updateTreeModel(model)
-      }
-    }
-    scope.launch(edtContext) {
+    scope.launch(treeEdtContext) {
       while (true) {
         // We respect the order of callbacks scheduling,
         // thus the callback with smaller requestId can be delayed by earlier callback with bigger requestId.
@@ -157,13 +156,32 @@ abstract class AsyncChangesTree : ChangesTree {
         handleCallback(callback)
       }
     }
+    scope.launch {
+      val repaintRequest = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+      launch(treeEdtContext, start = CoroutineStart.UNDISPATCHED) {
+        repaintRequest.debounce(300).collect {
+          repaint()
+        }
+      }
+
+      _pendingColors.collect { node ->
+        val wasChanged = readAction { node.cacheBackgroundColor(project) }
+        if (wasChanged) {
+          repaintRequest.emit(Unit)
+        }
+      }
+    }
   }
 
-  private suspend fun handleRequest(request: Request) {
+  private suspend fun refreshTreeModel(requestId: Int,
+                                       refreshGrouping: ChangesGroupingPolicyFactory,
+                                       treeStateStrategy: TreeStateStrategy<*>?) {
     _busy.value = true
     try {
-      val treeModel = changesTreeModel.buildTreeModel(request.grouping)
-      _model.value = Model(request.requestId, treeModel, request.treeStateStrategy)
+      val treeModel = changesTreeModel.buildTreeModel(refreshGrouping)
+      withContext(treeEdtContext) {
+        updateTreeModel(requestId, treeModel, treeStateStrategy)
+      }
     }
     finally {
       _busy.value = false
@@ -171,20 +189,21 @@ abstract class AsyncChangesTree : ChangesTree {
   }
 
   @RequiresEdt
-  private suspend fun updateTreeModel(model: Model) {
+  private suspend fun updateTreeModel(requestId: Int, treeModel: DefaultTreeModel, treeStateStrategy: TreeStateStrategy<*>?) {
     try {
-      coroutineToIndicator {
-        val strategy = model.treeStateStrategy
-        if (strategy != null) {
-          updateTreeModel(model.treeModel, strategy)
+      _pendingColors.resetReplayCache()
+
+      blockingContext {
+        if (treeStateStrategy != null) {
+          updateTreeModel(treeModel, treeStateStrategy)
         }
         else {
-          updateTreeModel(model.treeModel)
+          updateTreeModel(treeModel)
         }
       }
     }
     finally {
-      lastFulfilledRequestId.value = model.requestId
+      lastFulfilledRequestId.value = requestId
     }
   }
 
@@ -212,17 +231,16 @@ abstract class AsyncChangesTree : ChangesTree {
     repaint() // repaint empty text
   }
 
-  private class Request(
-    val requestId: Int,
-    val grouping: ChangesGroupingPolicyFactory,
-    val treeStateStrategy: TreeStateStrategy<*>?
-  )
-
-  private class Model(
-    val requestId: Int,
-    val treeModel: DefaultTreeModel,
-    val treeStateStrategy: TreeStateStrategy<*>?
-  )
+  override fun getFileColorForPath(path: TreePath): Color? {
+    val node = path.lastPathComponent
+    if (node is ChangesBrowserNode<*>) {
+      if (!node.hasBackgroundColorCached()) {
+        _pendingColors.tryEmit(node)
+      }
+      return node.backgroundColorCached
+    }
+    return null
+  }
 
   private class PendingCallback(
     val requestId: Int,
@@ -297,21 +315,5 @@ abstract class TwoStepAsyncChangesTreeModel<T>(val scope: CoroutineScope) : Asyn
     val newJob = scope.async { coroutineToIndicator { fetchData() } }
     deferredData.set(newJob)
     return newJob.await()
-  }
-}
-
-/**
- * [coroutineToIndicator]-friendly [collectLatest] implementation. Otherwise, indicator will never be cancelled.
- */
-private suspend fun <T> Flow<T>.asyncCollectLatest(scope: CoroutineScope, action: suspend (value: T) -> Unit) {
-  var lastJob: Job? = null
-  collect { request ->
-    lastJob?.let {
-      it.cancel()
-      it.join()
-    }
-    lastJob = scope.launch {
-      action(request)
-    }
   }
 }

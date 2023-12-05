@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.MergeIfsIntention
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
-import org.jetbrains.kotlin.idea.intentions.MergeIfsIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset

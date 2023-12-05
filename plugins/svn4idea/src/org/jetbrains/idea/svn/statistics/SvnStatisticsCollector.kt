@@ -30,5 +30,5 @@ private class SvnStatisticsCollector : ProjectUsagesCollector() {
 
   private val GROUP = EventLogGroup("svn.configuration", 2)
   private val WORKING_COPY = GROUP.registerEvent("working.copy",
-                                                 EventFields.StringValidatedByRegexp("format", "version"))
+                                                 EventFields.StringValidatedByRegexpReference("format", "version"))
 }

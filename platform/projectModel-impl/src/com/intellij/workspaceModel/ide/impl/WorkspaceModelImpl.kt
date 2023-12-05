@@ -12,8 +12,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.*
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
@@ -92,7 +92,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
           previousStorage
         }
 
-        loadingFromCacheTimeMs.addElapsedTimeMs(cacheLoadingStart)
+        loadingFromCacheTimeMs.addElapsedTimeMillis(cacheLoadingStart)
         activity.end()
         storage to previousStorageForUnloaded
       }
@@ -105,7 +105,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
     unloadedEntitiesStorage = VersionedEntityStorageImpl(unloadedEntities)
     entityTracer.subscribe(project, cs)
-    loadingTotalTimeMs.addElapsedTimeMs(start)
+    loadingTotalTimeMs.addElapsedTimeMillis(start)
   }
 
   override val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
@@ -262,7 +262,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         return
       }
     }
-    checkRecursiveUpdateTimeMs.addElapsedTimeMs(start)
+    checkRecursiveUpdateTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
@@ -293,7 +293,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
     if (entityStorage.version != replacement.version) return false
 
-    replaceProjectModelTimeMs.addMeasuredTimeMs {
+    replaceProjectModelTimeMs.addMeasuredTimeMillis {
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
       entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
@@ -308,7 +308,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
 
-    initializeBridgesTimeMs.addMeasuredTimeMs {
+    initializeBridgesTimeMs.addMeasuredTimeMillis {
       BridgeInitializer.EP_NAME.extensionList.forEach { bridgeInitializer ->
         logErrorOnEventHandling {
           if (bridgeInitializer.isEnabled()) {
@@ -492,7 +492,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
 
     init {
-      setupOpenTelemetryReporting(workspaceMetrics.meter)
+      setupOpenTelemetryReporting(workspaceModelMetrics.meter)
     }
   }
 }

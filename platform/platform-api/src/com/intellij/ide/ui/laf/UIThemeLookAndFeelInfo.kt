@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -47,3 +48,7 @@ class UIThemeExportableBean(
 
   val icons: Map<String, String>,
 )
+
+@Internal
+fun EditorColorsScheme.isDefaultForTheme(theme: UIThemeLookAndFeelInfo?): Boolean =
+  theme?.editorSchemeId == Scheme.getBaseName(name)

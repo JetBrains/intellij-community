@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class EntireFileDifferenceModel extends FileDifferenceModel {
-  private final Entry myLeft;
-  private final Entry myRight;
+  private final @Nullable Entry myLeft;
+  private final @Nullable Entry myRight;
 
-  public EntireFileDifferenceModel(Project p, IdeaGateway gw, Entry left, Entry right, boolean editableRightContent) {
+  public EntireFileDifferenceModel(Project p, IdeaGateway gw, @Nullable Entry left, @Nullable Entry right, boolean editableRightContent) {
     super(p, gw, editableRightContent);
     myLeft = left;
     myRight = right;
@@ -35,12 +35,12 @@ public final class EntireFileDifferenceModel extends FileDifferenceModel {
 
   @Override
   protected boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p) {
-    return myLeft.getContent().isAvailable();
+    return myLeft != null && myLeft.getContent().isAvailable();
   }
 
   @Override
   protected boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p) {
-    return myRight.getContent().isAvailable();
+    return myRight != null && myRight.getContent().isAvailable();
   }
 
   @Override

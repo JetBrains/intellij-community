@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
@@ -7,6 +7,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -47,7 +48,6 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.text.JBDateFormat;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -333,7 +333,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     myDualView.setTreeCellRenderer(new MyTreeCellRenderer(myDualView.getTree().getCellRenderer(), () -> myHistorySession));
     myDualView.setCellWrapper(new MyCellWrapper(() -> myHistorySession));
 
-    myDualView.installDoubleClickHandler(EmptyAction.wrap(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON)));
+    myDualView.installDoubleClickHandler(ActionUtil.wrap(IdeActions.ACTION_SHOW_DIFF_COMMON));
 
     myDualView.getFlatView().getTableViewModel().setSortable(true);
     RowSorter<? extends TableModel> rowSorter = myDualView.getFlatView().getRowSorter();
@@ -691,7 +691,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
           setOpaque(selected);
           Date date = (Date)value;
           if (date != null) {
-            append(JBDateFormat.getFormatter().formatPrettyDateTime(date), getDefaultAttributes());
+            append(DateFormatUtil.formatPrettyDateTime(date), getDefaultAttributes());
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
         }

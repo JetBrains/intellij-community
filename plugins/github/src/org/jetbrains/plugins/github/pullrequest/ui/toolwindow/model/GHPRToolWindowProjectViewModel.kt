@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import git4idea.GitStandardRemoteBranch
 import git4idea.push.GitPushRepoResult

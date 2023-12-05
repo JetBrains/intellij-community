@@ -2,5 +2,5 @@
   "type": "MARKED_ELEMENT",
   "mainFile": "test.kt",
   "newName": "Baz",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

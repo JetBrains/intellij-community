@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -37,6 +38,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
+    subscribeOnAdvancedSettings();
   }
 
   @NotNull
@@ -181,6 +183,19 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
       TestRunner testRunner = GradleProjectSettings.getTestRunner(getProject(), current.getExternalProjectPath());
       getPublisher().onTestRunnerChange(testRunner, current.getExternalProjectPath());
     }
+  }
+
+  private void subscribeOnAdvancedSettings() {
+    ApplicationManager.getApplication().getMessageBus()
+      .connect(this)
+      .subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
+        @Override
+        public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
+          if ("gradle.download.sources".equals(id) && newValue instanceof Boolean) {
+            isDownloadSources = (boolean)newValue;
+          }
+        }
+      });
   }
 
   public static class MyState implements State<GradleProjectSettings> {

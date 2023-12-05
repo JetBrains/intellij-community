@@ -7,6 +7,10 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * This interface represents a bridge initializer which is responsible for creating bridges
+ * base on the changes in project level WorkspaceModel
+ */
 @ApiStatus.Internal
 public interface BridgeInitializer {
   public fun isEnabled(): Boolean

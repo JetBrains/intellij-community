@@ -4,17 +4,12 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ex.QuickFixWrapper
-import com.intellij.openapi.application.PathManager
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import java.io.File
 
-abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
-
+abstract class JvmInspectionTestBase : LightJvmCodeInsightFixtureTestCase() {
   abstract val inspection: InspectionProfileEntry
 
   override fun setUp() {
@@ -136,7 +131,9 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
-    return getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available")
+    return getAvailableIntention(hint) ?: throw AssertionError(
+      "Quick-fix '$hint' not in list of available intentions:\n${availableIntentions.joinToString(separator = "\n") { it.text }}"
+    )
   }
 
   protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(
@@ -157,8 +154,6 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     configureByFile(file)
     assertEmpty("Quickfix '$hint' is available but should not", myFixture.filterAvailableIntentions(hint))
   }
-
-  protected fun generateFileName() = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")
 
   override fun tearDown() {
     try {

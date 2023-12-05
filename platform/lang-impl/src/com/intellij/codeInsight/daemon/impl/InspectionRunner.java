@@ -161,11 +161,13 @@ class InspectionRunner {
       BlockingQueue<InspectionContext> contexts = new ArrayBlockingQueue<>(allContexts.size() + 1, false, allContexts);
       boolean added = contexts.offer(TOMB_STONE);
       assert added;
-      ForkJoinTask<Boolean> regularElementsFuture = processInOrderAsync(contexts, TOMB_STONE, context -> processContext(finalPriorityRange, context, onComplete));
+      ForkJoinTask<Boolean> regularElementsFuture = processInOrderAsync(contexts, TOMB_STONE, context -> processContext(finalPriorityRange,
+                                                                                                                        myRestrictRange,
+                                                                                                                        context, onComplete));
 
       ForkJoinTask<Boolean> injectedElementsFuture = null;
       if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
-        BlockingQueue<Pair<PsiFile, PsiElement>> queue = new ArrayBlockingQueue<>(1000);
+        BlockingQueue<Pair<PsiFile, PsiElement>> queue = new LinkedBlockingQueue<>();
         Pair<PsiFile, PsiElement> tombStone = Pair.create(null, null);
         try {
           injectedElementsFuture =
@@ -174,7 +176,12 @@ class InspectionRunner {
           getInjectedWithHosts(ContainerUtil.concat(inside, outside), queue);
         }
         finally {
-          queue.add(tombStone);
+          try {
+            queue.put(tombStone);
+          }
+          catch (InterruptedException e) {
+            throw new ProcessCanceledException(e);
+          }
         }
       }
 
@@ -187,7 +194,7 @@ class InspectionRunner {
         }
       }
       catch (Exception e) {
-        ExceptionUtil.rethrow(e instanceof ExecutionException ? e.getCause() : e);
+        ExceptionUtil.rethrow(e);
       }
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
@@ -414,19 +421,16 @@ class InspectionRunner {
    * maintaining parallelism during this process (i.e., several visitors from {@code init} can be executed concurrently, but elements from the list head get higher priority than the list tail).
    */
   private static void processContext(long priorityRange,
-                                     @NotNull InspectionContext context,
+                                     @NotNull TextRange restrictRange, @NotNull InspectionContext context,
                                      @NotNull Consumer<? super InspectionContext> afterProcessCallback) {
     List<? extends PsiElement> elements = context.elements();
-    //if (elements.size() == 31 && context.tool().getID().equals("UnreachableCodeJS")) {
-    //  System.out.println("processCOntext "+context + ExceptionUtil.currentStackTrace());
-    //}
     Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
     InspectionProblemHolder holder = context.holder;
     int resultCount = holder.getResultCount();
     PsiElement favoriteElement = holder.myFavoriteElement;
 
     // accept favoriteElement only if it belongs to the correct inside/outside list
-    if (favoriteElement != null && context.isVisible() == TextRangeScalarUtil.intersects(favoriteElement.getTextRange(), priorityRange)) {
+    if (favoriteElement != null && context.isVisible() == TextRangeScalarUtil.intersects(favoriteElement.getTextRange(), priorityRange) && restrictRange.contains(favoriteElement.getTextRange())) {
       holder.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
       // run first for the element we know resulted in the diagnostics during the previous run
       favoriteElement.accept(context.visitor);
@@ -559,14 +563,19 @@ class InspectionRunner {
     });
   }
 
-  private void getInjectedWithHosts(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super Pair<PsiFile, PsiElement>> result) {
+  private void getInjectedWithHosts(@NotNull List<? extends PsiElement> elements, @NotNull BlockingQueue<? super Pair<PsiFile, PsiElement>> result) {
     Map<PsiFile, PsiElement> injectedToHost = createInjectedFileMap();
     Project project = myPsiFile.getProject();
     for (PsiElement element : elements) {
       InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false,
                                                                (injectedPsi, __) -> {
                                                                  if (injectedToHost.put(injectedPsi, element) == null) {
-                                                                   result.add(Pair.create(injectedPsi, element));
+                                                                   try {
+                                                                     result.put(Pair.create(injectedPsi, element));
+                                                                   }
+                                                                   catch (InterruptedException e) {
+                                                                     throw new ProcessCanceledException(e);
+                                                                   }
                                                                  }
                                                                });
     }

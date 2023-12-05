@@ -238,6 +238,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       showPopup(findPositionForBulbButton());
       return;
     }
+    CodeFloatingToolbar.temporarilyDisable(false);
     CodeFloatingToolbar toolbar = getFloatingToolbar();
     if (toolbar != null && toolbar.canBeShownAtCurrentSelection()) {
       showPopupFromToolbar(toolbar);

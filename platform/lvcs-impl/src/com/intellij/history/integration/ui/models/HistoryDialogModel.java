@@ -129,7 +129,7 @@ public abstract class HistoryDialogModel {
     });
   }
 
-  private static List<RevisionItem> groupRevisions(List<? extends Revision> revs) {
+  private static @NotNull List<RevisionItem> groupRevisions(@NotNull List<? extends Revision> revs) {
     LinkedList<RevisionItem> result = new LinkedList<>();
 
     for (Revision each : ContainerUtil.iterateBackward(revs)) {
@@ -229,7 +229,7 @@ public abstract class HistoryDialogModel {
     return getLeftRevision().getDifferencesWith(getRightRevision());
   }
 
-  protected Change createChange(Difference d) {
+  protected Change createChange(@NotNull Difference d) {
     return new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));
   }
 

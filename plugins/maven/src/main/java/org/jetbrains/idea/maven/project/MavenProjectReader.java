@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler;
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil;
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector;
 import org.jetbrains.idea.maven.model.*;
@@ -99,13 +100,12 @@ public final class MavenProjectReader {
   }
 
   private static RawModelReadResult doReadProjectModel(Project project, VirtualFile file, boolean headerOnly) {
-    MavenModel result = null;
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     Set<String> alwaysOnProfiles = new HashSet<>();
 
     String fileExtension = file.getExtension();
     if (!"pom".equalsIgnoreCase(fileExtension) && !"xml".equalsIgnoreCase(fileExtension)) {
-      return readProjectModelUsingMavenServer(project, file, result, problems, alwaysOnProfiles);
+      return readProjectModelUsingMavenServer(project, file, problems, alwaysOnProfiles);
     }
 
     return readMavenProjectModel(file, headerOnly, problems, alwaysOnProfiles, MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(file, project));
@@ -113,10 +113,10 @@ public final class MavenProjectReader {
 
   @NotNull
   private static RawModelReadResult readProjectModelUsingMavenServer(Project project,
-                                              VirtualFile file,
-                                              MavenModel result,
-                                              Collection<MavenProjectProblem> problems,
-                                              Set<String> alwaysOnProfiles) {
+                                                                     VirtualFile file,
+                                                                     Collection<MavenProjectProblem> problems,
+                                                                     Set<String> alwaysOnProfiles) {
+    MavenModel result = null;
     String basedir = getBaseDir(file).toString();
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir);
@@ -496,8 +496,7 @@ public final class MavenProjectReader {
       explicitProfiles,
       locator,
       null,
-      null,
-      null,
+      MavenLogEventHandler.INSTANCE,
       null,
       false);
   }

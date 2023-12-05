@@ -556,6 +556,30 @@ class RemoteSyncTest(HelpersTestCase):
                                          universal_newlines=True)
         self.assertIn('usage: remote_sync.py', output)
 
+    def test_versioned_dot_so_libraries_ignored(self):
+        self.collect_sources(['root'])
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
+            'roots': [
+                {
+                    'path': 'root',
+                    'zip_name': 'root.zip',
+                    'valid_entries': {
+                        'lib.py': {
+                            'mtime': self.mtime('root/lib.py'),
+                        },
+                        'lib.so.py': {
+                            'mtime': self.mtime('root/lib.so.py'),
+                        },
+                    },
+                    'invalid_entries': []
+                }
+            ]
+        })
+        self.assertZipContentEquals(self.resolve_in_temp_dir('root.zip'), """
+        lib.py
+        lib.so.py
+        """)
+
     def collect_sources(self, roots_inside_test_data, output_dir=None, state_json=None,
                         project_roots=()):
         if output_dir is None:

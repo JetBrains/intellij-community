@@ -12,8 +12,11 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.systemIndependentPath
 import java.io.FileInputStream
 import java.io.InputStream
@@ -22,12 +25,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.io.path.*
 
-class JbSettingsImporter(private val configDirPath: Path, private val pluginsPath: Path) {
+class JbSettingsImporter(private val configDirPath: Path,
+                         private val pluginsPath: Path,
+                         private val prevIdeHome: Path?
+                         ) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
+  private val defaultNewUIValue = true
+  private val IDE_GENERAL_XML = "ide.general.xml"
 
-  fun importOptions(categories: Set<SettingsCategory>) {
+  suspend fun importOptions(categories: Set<SettingsCategory>) {
     val allFiles = mutableSetOf<String>()
     val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
     optionsPath.listDirectoryEntries("*.xml").map { it.name }.forEach { allFiles.add(it) }
@@ -36,7 +46,8 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
         allFiles.add(optionsEntry.name)
       }
       else if (optionsEntry.isDirectory() && optionsEntry.name.lowercase() == getPerOsSettingsStorageFolderName()) {
-        allFiles.addAll(filesFromFolder(optionsEntry, ""))
+        // i.e. mac/keymap.xml
+        allFiles.addAll(filesFromFolder(optionsEntry, optionsEntry.name))
       }
     }
     // ensure CodeStyleSchemes manager is created
@@ -47,7 +58,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     schemeManagerFactory.process {
       val dirPath = configDirPath / it.fileSpec
       if (dirPath.isDirectory()) {
-        allFiles.addAll(filesFromFolder(dirPath))
+        allFiles.addAll(filesFromFolder(dirPath, it.fileSpec))
       }
     }
     LOG.info("Detected ${allFiles.size} files to import: ${allFiles.joinToString()}")
@@ -59,13 +70,36 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     storageManager.addStreamProvider(provider)
     componentStore.reloadComponents(files2process, emptyList())
     storageManager.removeStreamProvider(provider::class.java)
+    saveSettings(ApplicationManager.getApplication(), true)
+  }
+
+  internal fun isNewUIValueChanged() : Boolean {
+    val ideGeneralXmlFile = configDirPath / PathManager.OPTIONS_DIRECTORY / IDE_GENERAL_XML
+    try {
+      val ideGeneral = JDOMUtil.load(ideGeneralXmlFile.toFile())
+      val registry = ideGeneral.getChildren("component").find {
+        it.getAttributeValue("name") == "Registry"
+      } ?: return false
+      val newUIValue = registry.getChildren("entry").find {
+        it.getAttributeValue("key") == ExperimentalUI.KEY
+      }?.value ?: return false
+
+      return newUIValue.toBoolean() != defaultNewUIValue
+    } catch (e: Exception) {
+      LOG.warn("An error occurred while checking new UI state", e)
+      return false
+    }
   }
 
   private fun filesFromFolder(dir: Path, prefix: String = dir.name): Collection<String> {
     val retval = ArrayList<String>()
     for (entry in dir.listDirectoryEntries()) {
       if (entry.isRegularFile()) {
-        retval.add("$prefix/${entry.name}")
+        if (prefix.isNullOrEmpty()) {
+          retval.add(entry.name)
+        } else {
+          retval.add("$prefix/${entry.name}")
+        }
       }
     }
     return retval
@@ -75,14 +109,18 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
   private fun filterFiles(allFiles: Set<String>, categories: Set<SettingsCategory>): List<String> {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
     val retval = hashSetOf<String>()
+    val osFolderName = getPerOsSettingsStorageFolderName()
     componentManager.processAllImplementationClasses { aClass, _ ->
       if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
         val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
         if (!categories.contains(state.category))
           return@processAllImplementationClasses
         state.storages.forEach { storage ->
-          if (!storage.deprecated && allFiles.contains(storage.value)) {
-            @Suppress("UNCHECKED_CAST")
+          if (storage.deprecated)
+            return@forEach
+          if (storage.roamingType == RoamingType.PER_OS && allFiles.contains("$osFolderName/${storage.value}")) {
+            retval.add("$osFolderName/${storage.value}")
+          } else if (storage.roamingType != RoamingType.DISABLED && allFiles.contains(storage.value)) {
             retval.add(storage.value)
           }
         }
@@ -109,17 +147,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
   }
 
   fun installPlugins(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
-    val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
-    importOptions.isHeadless = true
-    importOptions.headlessProgressIndicator = progressIndicator
-    importOptions.importSettings = object : ConfigImportSettings {
-      override fun processPluginsToMigrate(newConfigDir: Path,
-                                           oldConfigDir: Path,
-                                           bundledPlugins: MutableList<IdeaPluginDescriptor>,
-                                           nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
-        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
-      }
-    }
+    val importOptions = configImportOptions(progressIndicator, pluginIds)
     ConfigImportHelper.migratePlugins(
       pluginsPath,
       configDirPath,
@@ -129,11 +157,68 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     ) { false }
   }
 
-  internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
+  private fun configImportOptions(progressIndicator: ProgressIndicator,
+                                  pluginIds: List<String>): ConfigImportHelper.ConfigImportOptions {
+    val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
+    importOptions.isHeadless = true
+    importOptions.headlessProgressIndicator = progressIndicator
+    importOptions.importSettings = object : ConfigImportSettings {
+      private val oldEarlyAccessRegistryTxt = configDirPath.resolve(EarlyAccessRegistryManager.fileName)
+      override fun processPluginsToMigrate(newConfigDir: Path,
+                                           oldConfigDir: Path,
+                                           bundledPlugins: MutableList<IdeaPluginDescriptor>,
+                                           nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
+        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
+      }
+
+      override fun shouldForceCopy(path: Path): Boolean {
+        return path == oldEarlyAccessRegistryTxt
+      }
+    }
+    return importOptions
+  }
+
+  fun importRaw(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
+    val storageManager = componentStore.storageManager as StateStorageManagerImpl
+    val dummyProvider = DummyStreamProvider()
+    // we add dummy provider to prevent IDE from saving files on shutdown
+    // we also need to take care of EarlyAccessManager
+    storageManager.addStreamProvider(dummyProvider)
+    val importOptions = configImportOptions(progressIndicator, pluginIds)
+    System.setProperty(EarlyAccessRegistryManager.DISABLE_SAVE_PROPERTY, "true")
+    importOptions.isMergeVmOptions = true
+    ConfigImportHelper.doImport(configDirPath, PathManager.getConfigDir(), prevIdeHome, LOG, importOptions)
+  }
+
+  internal class DummyStreamProvider : StreamProvider {
     override val isExclusive = true
 
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {}
+
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      return false
+    }
+
+    override fun processChildren(path: String,
+                                 roamingType: RoamingType,
+                                 filter: (name: String) -> Boolean,
+                                 processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) = true
+
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = true
+
+  }
+
+  internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
+    override val isExclusive = false
+
+    override val saveStorageDataOnReload: Boolean
+      get() = false
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+      return false
+    }
+
     override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
-      LOG.warn("Writing to $fileSpec (Will do nothing)")
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -156,7 +241,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
                                  roamingType: RoamingType,
                                  filter: (name: String) -> Boolean,
                                  processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
-      LOG.warn("Process Children $path")
+      LOG.debug("Process Children $path")
       val folder = configDirPath.resolve(path)
       if (!folder.exists()) return true
 
@@ -179,7 +264,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      LOG.warn("Deleting $fileSpec")
+      LOG.debug("Deleting $fileSpec")
       return false
     }
 

@@ -7,8 +7,8 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
-import com.intellij.collaboration.ui.codereview.list.search.SimpleSelectablePopupItemRenderer
+import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -92,7 +92,7 @@ object GHUIUtil {
   }
 
   fun <T> showChooserPopup(parentComponent: JComponent,
-                           presenter: (SelectableWrapper<T>) -> ChooserPopupUtil.SelectablePopupItemPresentation.Simple,
+                           presenter: (SelectableWrapper<T>) -> SelectablePopupItemPresentation.Simple,
                            currentList: List<T>,
                            availableListFuture: CompletableFuture<List<T>>)
     : CompletableFuture<CollectionDelta<T>> {
@@ -188,8 +188,8 @@ object GHUIUtil {
   }
 
   object SelectionPresenters {
-    fun PRReviewers(avatarIconsProvider: GHAvatarIconsProvider): (SelectableWrapper<GHPullRequestRequestedReviewer>) -> ChooserPopupUtil.SelectablePopupItemPresentation.Simple = { wrapper ->
-      ChooserPopupUtil.SelectablePopupItemPresentation.Simple(
+    fun PRReviewers(avatarIconsProvider: GHAvatarIconsProvider): (SelectableWrapper<GHPullRequestRequestedReviewer>) -> SelectablePopupItemPresentation.Simple = { wrapper ->
+      SelectablePopupItemPresentation.Simple(
         wrapper.value.shortName,
         avatarIconsProvider.getIcon(wrapper.value.avatarUrl, Avatar.Sizes.BASE),
         null,
@@ -197,8 +197,8 @@ object GHUIUtil {
       )
     }
 
-    fun Users(avatarIconsProvider: GHAvatarIconsProvider): (SelectableWrapper<GHUser>) -> ChooserPopupUtil.SelectablePopupItemPresentation.Simple = { wrapper ->
-      ChooserPopupUtil.SelectablePopupItemPresentation.Simple(
+    fun Users(avatarIconsProvider: GHAvatarIconsProvider): (SelectableWrapper<GHUser>) -> SelectablePopupItemPresentation.Simple = { wrapper ->
+      SelectablePopupItemPresentation.Simple(
         wrapper.value.login,
         avatarIconsProvider.getIcon(wrapper.value.avatarUrl, Avatar.Sizes.BASE),
         null,
@@ -206,8 +206,8 @@ object GHUIUtil {
       )
     }
 
-    fun Labels(): (SelectableWrapper<GHLabel>) -> ChooserPopupUtil.SelectablePopupItemPresentation.Simple = { wrapper ->
-      ChooserPopupUtil.SelectablePopupItemPresentation.Simple(
+    fun Labels(): (SelectableWrapper<GHLabel>) -> SelectablePopupItemPresentation.Simple = { wrapper ->
+      SelectablePopupItemPresentation.Simple(
         wrapper.value.name,
         ColorIcon(16, ColorUtil.fromHex(wrapper.value.color)),
         null,

@@ -996,26 +996,55 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
     }
     fun `test no highlighting when automatic registered parameter resolver is found`() {
       myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.kt", """
-      package com.intellij.testframework.ext
+        package com.intellij.testframework.ext
+        
+        class AutomaticExtension : org.junit.jupiter.api.extension.ParameterResolver {
+          override fun supportsParameter(
+            parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+            extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+          ): Boolean = true
       
-      class AutomaticExtension : org.junit.jupiter.api.extension.ParameterResolver {
-        override fun supportsParameter(
-          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
-          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
-        ): Boolean = true
-    
-        override fun resolveParameter(
-          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
-          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
-        ): Any = ""
-      }    
-    """.trimIndent())
+          override fun resolveParameter(
+            parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+            extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+          ): Any = ""
+        }    
+      """.trimIndent())
       addAutomaticExtension("com.intellij.testframework.ext.AutomaticExtension")
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
-      class MainTest {
-        @org.junit.jupiter.api.BeforeEach
-        fun foo(x: Int) { }
-      }
+        class MainTest {
+          @org.junit.jupiter.api.BeforeEach
+          fun foo(x: Int) { }
+        }
+    """.trimIndent())
+    }
+    fun `test no highlighting when multiple automatic registered parameter resolver is found`() {
+      myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.kt", """
+        package com.intellij.testframework.ext
+        
+        class NonResolverExtension : org.junit.jupiter.api.extension.Extension { }    
+        
+        class ResolverExtension : org.junit.jupiter.api.extension.ParameterResolver {
+          override fun supportsParameter(
+            parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+            extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+          ): Boolean = true
+      
+          override fun resolveParameter(
+            parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+            extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+          ): Any = ""
+        }
+    """.trimIndent())
+      addAutomaticExtension("""
+        com.intellij.testframework.ext.NonResolverExtension
+        com.intellij.testframework.ext.ResolverExtension
+      """.trimIndent())
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+        class MainTest {
+          @org.junit.jupiter.api.BeforeEach
+          fun foo(x: Int) { }
+        }
     """.trimIndent())
     }
 

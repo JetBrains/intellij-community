@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.onboarding
 
+import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.stats.completion.tracker.InstallationIdProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import java.time.Duration
 import java.time.Instant
@@ -18,20 +18,20 @@ class KotlinNewUserTrackerState : BaseState() {
     var firstKtFileOpened by property(0L)
     var lastKtFileOpened by property(0L)
     var newKtUserSince by property(0L)
-    // When the user either dismissed the dialog or chose to fill out the survey
-    var newKtUserDialogProcessed by property(false)
 }
 
 @State(name = "KotlinNewUserTracker", storages = [Storage("kotlin-onboarding.xml")])
 class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState> {
     companion object {
         // Offer survey after one week of using Kotlin
-        private val NEW_USER_SURVEY_DELAY = Duration.ofDays(7)
-        private val NEW_IDEA_USER_DATE = LocalDate.of(2023, 10, 19)
+        internal val NEW_USER_SURVEY_DELAY = Duration.ofDays(7)
+        internal val NEW_IDEA_USER_DATE = LocalDate.of(2023, 10, 19)
+
         // How long we will classify a user as new
-        private val NEW_USER_DURATION = Duration.ofDays(30)
+        internal val NEW_USER_DURATION = Duration.ofDays(30)
+
         // After how long of a period of not using Kotlin at all we consider the user a new user again
-        private val NEW_USER_RESET = Duration.ofDays(90)
+        internal val NEW_USER_RESET = Duration.ofDays(90)
 
         private val LOG = Logger.getInstance(KotlinNewUserTracker::class.java)
 
@@ -40,17 +40,27 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         }
     }
 
-    private var currentState: KotlinNewUserTrackerState = KotlinNewUserTrackerState()
+    // This is a var to allow unit tests to change this to a mock
+    internal var deviceIdProvider: () -> String? = {
+        DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "FUS")
+    }
 
-    private fun getInstallationDate(): LocalDate? {
-        val installationId = serviceOrNull<InstallationIdProvider>()?.installationId() ?: return null
+    internal var currentState: KotlinNewUserTrackerState = KotlinNewUserTrackerState()
+
+    internal fun getInstallationId(): String? {
+        return runCatching {
+            deviceIdProvider()
+        }.getOrNull()
+    }
+
+    internal fun getInstallationDate(): LocalDate? {
+        val installationId = getInstallationId() ?: return null
         val dateSubstring = installationId.take(6).takeIf { it.length == 6 } ?: return null
         val day = dateSubstring.substring(0..1).toIntOrNull() ?: return null
         val month = dateSubstring.substring(2..3).toIntOrNull() ?: return null
         val year = dateSubstring.substring(4..5).toIntOrNull() ?: return null
 
-        // installationId is 000000 in case of error (i.e. year 2000). In that case, return null.
-        return LocalDate.of(year + 2000, month, day).takeIf { it.year > 2000 }
+        return LocalDate.of(year + 2000, month, day)
     }
 
     /**
@@ -73,31 +83,14 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         currentState = state
     }
 
-    private var newUserDialogShownThisSession = false
-    internal fun onNewUserDialogShown() {
-        LOG.debug("New user dialog was shown, disabling showing it again for this session")
-        newUserDialogShownThisSession = true
-    }
-
-    private fun isNewKtUser(): Boolean {
+    internal fun isNewKtUser(): Boolean {
         if (state.newKtUserSince == 0L) return false
         val newUserStart = Instant.ofEpochSecond(state.newKtUserSince)
         return Duration.between(newUserStart, Instant.now()) <= NEW_USER_DURATION
     }
 
     internal fun shouldShowNewUserDialog(): Boolean {
-        val app = ApplicationManager.getApplication()
-        if (app.isUnitTestMode || app.isHeadlessEnvironment) return false
-
         if (currentState.firstKtFileOpened == 0L) return false
-        if (currentState.newKtUserDialogProcessed) {
-            LOG.debug("Not showing new user dialog because it has already been processed")
-            return false
-        }
-        if (newUserDialogShownThisSession) {
-            LOG.debug("Not showing new user dialog because it has already been shown this session")
-            return false
-        }
         if (!isNewKtUser()) {
             LOG.debug("Not showing new user dialog because the user is not a new Kotlin user")
             return false
@@ -108,11 +101,6 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
 
         LOG.debug("Duration since user became a new Kotlin user: ${durationSinceNewKtUser.toDays()} day(s)")
         return durationSinceNewKtUser > NEW_USER_SURVEY_DELAY
-    }
-
-    internal fun markNewKtUserDialogProcessed() {
-        LOG.debug("Marked new user dialog as processed")
-        currentState.newKtUserDialogProcessed = true
     }
 
     private fun checkForNewKtUser() {
@@ -141,7 +129,7 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
     internal fun onKtFileOpened() {
         checkForNewKtUser()
 
-        val currentEpoch =  Instant.now()
+        val currentEpoch = Instant.now()
         currentState.lastKtFileOpened = currentEpoch.epochSecond
         if (currentState.firstKtFileOpened == 0L) {
             currentState.firstKtFileOpened = currentEpoch.epochSecond

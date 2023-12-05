@@ -50,8 +50,7 @@ public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJav
               if (!configuredCopyableAnnotations.contains(SPRING_QUALIFIER_FQN)) {
                 holder.registerProblem(annotation,
                                        LombokBundle.message("inspection.message.annotation.not.lombok.copyable",
-                                                            SPRING_QUALIFIER_FQN),
-                                       ProblemHighlightType.WARNING);
+                                                            SPRING_QUALIFIER_FQN));
               }
             }
           }

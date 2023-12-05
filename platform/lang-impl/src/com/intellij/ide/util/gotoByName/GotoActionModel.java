@@ -31,6 +31,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,7 +104,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return event.getUpdateSession();
   }
 
-  void buildGroupMappings() {
+  public void buildGroupMappings() {
     if (!myActionGroups.isEmpty()) return;
     ActionGroup mainMenu = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU));
     ActionGroup keymapOthers = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup"));
@@ -224,7 +225,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @Nullable
     @VisibleForTesting
     public String getValueText() {
-      return GotoActionItemProvider.getActionText(value);
+      return ActionSearchUtilKt.getActionText(value);
     }
 
     @Nullable
@@ -516,8 +517,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return myDataContext;
   }
 
-  @NotNull
-  private UpdateSession getUpdateSession() {
+  @ApiStatus.Internal
+  public @NotNull UpdateSession getUpdateSession() {
     return myUpdateSession;
   }
 
@@ -664,6 +665,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     private final Presentation myPresentation;
     private final String myActionText;
 
+    @Deprecated(forRemoval = true)
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
                          @NotNull MatchMode mode,
@@ -679,7 +681,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
           return myModel.getUpdateSession().presentation(myAction);
         })
         .executeSynchronously();
-      myActionText = GotoActionItemProvider.getActionText(action);
+      myActionText = ActionSearchUtilKt.getActionText(action);
     }
 
     public ActionWrapper(@NotNull AnAction action,
@@ -692,7 +694,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       myGroupMapping = groupMapping;
       myModel = model;
       myPresentation = presentation;
-      myActionText = GotoActionItemProvider.getActionText(action);
+      myActionText = ActionSearchUtilKt.getActionText(action);
     }
 
     public String getActionText() {
@@ -945,7 +947,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       upgradeTo.setBackground(panelBackground);
       upgradeTo.setForeground(groupFg);
       upgradeTo.setIconOnTheRight(true);
-      upgradeTo.append(IdeBundle.message("plugin.advertiser.upgrade.to"));
+      upgradeTo.append(FeaturePromoBundle.message("get.prefix") + " ");
       upgradeTo.setTransparentIconBackground(true);
 
       BorderLayoutPanel compositeUpgradeHint = JBUI.Panels.simplePanel(promo)

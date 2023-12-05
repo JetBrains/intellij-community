@@ -11,13 +11,13 @@ class NotificationsOverlay {
 
   private val container = JPanel(VerticalFlowLayout(0, 0)).apply { isOpaque = false }
 
-  fun addNotification(notification: EditorNotificationPanel) {
+  fun addNotification(notification: InlineBanner) {
     container.add(notification)
     container.revalidate()
     container.repaint()
   }
 
-  fun removeNotification(notification: EditorNotificationPanel) {
+  fun removeNotification(notification: InlineBanner) {
     container.remove(notification)
     container.revalidate()
     container.repaint()

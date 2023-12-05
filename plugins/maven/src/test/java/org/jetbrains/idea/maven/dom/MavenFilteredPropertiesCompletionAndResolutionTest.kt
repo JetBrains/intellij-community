@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
 import org.junit.Test
 
 class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
   @Test
   fun testBasic() = runBlocking {
     createProjectSubDir("res")

@@ -105,7 +105,7 @@ private fun ObjClass<*>.buildEntity(propertyBuilder: MetadataBuilder<TypePropert
     fqName = fullName,
     entityDataFqName = getJavaFullName(javaDataName, module.name),
     supertypes = allSuperClasses.map { it.fullName },
-    properties = (allFieldsWithComputable + ownExtensions.filterNot { it.valueType.isEntityRef(it) }).map { propertyBuilder.buildMetadata(it) },
+      properties = allFieldsWithOwnExtensions.map { propertyBuilder.buildMetadata(it) },
     extProperties = module.extensions
       .filter { it.valueType.isEntityRef(it) && it.valueType.getRefType().target == this }
       .map { propertyBuilder.buildMetadata(it) },
@@ -166,11 +166,6 @@ private fun ValueType.ObjRef<*>.buildEntityReference(property: ObjProperty<*, *>
     connectionType = property.refsConnectionType(this@buildEntityReference),
     isNullable = property.valueType is ValueType.Optional<*>
   )
-
-
-private fun ValueType<*>.isEntityRef(property: TypeProperty<*>): Boolean {
-  return isRefType() && property is ObjProperty<*, *> && !property.isComputable && !property.withDefault
-}
 
 
 internal inline fun <reified T> unsupportedType(obj: T): String {

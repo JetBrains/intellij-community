@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
@@ -37,7 +37,6 @@ import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
 internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
-
   override fun createAction(editor: Editor): AnAction? {
     val project: Project? = editor.project
     return if (project == null || project.isDefault) null
@@ -52,7 +51,7 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
           if (p.isInitialized) {
             val textEditor = e.getData(CommonDataKeys.EDITOR) ?: return
             val file = PsiDocumentManager.getInstance(p).getPsiFile(textEditor.document)?.virtualFile
-            e.presentation.isEnabledAndVisible = matchMode(p, file, textEditor)
+            e.presentation.isEnabledAndVisible = file != null && matchMode(project = p, file = file, editor = textEditor)
           }
         }
       }
@@ -166,5 +165,4 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
       }
     }
   }
-
 }

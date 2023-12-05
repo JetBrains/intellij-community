@@ -264,6 +264,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
+  public synchronized boolean isDirty() {
+    return dirty;
+  }
+
   @Override
   public synchronized void close() throws IOException {
     if (storage.isOpen()) {

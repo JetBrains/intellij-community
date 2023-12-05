@@ -318,6 +318,10 @@ public final class HighlightControlFlowUtil {
                                                                           boolean ignoreFinality) {
     if (variable instanceof ImplicitVariable) return null;
     if (!PsiUtil.isAccessedForReading(expression)) return null;
+    if (ContainerUtil.exists(VariableInitializedBeforeUsageSupport.EP_NAME.getExtensionList(),
+                             ext -> ext.ignoreVariableExpression(expression, variable))) {
+      return null;
+    }
     int startOffset = expression.getTextRange().getStartOffset();
     PsiElement topBlock;
     if (variable.hasInitializer()) {
@@ -830,7 +834,7 @@ public final class HighlightControlFlowUtil {
             @Override
             public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               if (expression.isReferenceTo(variable) &&
-                  PsiUtil.isAccessedForWriting(expression) && 
+                  PsiUtil.isAccessedForWriting(expression) &&
                   ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) {
                 stopWalking();
                 stopped.set(true);

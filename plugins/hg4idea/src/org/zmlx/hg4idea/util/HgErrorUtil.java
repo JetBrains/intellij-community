@@ -59,8 +59,7 @@ public final class HgErrorUtil {
     return result == null || getAbortLine(result) != null;
   }
 
-  @Nullable
-  private static String getAbortLine(@NotNull HgCommandResult result) {
+  private static @Nullable String getAbortLine(@NotNull HgCommandResult result) {
     final List<String> errorLines = result.getErrorLines();
     return ContainerUtil.find(errorLines, s -> isAbortLine(s));
   }
@@ -84,8 +83,7 @@ public final class HgErrorUtil {
     return isAuthorizationError(line);
   }
 
-  @Nullable
-  private static String getLastErrorLine(@Nullable HgCommandResult result) {
+  private static @Nullable String getLastErrorLine(@Nullable HgCommandResult result) {
     if (result == null) {
       return null;
     }

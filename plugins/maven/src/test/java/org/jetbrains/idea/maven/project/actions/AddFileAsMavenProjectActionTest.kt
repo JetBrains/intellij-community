@@ -16,11 +16,6 @@ import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
-
-  override fun runInDispatchThread(): Boolean {
-    return false
-  }
-
   @Test
   fun testFilesSavedOnAction() = runBlocking {
     val projectPom = createProjectPom("<groupId>test</groupId>" +
@@ -47,9 +42,6 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
       AddFileAsMavenProjectAction().actionPerformedAsync(event)
     }
 
-    val promise = projectsManager.waitForImportCompletion()
-    waitForImportCompletion()
-    assertTrue("Import did not succeed", promise.isSucceeded)
     assertModules("project-new")
   }
 

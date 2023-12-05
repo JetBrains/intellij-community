@@ -20,11 +20,11 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
@@ -188,8 +188,6 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     } else {
                         TestCase.assertNull(".after file should not exist", afterFile)
                     }
-                } catch (e: ComparisonFailure) {
-                    throw e
                 } catch (e: AssertionError) {
                     throw e
                 } catch (e: Throwable) {
@@ -249,7 +247,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         val afterFilePath = beforeFileName.replace(".before.Main.", ".after.")
                         try {
                             myFixture.checkResultByFile(mainFile.name.replace(".before.Main.", ".after."))
-                        } catch (e: ComparisonFailure) {
+                        } catch (e: FileComparisonFailure) {
                             KotlinTestUtils.assertEqualsToFile(File(afterFilePath), editor)
                         }
 
@@ -272,8 +270,6 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                             }
                         }
                     }
-                } catch (e: ComparisonFailure) {
-                    throw e
                 } catch (e: AssertionError) {
                     throw e
                 } catch (e: Throwable) {

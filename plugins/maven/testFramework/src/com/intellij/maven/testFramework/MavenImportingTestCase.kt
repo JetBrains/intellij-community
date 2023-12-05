@@ -4,7 +4,6 @@ package com.intellij.maven.testFramework
 import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
-import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
@@ -14,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -88,13 +88,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @Throws(Exception::class)
   override fun tearDown() {
-    val projectsManager = myProjectsManager
     runAll(
       ThrowableRunnable<Throwable> { WriteAction.runAndWait<RuntimeException> { JavaAwareProjectJdkTableImpl.removeInternalJdkInTests() } },
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
       ThrowableRunnable<Throwable> { CompilerTestUtil.deleteBuildSystemDirectory(myProject) },
-      ThrowableRunnable<Throwable> { projectsManager?.waitForAfterImportJobs() },
       ThrowableRunnable<Throwable> { myProjectsManager = null },
       ThrowableRunnable<Throwable> { super.tearDown() },
       ThrowableRunnable<Throwable> {
@@ -405,7 +403,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     else {
       initProjectsManager(false)
       projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
-      projectsManager.waitForAfterImportJobs()
     }
 
 
@@ -414,7 +411,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected fun importProjectWithErrors() {
     val files = listOf(myProjectPom)
     doImportProjects(files, false)
-    importMavenProjects(projectsManager, files)
   }
 
   protected fun importProjectWithProfiles(vararg profiles: String) {
@@ -455,20 +451,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
     readProjects(files, disabledProfiles, *profiles)
-    resolvePlugins()
-    val promise = projectsManager.waitForImportCompletion()
-    ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.waitForPromise(promise) }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
       }
-    }
-  }
-
-  protected fun waitForImportCompletion() {
-    edt<RuntimeException> {
-      PlatformTestUtil.waitForPromise(
-        projectsManager.waitForImportCompletion(), 60000)
     }
   }
 
@@ -478,11 +464,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected fun readProjects(files: List<VirtualFile>, disabledProfiles: List<String>, vararg profiles: String) {
     projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
-    waitForImportCompletion()
-  }
-
-  protected fun updateProjectsAndImport(vararg files: VirtualFile) {
-    readProjects(*files)
   }
 
   protected fun initProjectsManager(enableEventHandling: Boolean) {
@@ -550,43 +531,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected suspend fun updateAllProjects() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
-    projectsManager.waitForAfterImportJobs()
-  }
-
-  protected fun waitForReadingCompletion() {
-    ApplicationManager.getApplication().invokeAndWait {
-      try {
-        projectsManager.waitForReadingCompletion()
-      }
-      catch (e: Exception) {
-        throw RuntimeException(e)
-      }
-    }
   }
 
   @Throws(Exception::class)
   protected open fun readProjects() {
     readProjects(projectsManager.getProjectsFiles())
-  }
-
-  protected fun readProjects(vararg files: VirtualFile?) {
-    val projects: MutableList<MavenProject> = ArrayList()
-    for (each in files) {
-      val mavenProject = projectsManager.findProject(each!!)
-      if (null != mavenProject) {
-        projects.add(mavenProject)
-      }
-    }
-    projectsManager.scheduleForceUpdateMavenProjects(projects)
-    waitForReadingCompletion()
-  }
-
-  protected fun resolveDependenciesAndImport() {
-    ApplicationManager.getApplication().invokeAndWait { projectsManager.waitForReadingCompletion() }
-  }
-
-  protected fun resolvePlugins() {
-    projectsManager.waitForImportCompletion()
   }
 
   protected suspend fun downloadArtifacts() {
@@ -654,13 +603,18 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any?) {
+  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
+    waitForImportWithinTimeout(myProject, action)
+  }
+
+  @RequiresBackgroundThread
+  protected suspend fun waitForImportWithinTimeout(project: Project, action: suspend () -> Unit) {
     MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
     val pluginResolutionFinished = AtomicBoolean(true)
     val artifactDownloadingFinished = AtomicBoolean(true)
-    myProject.messageBus.connect(testRootDisposable)
+    project.messageBus.connect(testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
         override fun importStarted() {
           importStarted.set(true)

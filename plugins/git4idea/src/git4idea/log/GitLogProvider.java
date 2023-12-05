@@ -37,7 +37,6 @@ import git4idea.commands.Git;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
-import git4idea.history.GitLogHistoryHandler;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -104,19 +103,28 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     // NB: not specifying --tags, because it introduces great slowdown if there are many tags,
     // but makes sense only if there are heads without branch or HEAD labels (rare case). Such cases are partially handled below.
 
-    boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
+    boolean refresh = false, isRefreshRefs = false;
+
+    if (requirements instanceof VcsLogProviderRequirementsEx requirementsEx) {
+      refresh = requirementsEx.isRefresh();
+      isRefreshRefs = requirementsEx.isRefreshRefs();
+    }
 
     DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new ObjectOpenCustomHashSet<>(safeRefs, DONT_CONSIDER_SHA);
-    Set<VcsRef> branches = readBranches(repository);
-    addNewElements(allRefs, branches);
+    Set<VcsRef> branches = Collections.emptySet();
+
+    if (isRefreshRefs) {
+      branches = readBranches(repository);
+      addNewElements(allRefs, branches);
+    }
 
     Collection<VcsCommitMetadata> allDetails;
     Set<String> currentTagNames = null;
     DetailedLogData commitsFromTags = null;
-    if (!refresh) {
+    if (!refresh || !isRefreshRefs) {
       allDetails = data.getCommits();
     }
     else {
@@ -333,7 +341,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   private @NotNull Set<VcsRef> readBranches(@NotNull GitRepository repository) {
-    return computeWithSpan(myTracer, ReadBranches.getName(), span -> {
+    return computeWithSpan(myTracer, ReadingBranches.getName(), span -> {
       span.setAttribute("rootName", repository.getRoot().getName());
       VirtualFile root = repository.getRoot();
       repository.update();
@@ -373,7 +381,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   public @NotNull Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, repository -> {
-      TrackingUtil.trackActivity(myProject, VcsInProgressWitness.class, () -> {
+      TrackingUtil.trackActivity(myProject, VcsActivityKey.INSTANCE, () -> {
         VirtualFile root = repository.getRoot();
         if (roots.contains(root)) {
           refresher.refresh(root);
@@ -551,11 +559,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public @NotNull VcsLogDiffHandler getDiffHandler() {
     return new GitLogDiffHandler(myProject);
-  }
-
-  @Override
-  public @NotNull VcsLogFileHistoryHandler getFileHistoryHandler() {
-    return new GitLogHistoryHandler(myProject);
   }
 
   @Override

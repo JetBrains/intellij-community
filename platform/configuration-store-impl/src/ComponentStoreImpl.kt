@@ -243,7 +243,7 @@ abstract class ComponentStoreImpl : IComponentStore {
               SAVE_MOD_LOG.debug(
                 "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
             }
-            if (isUseModificationCount) {
+            if (isUseModificationCount && !isForce) {
               continue
             }
           }

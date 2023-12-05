@@ -69,8 +69,7 @@ private suspend fun getAuthData(project: Project, url: String, server: GitLabSer
       1 -> {
         // apparently the token is missing or incorrect, otherwise this account should've been provided by silent provider
         val account = accountsWithTokens.keys.first()
-        val token = accountsWithTokens[account]
-                    ?: GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
+        val token = GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
                     ?: return@withContext null
         account to token
       }

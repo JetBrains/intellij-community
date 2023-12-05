@@ -526,7 +526,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   private static @NotNull List<FilePath> getPaths(@NotNull Collection<? extends ChangedPath> changes) {
     List<FilePath> files = new ArrayList<>();
     for (ChangedPath change : changes) {
-      if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(change.beforePath, change.afterPath)) {
+      if (equalsCaseSensitive(change.beforePath, change.afterPath)) {
         addIfNotNull(files, change.beforePath);
       }
       else {
@@ -1100,7 +1100,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     public boolean isMove() {
       if (beforePath == null || afterPath == null) return false;
-      return !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath);
+      return !equalsCaseSensitive(beforePath, afterPath);
     }
 
     @Override

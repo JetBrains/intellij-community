@@ -1,0 +1,5 @@
+fun op() {}
+
+fun main() {
+    op()
+}

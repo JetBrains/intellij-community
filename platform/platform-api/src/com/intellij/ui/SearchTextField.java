@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -187,7 +188,7 @@ public class SearchTextField extends JPanel {
     if (toClearTextOnEscape()) {
       ActionManager actionManager = ActionManager.getInstance();
       if (actionManager != null) {
-        EmptyAction.registerWithShortcutSet(IdeActions.ACTION_CLEAR_TEXT, CommonShortcuts.ESCAPE, this);
+        ActionUtil.wrap(IdeActions.ACTION_CLEAR_TEXT).registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
       }
     }
   }

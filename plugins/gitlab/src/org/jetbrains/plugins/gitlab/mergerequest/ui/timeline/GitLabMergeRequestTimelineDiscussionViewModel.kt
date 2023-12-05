@@ -7,7 +7,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -78,7 +78,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      GitLabDiscussionReplyViewModelImpl(this, currentUser, discussion).takeIf { canAddNotes }
+      GitLabDiscussionReplyViewModelImpl(this, project, currentUser, discussion).takeIf { canAddNotes }
     }.shareIn(cs, SharingStarted.Eagerly, 1)
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =

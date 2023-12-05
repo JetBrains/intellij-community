@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -33,7 +34,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +76,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         fixes.add(new MakeConstructorPrivateFix());
       }
     }
-    AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
+    fixes.addAll(SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(aClass, this, insp -> insp.ignorableAnnotations));
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 

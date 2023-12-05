@@ -5,10 +5,15 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_RECENT_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_RECENCY_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereStatisticianService
 
 internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
-  companion object {
+  object Fields {
     internal val PRIORITY_DATA_KEY = EventFields.Int("priority")
 
     internal val STATISTICIAN_USE_COUNT_DATA_KEY = EventFields.Int("statUseCount")

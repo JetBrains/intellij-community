@@ -2,21 +2,20 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
-import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
@@ -24,9 +23,10 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.Dimension
+import com.jediterm.terminal.TerminalColor
+import com.jediterm.terminal.TextStyle
+import com.jediterm.terminal.ui.AwtTransformers
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.CompletableFuture
@@ -47,7 +47,7 @@ object TerminalUiUtils {
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
-      lineSpacing = settings.lineSpacing
+      lineSpacing = 1.0f
     }
 
     editor.settings.apply {
@@ -62,9 +62,7 @@ object TerminalUiUtils {
       isBlockCursor = true
     }
 
-    editor.installPopupHandler(object:ContextMenuPopupHandler() {
-      override fun getActionGroup(event: EditorMouseEvent) =
-        ActionManager.getInstance().getAction("Terminal.PopupMenu") as ActionGroup})
+    editor.contextMenuGroupId = "Terminal.OutputContextMenu"
     return editor
   }
 
@@ -121,6 +119,48 @@ object TerminalUiUtils {
   }
 
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
+
+  internal fun TextStyle.toTextAttributes(palette: TerminalColorPalette): TextAttributes {
+    return TextAttributes().also { attr ->
+      backgroundForRun?.let {
+        // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
+        // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to
+        // paint the background uniformly.
+        attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(it))
+      }
+      attr.foregroundColor = getForegroundColor(this, palette)
+      if (hasOption(TextStyle.Option.BOLD)) {
+        attr.fontType = attr.fontType or Font.BOLD
+      }
+      if (hasOption(TextStyle.Option.ITALIC)) {
+        attr.fontType = attr.fontType or Font.ITALIC
+      }
+      if (hasOption(TextStyle.Option.UNDERLINED)) {
+        attr.withAdditionalEffect(EffectType.LINE_UNDERSCORE, attr.foregroundColor)
+      }
+    }
+  }
+
+  private fun getForegroundColor(style: TextStyle, palette: TerminalColorPalette): Color {
+    val foreground = getEffectiveForegroundColor(style.foregroundForRun, palette)
+    return if (style.hasOption(TextStyle.Option.DIM)) {
+      val background = getEffectiveBackgroundColor(style.backgroundForRun, palette)
+      @Suppress("UseJBColor")
+      Color((foreground.red + background.red) / 2,
+            (foreground.green + background.green) / 2,
+            (foreground.blue + background.blue) / 2,
+            foreground.alpha)
+    }
+    else foreground
+  }
+
+  private fun getEffectiveForegroundColor(color: TerminalColor?, palette: TerminalColorPalette): Color {
+    return AwtTransformers.toAwtColor(color?.let { palette.getForeground(it) } ?: palette.defaultForeground)!!
+  }
+
+  private fun getEffectiveBackgroundColor(color: TerminalColor?, palette: TerminalColorPalette): Color {
+    return AwtTransformers.toAwtColor(color?.let { palette.getBackground(it) } ?: palette.defaultBackground)!!
+  }
 
   private val LOG = logger<TerminalUiUtils>()
   private const val TIMEOUT = 2000

@@ -100,7 +100,6 @@ public abstract class LombokRedundantModifierInspection extends LombokJavaInspec
 
               psiModifier.ifPresent(psiElement -> holder.registerProblem(psiElement,
                 redundantModifiersInfo.getDescription(),
-                ProblemHighlightType.WARNING,
                 new RemoveModifierFix(modifier))
               );
             }

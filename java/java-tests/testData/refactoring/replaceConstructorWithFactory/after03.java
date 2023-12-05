@@ -2,7 +2,7 @@ class A {
     private A() {
     }
 
-    static A createA<caret>() {
+    static A <caret>createA() {
         return new A();
     }
 }

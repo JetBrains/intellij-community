@@ -218,10 +218,15 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
 
   targetEnvConfiguration?.let { targetConfig ->
     // Target-based sdk, not local one
-    sdk.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
-      .also {
-        it.targetEnvironmentConfiguration = targetConfig
+    sdk.sdkModificator.let { modificator ->
+      modificator.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
+        .also {
+          it.targetEnvironmentConfiguration = targetConfig
+        }
+      ApplicationManager.getApplication().runWriteAction {
+        modificator.commitChanges()
       }
+    }
   }
   PythonSdkType.getInstance().setupSdkPaths(sdk)
   return sdk
@@ -380,11 +385,12 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val newData = PythonSdkAdditionalData(flavor?.let { if (it.supportsEmptyData()) it else null })
   val modificator = sdkModificator
   modificator.sdkAdditionalData = newData
-  ApplicationManager.getApplication().let {
-    it.invokeLater {
-      it.runWriteAction {
-        modificator.commitChanges()
-      }
+  val application = ApplicationManager.getApplication()
+  if (application.isDispatchThread) {
+    application.runWriteAction { modificator.commitChanges() }
+  } else {
+    application.invokeLater {
+      application.runWriteAction { modificator.commitChanges() }
     }
   }
   return newData

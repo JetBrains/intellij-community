@@ -5,7 +5,7 @@ import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -17,7 +17,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDraftReplyNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
-import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 
 interface GitLabDiscussion {
@@ -34,7 +33,8 @@ interface GitLabDiscussion {
 
   suspend fun changeResolvedState()
 
-  suspend fun addNote(body: String, asDraft: Boolean)
+  suspend fun addNote(body: String)
+  suspend fun addDraftNote(body: String)
 }
 
 val GitLabMergeRequestDiscussion.firstNote: Flow<GitLabMergeRequestNote?>
@@ -115,7 +115,7 @@ class LoadedGitLabDiscussion(
   override val canAddNotes: Flow<Boolean> = draftNotes.map { it.isEmpty() && mr.details.value.userPermissions.createNote }
   override val canAddDraftNotes: Boolean =
     mr.details.value.userPermissions.createNote &&
-    (glMetadata?.let { GitLabVersion(15, 10) <= it.version } ?: false)
+    (glMetadata?.let { GitLabVersion(16, 3) <= it.version } ?: false)
 
   // a little cheat that greatly simplifies the implementation
   override val resolvable: Boolean = discussionData.notes.first().resolvable
@@ -134,33 +134,29 @@ class LoadedGitLabDiscussion(
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE)
   }
 
-  override suspend fun addNote(body: String, asDraft: Boolean) {
+  override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
-      if (!asDraft) {
-        val newDiscussion = withContext(Dispatchers.IO) {
-          api.graphQL.createReplyNote(mr.gid, id.gid, body).getResultOrThrow()
-        }
+      val newDiscussion = withContext(Dispatchers.IO) {
+        api.graphQL.createReplyNote(mr.gid, id.gid, body).getResultOrThrow()
+      }
 
+      withContext(NonCancellable) {
+        noteEvents.emit(GitLabNoteEvent.Added(newDiscussion))
+      }
+    }
+  }
+
+  override suspend fun addDraftNote(body: String) {
+    withContext(cs.coroutineContext) {
+      withContext(Dispatchers.IO) {
+        api.rest.addDraftReplyNote(glProject, mr.iid, id.guessRestId(), body).body()
+      }?.also {
         withContext(NonCancellable) {
-          noteEvents.emit(GitLabNoteEvent.Added(newDiscussion))
+          draftNotesEventSink(GitLabNoteEvent.Added(it))
         }
       }
-      else {
-        withContext(Dispatchers.IO) {
-          api.rest.addDraftReplyNote(glProject, mr.iid, id.guessRestId(), body).body()
-        }?.also {
-          withContext(NonCancellable) {
-            draftNotesEventSink(GitLabNoteEvent.Added(it))
-          }
-        }
-      }
-      GitLabStatistics.logMrActionExecuted(
-        project,
-        if (!asDraft) GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE
-        else GitLabStatistics.MergeRequestAction.ADD_DRAFT_DISCUSSION_NOTE)
     }
   }
 

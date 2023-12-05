@@ -36,8 +36,8 @@ public class JsonSchemaInfo {
     "angular", // the only angular-related schema is the 'angular-cli', so we skip the repo name
     "config");
 
-  // weird cases such as meaningless 'config' as a name, etc.
-  private static final @NotNull Map<String, @Nls String> myWeirdNames = Map.of(
+  // Strange cases such as meaningless 'config' as a name, etc.
+  private static final @NotNull Map<String, @NlsSafe String> myWeirdNames = Map.of(
     "http://json.schemastore.org/config", "asp.net config",
     "https://schemastore.azurewebsites.net/schemas/json/config.json", "asp.net config",
     "http://json.schemastore.org/2.0.0-csd.2.beta.2018-10-10.json", "sarif-2.0.0-csd.2.beta.2018-10-10",

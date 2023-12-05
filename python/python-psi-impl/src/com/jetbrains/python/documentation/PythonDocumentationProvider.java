@@ -300,6 +300,19 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   /**
+   * Provides additional information about the type
+   *
+   * @param type    type which name will be calculated
+   * @param context type evaluation context
+   * @return string representation of the type similar to {@link #getTypeName(PyType, TypeEvalContext)}, but with additional information,
+   * such as bounds for TypeVar types in ' ≤: *bound*' format
+   */
+  @NotNull
+  public static String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return buildTypeModel(type, context).asStringWithAdditionalInfo();
+  }
+
+  /**
    * @param type      type which description will be calculated.
    *                  Description is the same as {@link PythonDocumentationProvider#getTypeDescription(PyType, TypeEvalContext)} gives but
    *                  types are converted to links.

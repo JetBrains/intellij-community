@@ -5,7 +5,7 @@ import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -191,7 +191,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       ),
       artifactEntities.firstOrNull { it.isFailure }?.exceptionOrNull())
 
-    loadEntitiesTimeMs.addElapsedTimeMs(start)
+    loadEntitiesTimeMs.addElapsedTimeMillis(start)
     return loadingResult
   }
 
@@ -299,7 +299,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       componentTag.addContent(saveArtifact(it))
     }
     writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
-    saveEntitiesTimeMs.addElapsedTimeMs(start)
+    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun saveArtifact(artifact: ArtifactEntity): Element {

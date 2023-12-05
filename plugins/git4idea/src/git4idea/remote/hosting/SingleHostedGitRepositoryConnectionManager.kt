@@ -2,7 +2,7 @@
 package git4idea.remote.hosting
 
 import com.intellij.collaboration.auth.ServerAccount
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*

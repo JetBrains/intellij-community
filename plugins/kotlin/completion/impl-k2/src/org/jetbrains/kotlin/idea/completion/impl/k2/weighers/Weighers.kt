@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -174,7 +173,6 @@ internal object Weighers {
         context: WeighingContext,
         lookupElement: LookupElement,
         symbolWithOrigin: KtSymbolWithOrigin?,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
     ) {
         ExpectedTypeWeigher.addWeight(context, lookupElement, symbolWithOrigin?.symbol)
         KindWeigher.addWeight(lookupElement, symbolWithOrigin?.symbol, context)

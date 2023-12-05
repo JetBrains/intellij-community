@@ -3,5 +3,5 @@
   "newName": "prop11",
   "mainFile": "test.kt",
   "checkErrorsAfter": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

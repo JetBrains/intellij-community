@@ -47,5 +47,7 @@ public interface VirtualFileUrlManager {
 
   public fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl?
 
+  // This companion object is needed to attach extension methods in the platform:
+  //   VirtualFileUrlManager.getInstance(project) and VirtualFileUrlManager.getGlobalInstance()
   public companion object
 }

@@ -8,6 +8,12 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 
+/**
+ * Abstract class representing an inline completion suggestion.
+ *
+ * Provides the suggestion flow for generating only one suggestion.
+ * @see InlineCompletionElement
+ */
 abstract class InlineCompletionSuggestion : UserDataHolderBase() {
   abstract val suggestionFlow: Flow<InlineCompletionElement>
 

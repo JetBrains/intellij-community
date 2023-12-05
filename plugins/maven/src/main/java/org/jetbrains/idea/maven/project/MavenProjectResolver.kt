@@ -3,18 +3,15 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 
 interface MavenProjectResolver {
-  @Throws(MavenProcessCanceledException::class)
   suspend fun resolve(mavenProjects: Collection<MavenProject>,
                       tree: MavenProjectsTree,
                       generalSettings: MavenGeneralSettings,
                       embeddersManager: MavenEmbeddersManager,
-                      console: MavenConsole,
                       progressReporter: RawProgressReporter,
-                      syncConsole: MavenSyncConsole?): MavenProjectResolutionResult
+                      eventHandler: MavenEventHandler): MavenProjectResolutionResult
 
   @JvmRecord
   data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collection<MavenProjectWithHolder>>)

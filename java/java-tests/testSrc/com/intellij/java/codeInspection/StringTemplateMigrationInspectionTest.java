@@ -30,13 +30,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumberPlusString() {
     doTest("""
              class StringTemplateMigration {
-               void test(String s) {
-                 String test = 1 + <caret>" = " + s;
+               void test() {
+                 String test = 1 + <caret>" = number";
                }
              }""", """
              class StringTemplateMigration {
-               void test(String s) {
-                 String test = STR."1 = \\{s}";
+               void test() {
+                 String test = STR."1 = number";
                }
              }""");
   }
@@ -44,13 +44,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumbersPlusString() {
     doTest("""
              class StringTemplateMigration {
-               void test(int i) {
-                 String test = 1 + i + <caret>" = number = " + 1 + 2;
+               void test() {
+                 String test = 1 + 2 + <caret>" = number = " + 1 + 2;
                }
              }""", """
              class StringTemplateMigration {
-               void test(int i) {
-                 String test = STR."\\{1 + i} = number = 12";
+               void test() {
+                 String test = STR."\\{1 + 2} = number = 12";
                }
              }""");
   }
@@ -278,16 +278,32 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   }
 
   public void testAnnotationParameterIgnored() {
-    myFixture.configureByText("Template.java", """
+    assertNoHighlightNoQuickFix("""
       interface X {
         String s = "one";
         
-        @SuppressWarnings("x" + s + "y") void x();
+        @SuppressWarnings("x" +<caret> s + "y") void x();
+      }""");
+  }
+
+  public void testSwitchCaseLabelIgnored() {
+    assertNoHighlightNoQuickFix("""
+      class X {
+        static void x(String s) {
+          switch (s) {
+            case "asdf" <caret>+ 1:
+              System.out.println(s);
+          }
+        }
+      }""");
+  }
+
+  public void testAnnotationMethodIgnored() {
+    assertNoHighlightNoQuickFix("""
+      @interface X {
+        String x() default "number " <caret>+ 1;
       }
       """);
-
-    myFixture.enableInspections(new StringTemplateMigrationInspection());
-    myFixture.testHighlighting(true, true, true);
   }
 
   public void testNullValue() {
@@ -388,6 +404,15 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
     myFixture.launchAction(myFixture.findSingleIntention("Replace with string template"));
 
     myFixture.checkResult(after);
+  }
+
+  private void assertNoHighlightNoQuickFix(@NotNull @Language("Java") String code) {
+    myFixture.configureByText("Template.java", code);
+
+    myFixture.enableInspections(new StringTemplateMigrationInspection());
+    myFixture.testHighlighting(true, true, true);
+    assertEmpty("Quickfix is available but should not",
+                myFixture.filterAvailableIntentions("Replace with string template"));
   }
 
   @Override

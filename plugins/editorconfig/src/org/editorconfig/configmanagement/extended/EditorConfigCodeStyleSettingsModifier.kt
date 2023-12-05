@@ -4,10 +4,8 @@
 package org.editorconfig.configmanagement.extended
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
-import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.*
+import com.intellij.application.options.codeStyle.properties.OverrideLanguageIndentOptionsAccessor.OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -16,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -85,9 +84,11 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
         settings.addDependencies(editorConfigs)
         val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
         navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
+        LOG.debug { "Modified for ${psiFile.name}" }
         return true
       }
       else {
+        LOG.debug { "No changes for ${psiFile.name}" }
         return false
       }
     }
@@ -210,7 +211,7 @@ private fun getDependentProperties(property: String, langPrefix: String?): List<
     stripped = stripped.removePrefix(langPrefix)
   }
   return when (stripped) {
-    "indent_size" -> listOf("continuation_indent_size")
+    "indent_size" -> listOf("continuation_indent_size", OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME)
     else -> emptyList()
   }
 }
@@ -350,5 +351,6 @@ private suspend fun processEditorConfig(project: Project, psiFile: PsiFile): Pai
   else if (VfsUtilCore.isBrokenLink(file)) {
     LOG.warn("${file.presentableUrl} is a broken link")
   }
+  LOG.debug { "null filepath for ${psiFile.name}" }
   return Pair(ResourceProperties.Builder().build(), emptyList())
 }

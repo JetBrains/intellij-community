@@ -17,6 +17,7 @@ fun fail(project: Project) {
   project.<error descr="The application-level service is retrieved as a project-level service">service</error><ApplicationService>()
   project.<error descr="The application-level service is retrieved as a project-level service">serviceOrNull</error><ApplicationService>()
   project.<error descr="The application-level service is retrieved as a project-level service">serviceIfCreated</error><ApplicationService>()
+  project.<error descr="The application-level service is retrieved as a project-level service">getServiceIfCreated</error>(ApplicationService::class.java)
 }
 
 fun success(project: Project) {
@@ -24,4 +25,5 @@ fun success(project: Project) {
   project.service<ProjectService>()
   project.serviceOrNull<ProjectService>()
   project.serviceIfCreated<ProjectService>()
+  project.getServiceIfCreated(ProjectService::class.java)
 }

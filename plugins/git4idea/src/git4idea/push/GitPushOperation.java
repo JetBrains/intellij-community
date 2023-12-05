@@ -6,6 +6,7 @@ import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -22,10 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
-import git4idea.GitBranch;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitRevisionNumber;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -275,27 +273,35 @@ public class GitPushOperation {
     Map<GitRepository, GitPushRepoResult> results = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
-      ResultWithOutput resultWithOutput = doPush(repository, spec);
-      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
+      ResultWithOutput resultWithOutput = null;
+      GitPushRepoResult repoResult = null;
 
-      GitPushSource pushSource = spec.getSource();
-      GitPushTarget target = spec.getTarget();
-      GitPushRepoResult repoResult;
-      if (resultWithOutput.isError()) {
-        repoResult = GitPushRepoResult.error(pushSource, target.getBranch(), resultWithOutput.getErrorAsString());
-      }
-      else {
-        List<GitPushNativeResult> nativeResults = resultWithOutput.parsedResults;
-        final GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
-        if (sourceResult == null) {
-          LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
-                    "Full result: " + resultWithOutput);
-          continue;
+      StructuredIdeActivity pushActivity = GitOperationsCollector.startLogPush(repository.getProject());
+      try {
+        resultWithOutput = doPush(repository, spec);
+        LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
+
+        GitPushSource pushSource = spec.getSource();
+        GitPushTarget target = spec.getTarget();
+        if (resultWithOutput.isError()) {
+          repoResult = GitPushRepoResult.error(pushSource, target.getBranch(), resultWithOutput.getErrorAsString());
         }
-        List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
-          !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
-        int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
-        repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+        else {
+          List<GitPushNativeResult> nativeResults = resultWithOutput.parsedResults;
+          final GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
+          if (sourceResult == null) {
+            LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
+                      "Full result: " + resultWithOutput);
+            continue;
+          }
+          List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
+            !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
+          int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
+          repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+        }
+      }
+      finally {
+        GitOperationsCollector.endLogPush(pushActivity, resultWithOutput != null ? resultWithOutput.resultOutput : null, repoResult);
       }
 
       LOG.debug("Converted result: " + repoResult);
@@ -344,7 +350,7 @@ public class GitPushOperation {
       return GitHistoryUtils.history(myProject, root, range).size();
     }
     catch (VcsException e) {
-      LOG.error("Couldn't collect commits from range " + range);
+      LOG.error("Couldn't collect commits from range " + range, e);
       return -1;
     }
   }

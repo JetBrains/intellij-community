@@ -63,6 +63,11 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
         runTest("testData/editor/autoImport/extFunctionWithGenerics/");
     }
 
+    @TestMetadata("functionReference")
+    public void testFunctionReference() throws Exception {
+        runTest("testData/editor/autoImport/functionReference/");
+    }
+
     @TestMetadata("invoke")
     public void testInvoke() throws Exception {
         runTest("testData/editor/autoImport/invoke/");

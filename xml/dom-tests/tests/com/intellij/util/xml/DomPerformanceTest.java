@@ -54,7 +54,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
         }
         ref.set(element);
     }))
-      .assertTiming();
+      .assertTimingAsSubtest();
 
     MyElement newElement = createElement(DomUtil.getFile(ref.get()).getText(), MyElement.class);
 
@@ -64,7 +64,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
         public void visitDomElement(DomElement element) {
           element.acceptChildren(this);
         }
-      })).assertTiming();
+      })).assertTimingAsSubtest();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {

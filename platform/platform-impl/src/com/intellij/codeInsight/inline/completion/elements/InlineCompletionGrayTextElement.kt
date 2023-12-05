@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -14,19 +15,22 @@ import com.intellij.openapi.util.Disposer
 import java.awt.Graphics
 import java.awt.Rectangle
 
-data class InlineCompletionGrayTextElement(override val text: String) : InlineCompletionElement {
+class InlineCompletionGrayTextElement(override val text: String) : InlineCompletionElement {
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 
-  class Presentable(override val element: InlineCompletionElement) : InlineCompletionElement.Presentable {
+  open class Presentable(override val element: InlineCompletionElement) : InlineCompletionElement.Presentable {
     private var suffixInlay: Inlay<*>? = null
     private var blockInlay: Inlay<*>? = null
 
     override fun isVisible(): Boolean = suffixInlay != null || blockInlay != null
 
+    protected open fun getText(): String = element.text
+
     override fun render(editor: Editor, offset: Int) {
-      if (element.text.isEmpty()) return
-      val lines = element.text.lines()
+      val text = getText()
+      if (text.isEmpty()) return
+      val lines = text.lines()
       renderSuffix(editor, lines, offset)
       if (lines.size > 1) {
         renderBlock(lines.drop(1), editor, offset)
@@ -50,15 +54,9 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
     }
 
     private fun renderSuffix(editor: Editor, lines: List<String>, offset: Int) {
-      // TODO: remove this?
-      // the following is a hacky solution to the effect described in ML-977
-      //if (Registry.`is`("inline.completion.caret.forceLeanLeft")) {
-      //  val visualPosition = editor.caretModel.visualPosition
-      //  if (visualPosition.leansRight) {
-      //    val leftLeaningPosition = VisualPosition(visualPosition.line, visualPosition.column, false)
-      //    editor.caretModel.moveToVisualPosition(leftLeaningPosition)
-      //  }
-      //}
+      // The following is a hacky solution to the effect described in ML-977
+      // ML-1781 Inline completion renders on the left to the caret after moving it
+      editor.forceLeanLeft()
 
       val line = lines.first()
       if (line.isBlank()) {
@@ -90,6 +88,14 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
       ) ?: return
 
       blockInlay = element
+    }
+
+    private fun Editor.forceLeanLeft() {
+      val visualPosition = caretModel.visualPosition
+      if (visualPosition.leansRight) {
+        val leftLeaningPosition = VisualPosition(visualPosition.line, visualPosition.column, false)
+        caretModel.moveToVisualPosition(leftLeaningPosition)
+      }
     }
   }
 }

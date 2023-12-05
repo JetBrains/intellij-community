@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.consumeDataByPrefix
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Path
 import java.util.regex.Pattern
 
@@ -22,11 +21,6 @@ object KotlinPluginBuilder {
    * Module which contains META-INF/plugin.xml
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
-
-  /**
-   * Version of Kotlin compiler which is used in the cooperative development setup in kt-master && kt-*-master branches
-   */
-  private const val KOTLIN_COOP_DEV_VERSION = "1.7.255"
 
   @SuppressWarnings("SpellCheckingInspection")
   val MODULES: List<String> = persistentListOf(
@@ -337,22 +331,15 @@ object KotlinPluginBuilder {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
           val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|\\d+\\.SNAPSHOT.*)\$").matcher(ideBuildVersion)
           if (ijBuildNumber.matches()) {
-            val major = ijBuildNumber.group(1)
-            val minor = ijBuildNumber.group(2)
-            val library = context.project.libraryCollection.libraries
-              .firstOrNull { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type is JpsRepositoryLibraryType }
-
-            val kotlinVersion = System.getProperty("force.override.kotlin.compiler.version")
-                                ?: library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version
-                                ?: KOTLIN_COOP_DEV_VERSION
-
-            val version = "${major}-${kotlinVersion}-${kind}${minor}"
-            context.messages.info("version: $version")
-            return version
+            // IJ installer configurations.
+            // In this environment, ideBuildVersion matches ^(\d+)\.([\d.]+|\d+\.SNAPSHOT.*)\$
+            return "$ideBuildVersion-$kind"
           }
-          // Build number isn't recognized as IJ build number then it means build
-          // number must be plain Kotlin plugin version (build configuration in kt-branch)
+
           if (ideBuildVersion.contains("IJ")) {
+            // TC configurations that are inherited from AbstractKotlinIdeArtifact.
+            // In this environment, ideBuildVersion equals to build number.
+            // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
             val version = ideBuildVersion.replace("IJ", kind.toString())
             context.messages.info("Kotlin plugin IJ version: $version")
             return version
@@ -428,7 +415,10 @@ object KotlinPluginBuilder {
   }
 
   suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
-    val buildContext = BuildContextImpl.createContext(communityHome = communityHome, projectHome = home, productProperties = properties)
+    val buildContext = BuildContextImpl.createContext(communityHome = communityHome,
+                                                      setupTracer = true,
+                                                      projectHome = home,
+                                                      productProperties = properties)
     buildContext.options.enableEmbeddedJetBrainsClient = false
     BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }

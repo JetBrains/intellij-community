@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -123,7 +123,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
     spanBuilder("layout maven artifacts")
       .setAttribute(AttributeKey.stringArrayKey("modules"), modulesToPublish.entries.map { entry ->
         "  [${entry.value.joinToString(separator = ",") { it.name }}] -> ${entry.key.coordinates}"
-      }).useWithScope2 {
+      }).useWithScope {
         layoutMavenArtifacts(modulesToPublish, context.paths.artifactDir.resolve(outputDir), context)
       }
   }

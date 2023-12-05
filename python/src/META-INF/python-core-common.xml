@@ -341,8 +341,6 @@
     <projectService serviceImplementation="com.jetbrains.python.console.PythonConsoleToolWindow"/>
     <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
-    <activityInProgressWitness implementation="com.jetbrains.python.sdk.headless.PythonInProgressWitness"/>
-
     <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
                          instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
                          bundle="messages.PyBundle"
@@ -396,12 +394,14 @@
                  description="Possibility to create namespace packages from New | Python Package"/>
 
     <!-- asyncio REPL -->
-    <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
+    <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false"
+                 description="Possibility to write await outside of function"/>
 
     <!-- asyncio REPL for Python Console/Debugger -->
-    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false" description="Possibility to write await outside of function"/>
+    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false"
+                 description="Possibility to write await outside of function"/>
 
-    <registryKey defaultValue="false" description="Enables an experimental low impact monitoring API for Python 3.12"
+    <registryKey defaultValue="true" description="Enables an experimental low impact monitoring API for Python 3.12"
                  restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
 
     <!-- typing -->
@@ -434,9 +434,12 @@
     <!-- Run Anything -->
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
                                    implementation="com.jetbrains.python.run.runAnything.PyConsoleRunAnythingProvider"/>
-    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingFileProvider"/>
-    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingPipProvider"/>
-    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCondaProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingFileProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingPipProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCondaProvider"/>
     <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
 
     <!-- Statistics -->
@@ -492,6 +495,10 @@
     <!-- Targets API -->
     <registryKey key="python.use.targets.api" defaultValue="true" description="Switches Python support to Targets API."/>
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
+    <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
+                 description="Use project location as a working directory for the packaging tool execution."/>
+    <registryKey key="python.packaging.tool.upload.project" defaultValue="false"
+                 description="Upload project files and use this location as a working directory for the packaging tool execution."/>
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
                        key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle"
@@ -530,7 +537,8 @@
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
 
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
 
@@ -576,7 +584,7 @@
     <statistics.collectorExtension implementation="com.jetbrains.python.statistics.PyCompletionUsageExtension"/>
 
     <registryKey key="python.new.interpreter.creation.ui" defaultValue="true"
-                 description="Enable new UI for adding Python interpreter in New Project dialog." />
+                 description="Enable new UI for adding Python interpreter in New Project dialog."/>
   </extensions>
 
   <extensionPoints>
@@ -698,6 +706,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyVariableAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
@@ -858,7 +867,7 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </group>
 
-    <action overrides="true" id="XDebugger.CopyValue" class="com.jetbrains.python.debugger.actions.PyXCopyValueAction" />
+    <action overrides="true" id="XDebugger.CopyValue" class="com.jetbrains.python.debugger.actions.PyXCopyValueAction"/>
 
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
     >

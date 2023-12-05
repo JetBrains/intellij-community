@@ -582,7 +582,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var selection = new AtomicReference<FsItem>();
     var error = new AtomicReference<String>();
     try {
-      PlatformNioHelper.visitDirectory(directory, (file, result) -> {
+      PlatformNioHelper.visitDirectory(directory, null, (file, result) -> {
         BasicFileAttributes attrs;
         try {
           attrs = result.get();
@@ -799,7 +799,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private void reportError(String key, AtomicReference<String> error) {
-    String message = error.get();
+    var message = error.get();
     myErrorSink.accept(message != null ? UIBundle.message(key, message) : null);
   }
 

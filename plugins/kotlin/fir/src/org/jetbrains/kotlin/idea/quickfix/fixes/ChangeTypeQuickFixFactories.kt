@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -14,17 +15,25 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isNull
 
 object ChangeTypeQuickFixFactories {
     enum class TargetType {
@@ -61,10 +70,130 @@ object ChangeTypeQuickFixFactories {
             it.variable as? KtPropertySymbol
         }
 
+    context(KtAnalysisSession)
+    private fun getActualType(ktType: KtType): KtType {
+        val typeKind = ktType.functionTypeKind
+        when (typeKind) {
+            FunctionTypeKind.KFunction -> typeKind.nonReflectKind()
+            FunctionTypeKind.KSuspendFunction -> typeKind.nonReflectKind()
+            else -> null
+        }?.let {
+            val functionalType = ktType as KtFunctionalType
+            return buildClassType(it.numberedClassId((functionalType).arity)) {
+                functionalType.parameterTypes.forEach { arg ->
+                    argument(arg)
+                }
+                argument(functionalType.returnType)
+            }
+        }
+        return ktType.approximateToSuperPublicDenotableOrSelf(true)
+    }
+
+    context(KtAnalysisSession)
+    private fun KtElement.returnType(candidateType: KtType): KtType {
+        val (initializers, functionOrGetter) = when (this) {
+            is KtNamedFunction -> listOfNotNull(this.initializer) to this
+            is KtProperty -> listOfNotNull(this.initializer, this.getter?.initializer) to this.getter
+            is KtPropertyAccessor -> listOfNotNull(this.initializer) to this
+            else -> return candidateType
+        }
+        val returnedExpressions = if (functionOrGetter != null) {
+            val declarationSymbol = functionOrGetter.getSymbol()
+            functionOrGetter
+                .collectDescendantsOfType<KtReturnExpression> { it.getReturnTargetSymbol() == declarationSymbol }
+                .mapNotNull { it.returnedExpression }
+                .plus(initializers)
+        } else {
+            initializers
+        }.map { KtPsiUtil.safeDeparenthesize(it) }
+
+        returnedExpressions.singleOrNull()?.let {
+            if (it.isNull() || this is KtCallableDeclaration && this.typeReference == null || this is KtPropertyAccessor && this.returnTypeReference == null) return candidateType
+        }
+
+        val property = this as? KtProperty
+        val returnTypes = buildList {
+            addAll(returnedExpressions.mapNotNull { returnExpr ->
+                (property?.let { it.getPropertyInitializerType() } ?: returnExpr.getKtType())?.let { getActualType(it) }
+            })
+            if (!candidateType.isUnit) {
+                add(candidateType)
+            }
+        }.distinct()
+        return commonSuperType(returnTypes) ?: candidateType
+    }
+
+    context(KtAnalysisSession)
+    private fun KtProperty.getPropertyInitializerType(): KtType? {
+        val initializer = initializer
+        return if (typeReference != null && initializer != null) {
+            //copy property initializer to calculate initializer's type without property's declared type
+            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement()?.getKtType()
+        } else null
+    }
+
     val returnTypeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.ReturnTypeMismatch::class) { diagnostic ->
-            val declaration = diagnostic.targetFunction.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
-            listOf(UpdateTypeQuickFix(declaration, TargetType.ENCLOSING_DECLARATION, createTypeInfo(diagnostic.actualType)))
+            val element = diagnostic.targetFunction.psi as? KtElement ?: return@diagnosticFixFactory emptyList()
+            val declaration = element as? KtCallableDeclaration ?: (element as? KtPropertyAccessor)?.property  ?: return@diagnosticFixFactory emptyList()
+            listOf(UpdateTypeQuickFix(declaration, if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION, createTypeInfo(element.returnType(getActualType(diagnostic.actualType)))))
+        }
+
+    val returnTypeNullableTypeMismatch =
+        diagnosticFixFactory(KtFirDiagnostic.NullForNonnullType::class) { diagnostic ->
+            val returnExpr = diagnostic.psi.parentOfType<KtReturnExpression>() ?: return@diagnosticFixFactory emptyList()
+            val declaration = returnExpr.getReturnTargetSymbol()?.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
+            val withNullability = diagnostic.expectedType.withNullability(KtTypeNullability.NULLABLE)
+            listOf(UpdateTypeQuickFix(declaration, TargetType.ENCLOSING_DECLARATION, createTypeInfo(declaration.returnType(withNullability))))
+        }
+
+    val initializerTypeMismatch =
+        diagnosticFixFactory(KtFirDiagnostic.InitializerTypeMismatch::class) { diagnostic ->
+            val declaration = diagnostic.psi as? KtProperty ?: return@diagnosticFixFactory emptyList()
+            registerVariableTypeFixes(declaration, getActualType(diagnostic.actualType))
+        }
+
+    val assignmentTypeMismatch =
+        diagnosticFixFactory(KtFirDiagnostic.AssignmentTypeMismatch::class) { diagnostic ->
+            val expression = diagnostic.psi
+            val assignment = expression.parent as? KtBinaryExpression ?: return@diagnosticFixFactory emptyList()
+            val declaration = (assignment.left as? KtNameReferenceExpression)?.mainReference?.resolve() as? KtProperty ?: return@diagnosticFixFactory emptyList()
+            if (!declaration.isVar || declaration.typeReference != null) return@diagnosticFixFactory emptyList()
+            val actualType = getActualType(diagnostic.actualType)
+            val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(KtTypeNullability.NULLABLE) else actualType
+            registerVariableTypeFixes(declaration, type)
+        }
+
+    val typeMismatch =
+        diagnosticFixFactory(KtFirDiagnostic.TypeMismatch::class) { diagnostic ->
+            val expr = diagnostic.psi
+            val property = expr.parent as? KtProperty ?: return@diagnosticFixFactory emptyList()
+            val actualType = property.getPropertyInitializerType() ?: diagnostic.actualType
+            registerVariableTypeFixes(property, getActualType(actualType))
+        }
+
+    context(KtAnalysisSession)
+    private fun registerVariableTypeFixes(declaration: KtProperty, type: KtType): List<KotlinQuickFixAction<KtExpression>> {
+        val expectedType = declaration.getReturnKtType()
+        val expression = declaration.initializer
+        return buildList {
+            add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))
+            if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && type.isNumberOrUNumberType()) {
+                add(WrongPrimitiveLiteralFix(expression, preparePrimitiveLiteral(expression, expectedType)))
+            }
+        }
+    }
+
+    val parameterTypeMismatch =
+        diagnosticFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+            val expression = diagnostic.psi
+            val actualType = getActualType(diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            buildList {
+                if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && actualType.isNumberOrUNumberType()) {
+                    add(WrongPrimitiveLiteralFix(expression, preparePrimitiveLiteral(expression, expectedType)))
+                }
+            }
         }
 
     val componentFunctionReturnTypeMismatch =
@@ -194,13 +323,25 @@ object ChangeTypeQuickFixFactories {
                     else -> KotlinBundle.message("fix.change.return.type.presentation.called", presentation)
                 }
             }
-            TargetType.VARIABLE -> return "'${declaration.name}'"
+            TargetType.VARIABLE -> {
+                val containerName = declaration.parentOfType<KtClassOrObject>()?.nameAsName?.takeUnless { it.isSpecial }?.asString()
+                return "'${containerName?.let { "$containerName." } ?: ""}${declaration.name}'"
+            }
         }
     }
 
     private val KtCallableDeclaration.presentationForQuickfix: String?
         get() {
-            val containerName = parentOfType<KtNamedDeclaration>()?.nameAsName?.takeUnless { it.isSpecial }
+            val containerName = parentOfType<KtClassOrObject>()?.nameAsName?.takeUnless { it.isSpecial }
             return ChangeTypeFixUtils.functionOrConstructorParameterPresentation(this, containerName?.asString())
         }
 }
+
+context(KtAnalysisSession)
+fun KtType.isNumberOrUNumberType(): Boolean = isNumberType() || isUNumberType()
+
+context(KtAnalysisSession)
+fun KtType.isNumberType(): Boolean = isPrimitive && !isBoolean && !isChar
+
+context(KtAnalysisSession)
+fun KtType.isUNumberType(): Boolean = isUByte || isUShort || isUInt || isULong

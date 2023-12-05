@@ -17,7 +17,8 @@
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -27,8 +28,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -44,7 +45,7 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
+public class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdateIntention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
@@ -52,9 +53,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement psiElement, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+  protected void processIntention(@NotNull PsiElement psiElement, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     GrCodeReferenceElement ref = (GrCodeReferenceElement)psiElement;
     final GrAnonymousClassDefinition anonymous = (GrAnonymousClassDefinition)ref.getParent();
     final GrNewExpression newExpr = (GrNewExpression)anonymous.getParent();
@@ -102,7 +101,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
       buffer.append(" as ").append(iface.getQualifiedName());
     }
 
-    createAndAdjustNewExpression(project, newExpr, buffer);
+    createAndAdjustNewExpression(context.project(), newExpr, buffer);
   }
 
   private static void createAndAdjustNewExpression(final Project project,

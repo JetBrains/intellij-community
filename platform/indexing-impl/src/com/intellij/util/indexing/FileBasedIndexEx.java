@@ -50,44 +50,36 @@ import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIf
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
-  public static final boolean DO_TRACE_STUB_INDEX_UPDATE = Boolean.getBoolean("idea.trace.stub.index.update");
+  public static final boolean TRACE_STUB_INDEX_UPDATES = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false) ||
+                                                         SystemProperties.getBooleanProperty("trace.stub.index.update", false);
+  private static final boolean TRACE_INDEX_UPDATES = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
+  private static final boolean TRACE_SHARED_INDEX_UPDATES = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
     ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
-  private volatile boolean myTraceIndexUpdates;
-  private volatile boolean myTraceStubIndexUpdates;
-  private volatile boolean myTraceSharedIndexUpdates;
 
   @ApiStatus.Internal
-  boolean doTraceIndexUpdates() {
-    return myTraceIndexUpdates;
+  static boolean doTraceIndexUpdates() {
+    return TRACE_INDEX_UPDATES;
   }
 
   @ApiStatus.Internal
-  public boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
-    return myTraceStubIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
+  public static boolean doTraceStubUpdates(@NotNull IndexId<?, ?> indexId) {
+    return TRACE_STUB_INDEX_UPDATES && indexId.equals(StubUpdatingIndex.INDEX_ID);
   }
 
   @ApiStatus.Internal
-  boolean doTraceSharedIndexUpdates() {
-    return myTraceSharedIndexUpdates;
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public void loadIndexes() {
-    myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
-    myTraceStubIndexUpdates = SystemProperties.getBooleanProperty("trace.stub.index.update", false);
-    myTraceSharedIndexUpdates = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+  static boolean doTraceSharedIndexUpdates() {
+    return TRACE_SHARED_INDEX_UPDATES;
   }
 
   @ApiStatus.Internal
   public abstract @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 
   @ApiStatus.Internal
-  public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
-                                                     @Nullable Project project);
+  public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope, @Nullable Project project);
 
   @ApiStatus.Internal
   public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
@@ -425,12 +417,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                                @NotNull GlobalSearchScope filter,
-                                                               Processor<? super VirtualFile> processor,
-                                                               IdFilter filesSet) {
+                                                               @Nullable IdFilter filesSet,
+                                                               @NotNull Processor<? super VirtualFile> processor) {
     IntSet set = null;
-    if (filter instanceof GlobalSearchScope.FilesScope) {
-      VirtualFileEnumeration hint = VirtualFileEnumeration.extract(filter);
-      set = hint != null ? new IntOpenHashSet(hint.asArray()) : IntSet.of();
+    if (filter instanceof GlobalSearchScope.FilesScope filesScope) {
+      set = new IntOpenHashSet(filesScope.asArray());
     }
 
     //noinspection rawtypes
@@ -451,10 +442,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set = queryResult;
       }
     }
-    if (set == null || !processVirtualFiles(set, filter, processor)) {
-      return false;
-    }
-    return true;
+    return set != null && processVirtualFiles(set, filter, processor);
   }
 
   @Override
@@ -463,11 +451,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                @NotNull Processor<? super VirtualFile> processor) {
     IdFilter filesSet = extractIdFilter(filter, filter.getProject());
 
-    if (!processFilesContainingAllKeysInPhysicalFiles(queries, filter, processor, filesSet)) {
-      return false;
-    }
-
-    return true;
+    return processFilesContainingAllKeysInPhysicalFiles(queries, filter, filesSet, processor);
   }
 
   @Override
@@ -609,7 +593,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return result;
   }
 
-  @Nullable DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
+  @Nullable
+  DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
       return null;

@@ -1,0 +1,24 @@
+<!-- Events should be registered in this file -->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij.platform.ae.database">
+    <fusBasedCounterUserActivity implementation="com.intellij.ae.database.counters.community.events.PluginsInstalledUserActivity$Factory"/>
+    <fusBasedCounterUserActivity implementation="com.intellij.ae.database.counters.community.events.AltEnterActionInvocation$Factory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <vfs.asyncListener implementation="com.intellij.ae.database.counters.community.events.TestFileCreationListener"/>
+    <editorFactoryListener implementation="com.intellij.ae.database.counters.community.events.CodingTimeUserActivityEditorFactoryListener"/>
+    <postStartupActivity implementation="com.intellij.ae.database.counters.community.events.BuildListenerProjectActivity"/>
+    <checkinHandlerFactory implementation="com.intellij.ae.database.counters.community.events.VcsListenerFactory"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.ae.database.counters.community.events.IdeStartedUserActivityListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+
+    <listener class="com.intellij.ae.database.counters.community.events.CompletionCharactersSparedListener"
+              topic="com.intellij.featureStatistics.FeatureStatisticsUpdateListener"/>
+
+    <listener class="com.intellij.ae.database.counters.community.events.RunConfigurationListener" topic="com.intellij.execution.ExecutionListener"/>
+  </applicationListeners>
+</idea-plugin>

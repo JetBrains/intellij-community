@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManagerListener
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.ItemPresentationCustomizer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.completion.ml.tracker.setupCompletionContext
 import junit.framework.TestCase
+import javax.swing.Icon
 
 class ChangeArrowsDrawingTest : MLSortingTestCase() {
   private val arrowChecker = ArrowPresenceChecker()
@@ -52,12 +56,17 @@ class ChangeArrowsDrawingTest : MLSortingTestCase() {
     var arrowsFound: Boolean = false
 
     override fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage) {
-      lookup.addPresentationCustomizer { _, presentation ->
-        invokedCount += 1
-        arrowsFound = arrowsFound || presentation.icon is ItemsDecoratorInitializer.LeftDecoratedIcon
+      lookup.addPresentationCustomizer(
+        object : ItemPresentationCustomizer {
+          override fun customizePresentation(item: LookupElement, presentation: LookupElementPresentation): LookupElementPresentation {
+            invokedCount += 1
+            arrowsFound = arrowsFound || presentation.icon is ItemsDecoratorInitializer.LeftDecoratedIcon
+            return presentation
+          }
 
-        presentation
-      }
+          override fun customizeEmptyIcon(emptyIcon: Icon): Icon = emptyIcon
+        }
+      )
     }
   }
 }

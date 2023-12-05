@@ -21,9 +21,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -104,7 +104,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 
     @Throws(Exception::class)
-    protected fun doTest(unused: String) {
+    protected open fun doTest(unused: String) {
         val mainFile = dataFile()
         val mainFileName = FileUtil.getNameWithoutExtension(mainFile)
         val intentionAction = createIntention(mainFile)
@@ -266,7 +266,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         if (filePath == mainFilePath) {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)
-                            } catch (e: ComparisonFailure) {
+                            } catch (e: FileComparisonFailure) {
                                 KotlinTestUtils.assertEqualsToFile(afterFile, editor.document.text)
                             }
                         } else {

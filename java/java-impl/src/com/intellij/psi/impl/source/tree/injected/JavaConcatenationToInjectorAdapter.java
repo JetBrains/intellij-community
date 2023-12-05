@@ -19,9 +19,9 @@ public class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorMan
   public Pair<PsiElement, PsiElement[]> computeAnchorAndOperands(@NotNull PsiElement context) {
     PsiElement element = context;
     PsiElement parent = context.getParent();
-    while (parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS
-           || parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.PLUSEQ
-           || parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != element
+    while (parent instanceof PsiPolyadicExpression polyadic && polyadic.getOperationTokenType() == JavaTokenType.PLUS
+           || parent instanceof PsiAssignmentExpression assignment && assignment.getOperationTokenType() == JavaTokenType.PLUSEQ
+           || parent instanceof PsiConditionalExpression cond && cond.getCondition() != element
            || parent instanceof PsiTypeCastExpression
            || parent instanceof PsiParenthesizedExpression) {
       element = parent;

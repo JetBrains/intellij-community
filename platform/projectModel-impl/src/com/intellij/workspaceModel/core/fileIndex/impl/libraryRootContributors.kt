@@ -87,12 +87,12 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
     })
   }
 
-  companion object {
+  object Util {
     internal fun getProjectLibraryId(data: WorkspaceFileSetData): LibraryId? {
       return data.asSafely<LibraryRootFileSetData>()?.projectLibraryId
     }
 
-    fun getModuleLibraryId(fileSet: WorkspaceFileSet, storage: EntityStorage): LibraryId? {
+    internal fun getModuleLibraryId(fileSet: WorkspaceFileSet, storage: EntityStorage): LibraryId? {
       return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityReference?.resolve(storage).asSafely<LibraryEntity>()?.symbolicId
     }
   }

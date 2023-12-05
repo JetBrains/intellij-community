@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 
 class KotlinFirChangeSignatureTest :
     BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, Visibility, KotlinMethodDescriptor>() {
@@ -29,7 +29,7 @@ class KotlinFirChangeSignatureTest :
     }
 
     override fun addFullQualifier(fragment: KtExpressionCodeFragment) {
-        TODO("Not yet implemented")
+        AddQualifiersUtil.addQualifiersRecursively(fragment)
     }
 
     override fun KotlinChangeInfo.createKotlinParameter(
@@ -55,19 +55,28 @@ class KotlinFirChangeSignatureTest :
     override fun createParameterTypeInfo(type: String?, ktElement: PsiElement): KotlinTypeInfo = KotlinTypeInfo(type, ktElement as KtElement)
 
     override fun createChangeInfo(): KotlinChangeInfo {
-        val targetElement = findTargetDescriptor(KotlinChangeSignatureHandler)
-        return KotlinChangeInfo(KotlinMethodDescriptor(targetElement))
+        val element = findTargetElement()?.unwrapped as KtElement
+        val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor)!!
+        val superMethod = checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration
+        return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
         KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }).run()
     }
 
-    override fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod> {
-        TODO("Not yet implemented")
+    override fun ignoreTestData(fileName: String): Boolean {
+        return fileName.contains("Propagat")
     }
 
     override fun getIgnoreDirective(): String {
         return "// IGNORE_K2"
     }
+
+
+    //--------------------------------------------------
+    fun testJavaMethodJvmStaticKotlinUsages() = doTest {
+        swapParameters(0, 1)
+    }
+
 }

@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
@@ -39,14 +39,19 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     projectsManager: GitLabProjectsManager,
     projectData: GitLabProject,
     avatarIconProvider: IconsProvider<GitLabUserDTO>,
-    openReviewTabAction: suspend (mrIid: String) -> Unit
+    openReviewTabAction: suspend (mrIid: String) -> Unit,
+    onReviewCreated: () -> Unit
   ) : GitLabReviewTabViewModel {
     private val cs = parentCs.childScope()
 
     private val projectPath = projectData.projectMapping.repository.projectPath.fullPath()
     override val displayName: String = GitLabBundle.message("merge.request.create.tab.title", projectPath)
 
-    val createVm = GitLabMergeRequestCreateViewModelImpl(project, cs, projectsManager, projectData, avatarIconProvider, openReviewTabAction)
+    val createVm = GitLabMergeRequestCreateViewModelImpl(
+      project, cs,
+      projectsManager, projectData, avatarIconProvider,
+      openReviewTabAction, onReviewCreated
+    )
 
     override suspend fun destroy() = cs.cancelAndJoinSilently()
   }

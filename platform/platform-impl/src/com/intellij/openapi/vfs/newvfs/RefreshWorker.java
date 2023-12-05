@@ -298,12 +298,11 @@ final class RefreshWorker {
     List<VirtualFile> cached = snapshot.first;
     List<String> wanted = snapshot.second;
 
+    Set<String> names = CollectionFactory.createFilePathSet(wanted, dir.isCaseSensitive());
+    for (VirtualFile file : cached) names.add(file.getName());
+
     Map<String, FileAttributes> dirList = null;
     if (fs instanceof BatchingFileSystem) {
-      Set<String> names = CollectionFactory.createFilePathSet(wanted, dir.isCaseSensitive());
-      for (VirtualFile file : cached) {
-        names.add(file.getName());
-      }
       t = System.nanoTime();
       Map<String, FileAttributes> rawDirList = ((BatchingFileSystem)fs).listWithAttributes(dir, names);
       myIoTime.addAndGet(System.nanoTime() - t);
@@ -319,7 +318,7 @@ final class RefreshWorker {
     }
     else {
       t = System.nanoTime();
-      String[] rawList = fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir);
+      String[] rawList = fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir, names) : fs.list(dir);
       actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(rawList, false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }

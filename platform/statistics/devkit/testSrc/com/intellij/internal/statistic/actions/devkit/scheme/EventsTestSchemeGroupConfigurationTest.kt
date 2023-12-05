@@ -25,8 +25,7 @@ class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
     val fieldDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"))
     val eventDescriptor = EventDescriptor("testEvent", setOf(fieldDescriptor))
     val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventDescriptor),
-                                          "classNameTest", "recorderTest",
-                                          PluginSchemeDescriptor("pluginIdTest", "pluginVersionTest"))
+                                          "classNameTest", "recorderTest", PluginSchemeDescriptor("pluginIdTest"))
 
     val scheme = EventsTestSchemeGroupConfiguration.createEventsScheme(listOf(groupDescriptor))
 

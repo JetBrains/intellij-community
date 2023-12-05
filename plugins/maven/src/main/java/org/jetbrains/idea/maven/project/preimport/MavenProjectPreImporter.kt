@@ -14,10 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,6 +44,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
                         generalSettings: MavenGeneralSettings,
                         parentActivity: StructuredIdeActivity): List<Module> {
 
+
     val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
     val statisticsData = StatisticsData(project, rootProjectFiles.size)
     try {
@@ -58,11 +60,21 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       val roots = ArrayList<MavenProject>()
       val mavenProjectMappings = HashMap<MavenProject, List<MavenProject>>()
       val allProjects = ArrayList<MavenProject>()
+      val projectChanges = HashMap<MavenProject, MavenProjectChanges>()
+      val existingTree = MavenProjectsManager.getInstance(project).let { if (it.isMavenizedProject) it.projectsTree else null }
 
-      forest.forEach {
-        mavenProjectMappings.putAll(it.mavenProjectMappings())
-        allProjects.addAll(it.projects())
-        it.root?.let(roots::add)
+      forest.forEach { tree ->
+        mavenProjectMappings.putAll(tree.mavenProjectMappings())
+        allProjects.addAll(tree.projects())
+        tree.root?.let(roots::add)
+
+        if (existingTree == null) {
+          projectChanges.putAll(tree.projects().associateWith { MavenProjectChanges.ALL })
+        }
+        else {
+          projectChanges.putAll(
+            tree.projects().filter { existingTree.findProject(it.file) == null }.associateWith { MavenProjectChanges.ALL })
+        }
       }
 
 
@@ -77,7 +89,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         blockingContext {
           val importer = MavenProjectImporter.createImporter(project, projectTree,
-                                                             allProjects.associateWith { MavenProjectChanges.ALL },
+                                                             projectChanges,
                                                              modelsProvider,
                                                              importingSettings,
                                                              null,
@@ -102,16 +114,21 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
           ProjectImportCollector.LINKED_PROJECTS.with(statisticsData.linkedProject),
           ProjectImportCollector.RESOLVED_DEPENDENCIES.with(statisticsData.resolvedDependencies),
           ProjectImportCollector.RESOLVED_DEPS_PERCENT.with(
-            statisticsData.resolvedDependencies.toFloat() / statisticsData.totalDependencies.toFloat()),
+            if (statisticsData.totalDependencies == 0) 0.0f else (statisticsData.resolvedDependencies.toFloat() / statisticsData.totalDependencies.toFloat())),
           ProjectImportCollector.ADDED_MODULES.with(statisticsData.addedModules))
       }
     }
   }
 
-  private fun CoroutineScope.preimport(rootProjectFile: VirtualFile): Deferred<ProjectTree?> = async {
+  private fun CoroutineScope.preimport(rootProjectFileOrDir: VirtualFile): Deferred<ProjectTree?> = async {
 
     val tree = ProjectTree()
+
     try {
+      val rootProjectFile = if (rootProjectFileOrDir.isFile) rootProjectFileOrDir else rootProjectFileOrDir.findChild("pom.xml")
+      if (rootProjectFile == null) {
+        return@async null
+      }
       val rootModel = MavenJDOMUtil.read(rootProjectFile, null) ?: return@async null
 
       // reading
@@ -360,7 +377,7 @@ private class StatisticsData(val project: Project, val rootProjects: Int) {
     }
     finally {
       MavenLog.LOG.info("preimport statistics: " +
-                        "linked: $linkedProject of $rootProjects with total $totalProjects modules" +
+                        "linked: $linkedProject of $rootProjects with total $totalProjects modules " +
                         "interpolated $resolvedDependencies of $totalDependencies, " +
                         "$addedModules modules added. This statistics calculated for ${System.currentTimeMillis() - time} millis")
     }

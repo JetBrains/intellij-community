@@ -202,6 +202,19 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
                 )
             }
         }
+
+        // Collect compilation output archives
+        mppModel.targets.flatMap { it.compilations }.forEach { compilation ->
+            val archiveFile = compilation.archiveFile ?: return@forEach
+            val path = ExternalSystemApiUtil.toCanonicalPath(archiveFile.absolutePath)
+            compilation.allSourceSets.forEach { sourceSet ->
+                resolverCtx.artifactsMap.storeModuleId(
+                    artifactPath = path,
+                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                    ownerId = "kotlin"
+                )
+            }
+        }
     }
 
     /* Create KotlinGradleProjectData node and attach it to moduleDataNode */

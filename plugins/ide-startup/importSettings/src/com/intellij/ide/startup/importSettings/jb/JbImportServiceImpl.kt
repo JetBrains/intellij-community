@@ -15,13 +15,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.jetbrains.rd.util.remove
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
@@ -165,7 +165,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         }
       }
 
-      LOG.info("${confDir.name}/options' newest file is dated $lastModified")
+      LOG.info("${optionsDir}' newest file is dated $lastModified")
       val ideName = matcher.group(1)
       val ideVersion = matcher.group(2)
       val fullName = "${NameMappings.getFullName(ideName)} $ideVersion"
@@ -226,25 +226,32 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     }
     LOG.info("Will import the following categories: ${filteredCategories.joinToString()}")
 
+    val allRoamableCategories = DEFAULT_SETTINGS_CATEGORIES.values.map { it.settingsCategory }
+    val importEverything = filteredCategories.containsAll(allRoamableCategories)
+
     val importData = TransferSettingsProgress(productInfo)
-    val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath)
+    val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath, null)
     val progressIndicator = importData.createProgressIndicatorAdapter()
     val modalityState = ModalityState.current()
 
     val startTime = System.currentTimeMillis()
     coroutineScope.async(modalityState.asContextElement()) {
-      progressIndicator.text2 = "Migrating options"
-      LOG.info("Starting migration...")
-      importer.importOptions(filteredCategories)
-      LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
-      progressIndicator.fraction = 0.1
-      ApplicationManager.getApplication().saveSettings()
-      if (plugins2import != null) {
+      if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
+        LOG.info("Started importing all...")
+        progressIndicator.text2 = "Migrating options"
+        importer.importRaw(progressIndicator, plugins2import ?: emptyList())
+        LOG.info("Imported all completed in ${System.currentTimeMillis() - startTime} ms. ")
+        LOG.info("Calling restart...")
+        withContext(Dispatchers.EDT) {
+          ApplicationManager.getApplication().invokeLater({
+                                                            ApplicationManagerEx.getApplicationEx().restart(true)
+                                                          }, modalityState)
+        }
+      } else if (!plugins2import.isNullOrEmpty()) {
         LOG.info("Started importing plugins...")
-        val pluginsImportStart = System.currentTimeMillis()
         importer.installPlugins(progressIndicator, plugins2import)
-        LOG.info("Plugins imported in ${System.currentTimeMillis() - pluginsImportStart} ms. " +
-                 "Migration completed in ${System.currentTimeMillis() - startTime} ms.")
+        storeImportConfig(productInfo.configDirPath, filteredCategories)
+        LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
         LOG.info("Calling restart...")
         // restart if we install plugins
         withContext(Dispatchers.EDT) {
@@ -253,8 +260,21 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                           }, modalityState)
         }
       }
+      else if (importer.isNewUIValueChanged()) {
+        withContext(Dispatchers.EDT) {
+          SettingsService.getInstance().doClose.fire(Unit)
+          LOG.info("Starting migration after windows is closed")
+          importer.importOptions(filteredCategories)
+          LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
+          LOG.info("Migration complete. Showing welcome screen")
+        }
+      }
       else {
-        //close the dialog and start IDE
+        progressIndicator.text2 = "Migrating options"
+        LOG.info("Starting migration...")
+        importer.importOptions(filteredCategories)
+        LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
+        progressIndicator.fraction = 0.1
         LOG.info("Migration complete. Showing welcome screen")
         withContext(Dispatchers.EDT) {
           SettingsService.getInstance().doClose.fire(Unit)

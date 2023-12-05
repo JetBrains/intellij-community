@@ -14,6 +14,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 import java.lang.reflect.UndeclaredThrowableException
 import java.util.concurrent.ConcurrentHashMap
+import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
@@ -31,7 +32,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         return invoker.isApplicationInitialized()
       }
       catch (ut: UndeclaredThrowableException) {
-        if (ut.cause is InstanceNotFoundException) {
+        if (ut.cause is InstanceNotFoundException
+            || ut.cause is AttributeNotFoundException) {
           return false // Invoker is not yet registered in JMX
         }
         throw ut

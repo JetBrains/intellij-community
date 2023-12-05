@@ -14,7 +14,7 @@ class CodeFragmentCodegenException(val reason: Throwable) : Exception()
 internal fun reportErrorWithAttachments(
     executionContext: ExecutionContext,
     codeFragment: KtCodeFragment,
-    e: CodeFragmentCodegenException
+    reason: Throwable
 ) {
     val evaluationContext = executionContext.evaluationContext
     val projectName = evaluationContext.project.name
@@ -59,6 +59,6 @@ internal fun reportErrorWithAttachments(
 
     LOG.error(
         "Error when compiling code fragment with IR evaluator. Details in attachments.",
-        RuntimeExceptionWithAttachments(e.reason, *attachments.toTypedArray())
+        RuntimeExceptionWithAttachments(reason, *attachments.toTypedArray())
     )
 }

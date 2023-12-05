@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.HorizontalListPanel
@@ -12,7 +12,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
-import com.intellij.util.text.JBDateFormat
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
@@ -32,7 +32,7 @@ internal object GHPRTimelineItemUIUtil {
       .append(HtmlChunk.nbsp())
       .apply {
         if (date != null) {
-          append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
+          append(DateFormatUtil.formatPrettyDateTime(date))
         }
       }.toString()
     val titleTextPane = SimpleHtmlPane(titleText).apply {

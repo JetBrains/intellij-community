@@ -87,30 +87,30 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     SearchScope scope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(element.getContainingFile());
     if (scope != null) return scope;
     scope = element.getUseScope();
-    for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {
+    for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       SearchScope additionalScope = null;
       try {
         additionalScope = enlarger.getAdditionalUseScope(element);
       }
       catch (IndexNotReadyException pce) {
-        LOG.debug("ProcessCancelledException thrown while getUseScope() calculation", pce);
+        LOG.debug("ProcessCanceledException thrown while getUseScope() calculation", pce);
       }
       if (additionalScope != null) {
         scope = scope.union(additionalScope);
       }
     }
 
-    scope = restrictScope(scope, USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
+    scope = restrictScope(scope, USE_SCOPE_OPTIMIZER_EP_NAME.getExtensionList(), element);
     if (restrictToCodeUsageScope) {
-      scope = restrictScope(scope, CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
+      scope = restrictScope(scope, CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensionList(), element);
     }
 
     return scope;
   }
 
   private static @NotNull SearchScope restrictScope(@NotNull SearchScope baseScope,
-                                                    @NotNull ScopeOptimizer @NotNull [] optimizers,
+                                                    @NotNull List<ScopeOptimizer> optimizers,
                                                     @NotNull PsiElement element) {
     SearchScope scopeToRestrict = ScopeOptimizer.calculateOverallRestrictedUseScope(optimizers, element);
     if (scopeToRestrict != null) {
@@ -350,7 +350,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       Processor<PsiElement> localProcessor = localProcessor(searcher, processor);
 
-      // lists of files to search in this order. First there are lists with higher probability of hits (e.g., files with `containerName` or files near the target)
+      // Lists of files to search in this order.
+      // First, there are lists with higher probability of hits (e.g., files with `containerName` or files near the target)
       List<List<VirtualFile>> priorities = computePriorities(scope, searcher, searchContext, caseSensitively, containerName, session);
       if (priorities.isEmpty()) return true;
       int totalSize = priorities.stream().mapToInt(l -> l.size()).sum();
@@ -387,7 +388,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     else {
       priorities.add(targets);
-      allFiles.removeAll(targets);
+      targets.forEach(allFiles::remove);
 
       directories = ContainerUtil.mapNotNull(targets, v -> v.getParent());
 
@@ -403,15 +404,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       );
       if (!directoryNearTargetFiles.isEmpty()) {
         priorities.add(directoryNearTargetFiles);
-        allFiles.removeAll(directoryNearTargetFiles);
+        directoryNearTargetFiles.forEach(allFiles::remove);
       }
     }
     if (containerName != null) {
       Set<VirtualFile> intersectionWithContainerFiles = new HashSet<>();
       // intersectionWithContainerFiles holds files containing words from both `text` and `containerName`
       getFilesWithText(scope, searchContext, caseSensitively, text+" "+containerName, intersectionWithContainerFiles);
-      intersectionWithContainerFiles.removeAll(targets);
-      intersectionWithContainerFiles.removeAll(directories);
+      targets.forEach(intersectionWithContainerFiles::remove);
+      directories.forEach(intersectionWithContainerFiles::remove);
       if (!intersectionWithContainerFiles.isEmpty()) {
         priorities.add(new ArrayList<>(intersectionWithContainerFiles));
 
@@ -456,7 +457,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           LOG.error("Error during processing of: " + vfile.getName(), e);
           throw e;
         }
-        if (progress.isRunning()) {
+        if (progress.isRunning() && !progress.isIndeterminate()) {
           double fraction = (double)counter.incrementAndGet() / totalSize;
           progress.setFraction(fraction);
         }
@@ -538,7 +539,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             processorCanceled = stopped.get();
           }
           catch (ProcessCanceledException e) {
-            // we can be interrupted by wrapper (means write action is about to start) or by genuine exception in progress
+            // wrapper can interrupt us (means write action is about to start) or by genuine exception in progress
             progress.checkCanceled();
           }
         }

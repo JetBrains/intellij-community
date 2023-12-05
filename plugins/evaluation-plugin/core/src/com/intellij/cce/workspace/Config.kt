@@ -11,6 +11,7 @@ import kotlin.io.path.absolute
 
 data class Config private constructor(
   val projectPath: String,
+  val projectName: String,
   val language: String,
   val outputDir: String,
   val strategy: EvaluationStrategy,
@@ -62,6 +63,7 @@ data class Config private constructor(
 
   class Builder internal constructor(private val projectPath: String, private val language: String) {
     var evaluationRoots = mutableListOf<String>()
+    var projectName = projectPath.split('/').last()
     var outputDir: String = Paths.get(projectPath, "completion-evaluation").toAbsolutePath().toString()
     var strategy: EvaluationStrategy = EvaluationStrategy.defaultStrategy
     var saveLogs = false
@@ -118,6 +120,7 @@ data class Config private constructor(
 
     fun build(): Config = Config(
       Paths.get(projectPath).absolute().toString(),
+      projectName,
       language,
       outputDir,
       strategy,

@@ -20,9 +20,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 
 internal class LanguageDetectionInspection : LocalInspectionTool() {
-  companion object {
-    private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
-  }
+
+  private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
 
   override fun inspectionStarted(session: LocalInspectionToolSession, isOnTheFly: Boolean) {
     session.getUserData(key)!!.clear()
@@ -46,7 +45,8 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(file) || GrazieInspection.ignoreGrammarChecking(file))
+    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(
+        file) || GrazieInspection.ignoreGrammarChecking(file))
       return PsiElementVisitor.EMPTY_VISITOR
 
     val domains = GrazieInspection.checkedDomains()

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class TerminalShellCommandTest extends TestCase {
+public class TerminalShellCommandTest extends BasePlatformTestCase {
   public void testDontAddAnything() {
     if (SystemInfo.isUnix) {
       doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i", Maps.newHashMap());
@@ -41,10 +41,11 @@ public class TerminalShellCommandTest extends TestCase {
     }
   }
 
-  private static List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
+  private List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
     List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
     if (shellIntegration) {
-      ShellStartupOptions options = LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs);
+      var runner = new LocalTerminalDirectRunner(getProject());
+      ShellStartupOptions options = runner.injectShellIntegration(shellCommand, envs);
       envs.clear();
       envs.putAll(options.getEnvVariables());
       return Objects.requireNonNull(options.getShellCommand());
@@ -52,17 +53,17 @@ public class TerminalShellCommandTest extends TestCase {
     return shellCommand;
   }
 
-  private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
+  private void hasRcConfig(String path, String configName, Map<String, String> envs) {
     List<String> res = getCommand(path, envs, true);
     assertEquals("--rcfile", res.get(1));
     assertTrue(res.get(2).contains(configName));
   }
 
-  private static void doTest(String[] expected, String path, Map<String, String> envs) {
+  private void doTest(String[] expected, String path, Map<String, String> envs) {
     assertEquals(Arrays.asList(expected), getCommand(path, envs, true));
   }
 
-  private static void contains(@NotNull String shellPath, boolean shellIntegration, Map<String, String> envs, String... item) {
+  private void contains(@NotNull String shellPath, boolean shellIntegration, Map<String, String> envs, String... item) {
     List<String> result = getCommand(shellPath, envs, shellIntegration);
     for (String i : item) {
       assertTrue(i + " isn't in " + StringUtil.join(result, " "), result.contains(i));

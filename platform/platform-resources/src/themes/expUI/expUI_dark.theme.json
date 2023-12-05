@@ -291,7 +291,8 @@
         "successBackground": "Green1",
         "successBorder": "Green2",
         "warningBackground": "Yellow1",
-        "warningBorder": "Yellow2"
+        "warningBorder": "Yellow2",
+        "iconHoverBackground": "#FFFFFF1A"
       }
     },
 
@@ -445,8 +446,11 @@
         "Background.Hover": "Grey4"
       },
       "State": {
-        "Background": "Grey3",
-        "Foreground": "Grey7"
+        "Background": "Grey4",
+        "Foreground": "Grey8"
+      },
+      "ChatItem":{
+        "Hover": "#5A5D6333"
       }
     },
 
@@ -577,9 +581,11 @@
 
     "ValidationTooltip": {
       "errorBackground": "Red3",
-      "errorBorderColor": "Red3",
+      "errorBorderColor": "Red6",
+      "errorForeground": "Gray14",
       "warningBackground": "Yellow2",
-      "warningBorderColor": "Yellow2"
+      "warningBorderColor": "Yellow5",
+      "warningForeground": "Gray14"
     },
 
     "ToolWindow": {
@@ -948,7 +954,10 @@
     "ManagedIdeBadgeBorder": "Grey5",
     "ManagedIdeBadgeBackground": "Grey3",
     "ManagedIdeBadgeBackgroundHover": "Grey4",
-    "ManagedIdeMenuItemHover": "Grey4"
+    "ManagedIdeMenuItemHover": "Grey4",
+
+    "InlineBanner.hoverBackground": "#FFFFFF14",
+    "InlineBanner.pressedBackground": "#FFFFFF1E"
   },
 
   "icons": {

@@ -12,7 +12,7 @@ import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.getNamedArgument
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.basePath
@@ -221,16 +221,11 @@ fun findDecoratorsByName(module: Module, vararg names: String): Iterable<PyDecor
   }
 
 
+
 private fun createFixture(decorator: PyDecorator): PyTestFixture? {
   val target = decorator.target ?: return null
-  val nameValue = decorator.argumentList?.getKeywordArgument("name")?.valueExpression
-  if (nameValue != null) {
-    val name = PyEvaluator.evaluate(nameValue, String::class.java) ?: return null
-    return PyTestFixture(target, nameValue, name)
-  }
-  else {
-    val name = target.name ?: return null
-    return PyTestFixture(target, target, name)
+  return (decorator.getNamedArgument("name") ?: target.name)?.let { name ->
+    PyTestFixture(target, target, name)
   }
 }
 

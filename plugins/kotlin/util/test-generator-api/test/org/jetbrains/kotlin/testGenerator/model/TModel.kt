@@ -23,6 +23,7 @@ data class TModel(
     val passTestDataPath: Boolean,
     val classPerTest: Boolean,
     val bucketSize: Int?,
+    val ignored: Boolean
 )
 
 fun ModelMatcher.withPrecondition(precondition: (String) -> Boolean): ModelMatcher {
@@ -63,6 +64,7 @@ fun MutableTSuite.model(
     path: String,
     pattern: ModelMatcher = Patterns.KT,
     isRecursive: Boolean = true,
+    isIgnored: Boolean = false,
     testClassName: String = File(path).toJavaIdentifier().capitalize(),
     testMethodName: String = "doTest",
     flatten: Boolean = false,
@@ -86,6 +88,7 @@ fun MutableTSuite.model(
         passTestDataPath = passTestDataPath,
         classPerTest = classPerTest,
         bucketSize = if (!splitToBuckets) null else bucketSize,
+        ignored = isIgnored
     )
 }
 

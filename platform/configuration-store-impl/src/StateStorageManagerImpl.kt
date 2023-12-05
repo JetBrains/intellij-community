@@ -44,16 +44,11 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
-    if (first) {
-      compoundStreamProvider.providers.add(0, provider)
-    }
-    else {
-      compoundStreamProvider.providers.add(provider)
-    }
+    compoundStreamProvider.addStreamProvider(provider = provider, first = first)
   }
 
   override fun removeStreamProvider(aClass: Class<out StreamProvider>) {
-    compoundStreamProvider.providers.removeAll(aClass::isInstance)
+    compoundStreamProvider.removeStreamProvider(aClass)
   }
 
   // access under storageLock
@@ -143,8 +138,6 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   }
 
   fun getCachedFileStorages(): Set<StateStorage> = storageLock.read { storages.values.toSet() }
-
-  fun findCachedFileStorage(name: String): StateStorage? = storageLock.read { storages.get(name) }
 
   fun getCachedFileStorages(changed: Collection<String>,
                             deleted: Collection<String>,

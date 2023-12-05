@@ -141,7 +141,8 @@ object TestKotlinArtifacts {
 
         if (!libFile.exists()) {
             val archiveFilePath = Paths.get(downloadOut)
-            downloadFile(downloadUrl, Paths.get(downloadOut))
+            Files.deleteIfExists(archiveFilePath)
+            downloadFile(downloadUrl, archiveFilePath)
             unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
             Files.deleteIfExists(archiveFilePath)
         }

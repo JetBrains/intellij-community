@@ -28,7 +28,7 @@ abstract class FileReportGenerator(
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) {
     val fileInfo = sessions.first()
-    val fileName = File(fileInfo.sessionsInfo.filePath).name
+    val fileName = "${fileInfo.sessionsInfo.projectName}: ${File(fileInfo.sessionsInfo.filePath).name}"
     val (resourcePath, reportPath) = dirs.getPaths(fileName)
     val sessionsJson = sessionSerializer.serialize(sessions.map { it.sessionsInfo.sessions }.flatten())
     val resourceFile = File(resourcePath.toString())
@@ -51,7 +51,7 @@ abstract class FileReportGenerator(
         }
       }
     }.also { html -> FileWriter(reportPath.toString()).use { it.write(html) } }
-    reportReferences[fileInfo.sessionsInfo.filePath] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
+    reportReferences["${fileInfo.sessionsInfo.projectName}: ${fileInfo.sessionsInfo.filePath}"] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
   }
 
   open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {

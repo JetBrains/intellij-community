@@ -84,5 +84,7 @@
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.instanceContainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.webp" scope="TEST" />
   </component>
 </module>

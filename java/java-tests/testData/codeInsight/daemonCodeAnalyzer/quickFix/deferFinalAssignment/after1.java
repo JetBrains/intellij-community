@@ -4,7 +4,7 @@ import java.io.*;
 class a {
     void f(InputStream in) {
         final int n;
-        int n1<caret>;
+        int <caret>n1;
         try {
             n1 = in.read();
         } catch (IOException e) {

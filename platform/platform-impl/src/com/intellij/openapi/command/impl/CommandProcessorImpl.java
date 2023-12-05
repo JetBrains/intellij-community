@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,8 +23,10 @@ final class CommandProcessorImpl extends CoreCommandProcessor {
     try {
       if (throwable != null) {
         failed = true;
-        ExceptionUtil.rethrowUnchecked(throwable);
-        CommandLog.LOG.error(throwable);
+        if (!(throwable instanceof ProcessCanceledException)) {
+          ExceptionUtil.rethrowUnchecked(throwable);
+          CommandLog.LOG.error(throwable);
+        }
       }
       else {
         failed = false;
@@ -43,7 +46,7 @@ final class CommandProcessorImpl extends CoreCommandProcessor {
     if (failed) {
       Project project = command.getProject();
       if (project != null) {
-        FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+        FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor(project);
         final UndoManager undoManager = UndoManager.getInstance(project);
         if (undoManager.isUndoAvailable(editor)) {
           undoManager.undo(editor);

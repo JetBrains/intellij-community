@@ -365,7 +365,23 @@ class GCRootPathsTree(
               val childrenToReport =
                 currentNodeEdges
                   .entries
-                  .sortedByDescending { it.value.pathsSize }
+                  .sortedWith { a, b ->
+                    // First: by paths size, descending
+                    val compareByPathsSizeDesc = b.value.pathsSize.compareTo(a.value.pathsSize)
+                    if (compareByPathsSizeDesc != 0) return@sortedWith compareByPathsSizeDesc
+
+                    // Second, if paths sizes are the same: by total size, descending
+                    val compareByTotalSizeDesc = b.value.totalSizeInDwords.compareTo(a.value.totalSizeInDwords)
+                    if (compareByTotalSizeDesc != 0) return@sortedWith compareByTotalSizeDesc
+
+                    // Third, if total sizes are the same: by ref index
+                    val compareByRefIndex = a.key.refIndex.compareTo(b.key.refIndex)
+                    if (compareByRefIndex != 0) return@sortedWith compareByRefIndex
+
+                    // Last, if ref indexes are the same: by class name
+                    val compareByClassName = a.key.classDefinition.name.compareTo(b.key.classDefinition.name)
+                    return@sortedWith compareByClassName
+                  }
                   .filterIndexed { index, e ->
                     index == 0 ||
                     e.value.pathsCount >= minimumObjectsForReport ||
@@ -425,7 +441,7 @@ class GCRootPathsTree(
           "[$pathsCountString/$percentString/$instanceSizeString] $subgraphSizeString $instanceCountString $status $indent$fieldNameString$text$disposedString")
       }
       else {
-        printFunc("$status $indent$text.$fieldNameString$disposedString")
+        printFunc("$status $indent$fieldNameString$text$disposedString")
       }
     }
 

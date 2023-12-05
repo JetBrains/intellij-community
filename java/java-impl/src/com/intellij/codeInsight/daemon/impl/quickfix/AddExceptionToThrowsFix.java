@@ -38,10 +38,9 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
     if (targetMethod == null) return ModCommand.nop();
     ModCommand command = addExceptionsToThrowsList(context.project(), targetMethod, exceptions, myProcessHierarchy);
     if (command == null) {
-      return new ModChooseAction(QuickFixBundle.message("add.exception.to.throws.header", exceptions.size()),
-                                 List.of(
-                                   new AddExceptionToThrowsFix(element, ThreeState.YES),
-                                   new AddExceptionToThrowsFix(element, ThreeState.NO)));
+      return ModCommand.chooseAction(QuickFixBundle.message("add.exception.to.throws.header", exceptions.size()),
+                                     new AddExceptionToThrowsFix(element, ThreeState.YES),
+                                     new AddExceptionToThrowsFix(element, ThreeState.NO));
     }
 
     return command;

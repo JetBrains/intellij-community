@@ -27,8 +27,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   private var myNavigator: MavenProjectsNavigator? = null
   private var myStructure: MavenProjectsStructure? = null
 
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
     myProject.replaceService(ToolWindowManager::class.java, object : ToolWindowHeadlessManagerImpl(myProject) {
@@ -184,7 +182,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <version>1</version>
                        """.trimIndent())
     readFiles(myProjectPom)
-    resolveDependenciesAndImport()
     assertEquals(1, rootNodes.size)
     MavenUtil.cleanAllRunnables()
 
@@ -262,20 +259,18 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
     readFiles(myProjectPom, m)
 
-    projectsManager.waitForAfterImportJobs()
-
     projectsManager.projectsTree.ignoredFilesPaths = listOf(m.getPath())
 
     myNavigator!!.showIgnored = true
     assertTrue(rootNodes[0].isVisible())
     val childNodeNamesBefore = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins", "m"), childNodeNamesBefore)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories", "m"), childNodeNamesBefore)
 
     myNavigator!!.showIgnored = false
     assertTrue(rootNodes[0].isVisible())
     waitForPluginNodesUpdated()
     val childNodeNamesAfter = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins"), childNodeNamesAfter)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories"), childNodeNamesAfter)
   }
 
   private suspend fun waitForPluginNodesUpdated() = withContext(Dispatchers.EDT) {

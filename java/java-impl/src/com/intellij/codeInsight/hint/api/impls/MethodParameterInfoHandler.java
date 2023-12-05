@@ -151,11 +151,11 @@ public final class MethodParameterInfoHandler
       Object[] candidates = context.getObjectsToView();
       if (candidates != null && candidates.length != 0) {
         Object highlighted = context.getHighlightedParameter();
-        CandidateWithPresentation currentMethodInfo;
+        CandidateWithPresentation currentMethodInfo = null;
         if (highlighted instanceof PsiMethod method) {
           currentMethodInfo = (CandidateWithPresentation)ContainerUtil.find(candidates, c -> getMethodFromCandidate(c).equals(method));
-        } else {
-          currentMethodInfo = (CandidateWithPresentation)highlighted;
+        } else if (highlighted instanceof CandidateWithPresentation cwp) {
+          currentMethodInfo = cwp;
         }
         if (currentMethodInfo == null) currentMethodInfo = (CandidateWithPresentation)candidates[0];
         PsiMethod method = currentMethodInfo.getMethod();

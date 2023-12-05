@@ -6,9 +6,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +38,8 @@ public final class HighlightUnnamedClassUtil {
     if (!HighlightingFeature.UNNAMED_CLASSES.isAvailable(file)) return null;
     PsiUnnamedClass unnamedClass = JavaUnnamedClassUtil.getUnnamedClassFor(file);
     if (unnamedClass == null) return null;
-    String name = JavaUnnamedClassUtil.getJvmName(unnamedClass);
-    if (name == null) {
+    String name = ClassUtil.getJVMClassName(unnamedClass);
+    if (!PsiNameHelper.getInstance(file.getProject()).isQualifiedName(name)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(file)
         .fileLevelAnnotation()

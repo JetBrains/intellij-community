@@ -388,8 +388,6 @@ class KotlinFacetEditorGeneralTab(
             reportWarningsCheckBox.validateOnChange()
             additionalArgsOptionsField.textField.validateOnChange()
             generateSourceMapsCheckBox.validateOnChange()
-            outputPrefixFile.textField.validateOnChange()
-            outputPostfixFile.textField.validateOnChange()
             outputDirectory.textField.validateOnChange()
             copyRuntimeFilesCheckBox.validateOnChange()
             moduleKindComboBox.validateOnChange()

@@ -46,10 +46,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
@@ -82,6 +79,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
 
   public static final DataKey<Integer> LINE_NUMBER = DataKey.create("x.debugger.line.number");
+  public static final DataKey<Integer> OFFSET = DataKey.create("x.debugger.offset");
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
@@ -279,7 +277,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
     if (areInlineBreakpointsEnabled()) {
-      return variantsAsync.then(variants -> {
+      return variantsAsync.then(variantsWithAll -> {
+        var variants = variantsWithAll.stream().filter(v -> !InlineBreakpointInlayManager.isAllVariant(v)).toList();
 
         var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,
                                                             Stream.concat(
@@ -578,6 +577,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     Integer lineNumber = LINE_NUMBER.getData(context);
     if (lineNumber != null) {
       return XSourcePositionImpl.create(editor.getVirtualFile(), lineNumber);
+    }
+    Integer offsetFromDataContext = OFFSET.getData(context);
+    if (offsetFromDataContext != null) {
+      return XSourcePositionImpl.createByOffset(editor.getVirtualFile(), offsetFromDataContext);
     }
 
     final Document document = editor.getDocument();

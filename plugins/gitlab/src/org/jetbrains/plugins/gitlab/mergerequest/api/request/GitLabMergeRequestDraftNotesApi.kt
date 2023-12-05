@@ -4,11 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.request
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
+import com.intellij.util.Url
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
+import java.net.URLEncoder
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
@@ -18,7 +20,7 @@ fun getMergeRequestDraftNotesUri(project: GitLabProjectCoordinates, mrIid: Strin
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("draft_notes")
-    .withQuery(params.entries.joinToString("&") { "${it.key}=${it.value}" })
+    .withQuery(params.entries.joinToString("&") { "${it.key}=${URLEncoder.encode(it.value, "UTF-8")}" })
 
 @SinceGitLab("15.10")
 suspend fun GitLabApi.Rest.updateDraftNote(project: GitLabProjectCoordinates,
@@ -74,7 +76,7 @@ suspend fun GitLabApi.Rest.submitSingleDraftNote(project: GitLabProjectCoordinat
   }
 }
 
-@SinceGitLab("15.10")
+@SinceGitLab("16.3")
 suspend fun GitLabApi.Rest.addDraftReplyNote(project: GitLabProjectCoordinates,
                                              mrIid: String,
                                              discussionId: String,
@@ -100,7 +102,7 @@ suspend fun GitLabApi.Rest.addDraftNote(project: GitLabProjectCoordinates,
     "note" to body,
   ) + (positionOrNull?.let { position ->
     listOfNotNull(
-      position.baseSha?.let { "position[base_sha]" to it },
+      position.baseSha.let { "position[base_sha]" to it },
       "position[head_sha]" to position.headSha,
       "position[start_sha]" to position.startSha,
       position.oldLine?.let { "position[old_line]" to it.toString() },

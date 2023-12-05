@@ -44,7 +44,6 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
       MavenUtil.runWhenInitialized(project) {
         JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded {
           ApplicationManager.getApplication().executeOnPooledThread {
-            waitForCurrentMavenImportActivities(context, project)
             context.message("Import of the project has been started", line)
             val mavenManager = MavenProjectsManager.getInstance(project)
             runBlockingMaybeCancellable {
@@ -57,7 +56,6 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
                 mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
               }
             }
-            waitForCurrentMavenImportActivities(context, project)
             context.message("Import of the maven project has been finished", line)
             projectTrackerSettings.autoReloadType = currentAutoReloadType
             DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(runnable, project))
@@ -70,12 +68,6 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
         }
       }
     }
-  }
-
-  private fun waitForCurrentMavenImportActivities(context: PlaybackContext, project: Project) {
-    context.message("Waiting for current maven import activities", line)
-    MavenProjectsManager.getInstance(project).waitForImportCompletion()
-    context.message("Maven import activities completed", line)
   }
 
   companion object {

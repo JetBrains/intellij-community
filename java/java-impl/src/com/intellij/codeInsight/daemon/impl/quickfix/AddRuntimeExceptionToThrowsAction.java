@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.modcommand.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.modcommand.ModCommand.*;
 
 public class AddRuntimeExceptionToThrowsAction implements ModCommandAction {
   private final ThreeState myProcessHierarchy;
@@ -28,14 +31,13 @@ public class AddRuntimeExceptionToThrowsAction implements ModCommandAction {
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
     PsiClassType aClass = getRuntimeExceptionAtCaret(context);
     PsiMethod method = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiMethod.class);
-    if (method == null) return ModCommand.nop();
+    if (method == null) return nop();
     ModCommand command =
       AddExceptionToThrowsFix.addExceptionsToThrowsList(context.project(), method, Collections.singleton(aClass), myProcessHierarchy);
     if (command == null) {
-      return new ModChooseAction(QuickFixBundle.message("add.runtime.exception.to.throws.header"), List.of(
-        new AddRuntimeExceptionToThrowsAction(ThreeState.YES),
-        new AddRuntimeExceptionToThrowsAction(ThreeState.NO)
-      ));
+      return chooseAction(QuickFixBundle.message("add.runtime.exception.to.throws.header"),
+                          new AddRuntimeExceptionToThrowsAction(ThreeState.YES),
+                          new AddRuntimeExceptionToThrowsAction(ThreeState.NO));
     }
     return command;
   }
@@ -54,6 +56,7 @@ public class AddRuntimeExceptionToThrowsAction implements ModCommandAction {
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
     if (!(context.file() instanceof PsiJavaFile)) return null;
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiClassType exception = getRuntimeExceptionAtCaret(context);
     if (exception == null) return null;
 

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 internal class KotlinDataClassComponentUsage(
     calleeExpression: KtSimpleNameExpression,
     private val newName: String
-) : UsageInfo(calleeExpression), KotlinBaseUsage {
+) : UsageInfo(calleeExpression), KotlinBaseChangeSignatureUsage {
     override fun processUsage(
       changeInfo: KotlinChangeInfoBase,
       element: KtElement,

@@ -5,7 +5,7 @@ import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

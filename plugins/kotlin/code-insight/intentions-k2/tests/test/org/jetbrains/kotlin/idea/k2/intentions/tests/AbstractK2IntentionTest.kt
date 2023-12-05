@@ -34,10 +34,14 @@ abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
-            super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
+    override fun doTest(unused: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
+            super.doTest(unused)
         }
+    }
+
+    override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+        super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
     }
 
     override fun checkForErrorsAfter(fileText: String) {}

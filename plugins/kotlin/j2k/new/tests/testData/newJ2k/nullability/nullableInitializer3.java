@@ -1,5 +1,3 @@
-import org.jetbrains.annotations.Nullable;
-
 public class Test {
     public String notNullString(int p) {
         return "response";

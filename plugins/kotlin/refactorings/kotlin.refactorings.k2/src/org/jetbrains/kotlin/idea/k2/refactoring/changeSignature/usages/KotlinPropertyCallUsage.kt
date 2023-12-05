@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
-internal class KotlinPropertyCallUsage(element: KtSimpleNameExpression, private val changeInfo: KotlinChangeInfoBase) : UsageInfo(element), KotlinBaseUsage {
+internal class KotlinPropertyCallUsage(element: KtSimpleNameExpression, private val changeInfo: KotlinChangeInfoBase) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
     override fun processUsage(
       changeInfo: KotlinChangeInfoBase,
       element: KtElement,

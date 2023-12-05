@@ -2055,7 +2055,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       }
 
       setBounds(bounds);
-
+      doLayout();
 
       if (getParent() != null) {
         if (myActionButtons == null) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
+import kotlin.coroutines.coroutineContext
 
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
@@ -91,10 +93,11 @@ class InlineCompletionHandler(
       return
     }
 
-    val provider = getProvider(event)
-    if (sessionManager.updateSession(request, provider) || provider == null) {
+    if (sessionManager.updateSession(request)) {
       return
     }
+
+    val provider = getProvider(event) ?: return
 
     // At this point, the previous session must be removed, otherwise, `init` will throw.
     val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
@@ -124,6 +127,7 @@ class InlineCompletionHandler(
 
     editor.document.insertString(offset, textToInsert)
     editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
+    PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
@@ -133,9 +137,7 @@ class InlineCompletionHandler(
   @RequiresBlockingContext
   fun hide(context: InlineCompletionContext, finishType: FinishType = FinishType.OTHER) {
     LOG.assertTrue(!context.isDisposed)
-    if (context.isCurrentlyDisplaying()) {
-      trace(InlineCompletionEventType.Hide(finishType))
-    }
+    trace(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
 
     InlineCompletionSession.remove(editor)
     sessionManager.sessionRemoved()
@@ -156,32 +158,41 @@ class InlineCompletionHandler(
     val context = session.context
     val offset = request.endOffset
 
-    val suggestion = try {
-      request(session.provider, request)
-    }
-    catch (e: Throwable) {
-      LOG.errorIfNotMessage(e)
-      InlineCompletionSuggestion.empty()
+    val result = Result.runCatching {
+      val suggestion = request(session.provider, request)
+
+      // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
+      withContext(Dispatchers.EDT) {
+        suggestion.suggestionFlow.flowOn(Dispatchers.Default)
+          .onEmpty {
+            coroutineToIndicator {
+              trace(InlineCompletionEventType.Empty)
+              hide(context, FinishType.EMPTY)
+            }
+          }
+          .onCompletion {
+            if (it == null && !suggestion.isUserDataEmpty) {
+              suggestion.copyUserDataTo(context)
+            }
+          }
+          .collectIndexed { index, it ->
+            ensureActive()
+            showInlineElement(it, index, offset, context)
+          }
+      }
     }
 
-    // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
-    withContext(Dispatchers.EDT) {
-      suggestion.suggestionFlow.flowOn(Dispatchers.Default)
-        .onEmpty {
-          coroutineToIndicator {
-            trace(InlineCompletionEventType.Empty)
-            hide(context, FinishType.EMPTY)
-          }
+    val exception = result.exceptionOrNull()
+    val isActive = coroutineContext.isActive
+
+    // Another request is waiting outside of EDT, so no deadlock
+    withContext(NonCancellable) {
+      withContext(Dispatchers.EDT) {
+        coroutineToIndicator {
+          complete(isActive, exception, context)
         }
-        .onCompletion {
-          val isActive = currentCoroutineContext().isActive
-          coroutineToIndicator { complete(isActive, it, context, suggestion) }
-          it?.let(LOG::errorIfNotMessage)
-        }
-        .collectIndexed { index, it ->
-          ensureActive()
-          showInlineElement(it, index, offset, context)
-        }
+      }
+      exception?.let(LOG::errorIfNotMessage)
     }
   }
 
@@ -190,14 +201,9 @@ class InlineCompletionHandler(
   private fun complete(
     isActive: Boolean,
     cause: Throwable?,
-    context: InlineCompletionContext,
-    suggestion: InlineCompletionSuggestion,
+    context: InlineCompletionContext
   ) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
-    if (!suggestion.isUserDataEmpty) {
-      suggestion.copyUserDataTo(context)
-    }
-
     if (cause != null && !context.isDisposed) {
       hide(context, FinishType.ERROR)
       return
@@ -245,7 +251,7 @@ class InlineCompletionHandler(
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     if (application.isUnitTestMode && testProvider != null) {
-      return testProvider
+      return testProvider?.takeIf { it.isEnabled(event) }
     }
 
     return InlineCompletionProvider.extensions().firstOrNull {
@@ -290,10 +296,13 @@ class InlineCompletionHandler(
               context.clear()
               result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.newOffset) }
             }
+            if (context.textToInsert().isEmpty()) {
+              hide(context, FinishType.TYPED)
+            }
           }
           is UpdateSessionResult.Same -> Unit
           UpdateSessionResult.Invalidated -> {
-            hide(session.context, FinishType.INVALIDATED)
+            hide(context, FinishType.INVALIDATED)
           }
         }
       }
@@ -333,6 +342,12 @@ class InlineCompletionHandler(
     @TestOnly
     fun registerTestHandler(provider: InlineCompletionProvider) {
       testProvider = provider
+    }
+
+    @TestOnly
+    fun registerTestHandler(provider: InlineCompletionProvider, disposable: Disposable) {
+      registerTestHandler(provider)
+      disposable.whenDisposed { unRegisterTestHandler() }
     }
 
     @TestOnly

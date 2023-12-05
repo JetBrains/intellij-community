@@ -33,6 +33,8 @@ class TimestampsImmutable {
   }
 
   companion object {
+    //FIXME RC: this call to application makes us use ApplicationRule in tests for TimestampsImmutable -- which
+    //          introduce completely superficial coupling, because TimestampsImmutable logic has nothing to do with application
     private val IS_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode()
 
     @JvmField
@@ -117,7 +119,7 @@ class TimestampsImmutable {
         assert(dominatingIndexStamp == DataInputOutputUtil.timeBase) {
           "dominatingIndexStamp=$dominatingIndexStamp != timeBase=${DataInputOutputUtil.timeBase}"
         }
-        dominatingIndexStamp = 0
+        dominatingIndexStamp = 0 //MAYBE RC: return EMPTY?
       }
       return TimestampsImmutable(dominatingIndexStamp, outdatedIndices, upToDateIndexIds)
     }
@@ -200,7 +202,6 @@ class TimestampsImmutable {
     val indexStamps = Object2LongOpenHashMap<ID<*, *>>()
 
     upToDateIndexIds.forEach { indexUniqueId ->
-      //RC: .findById() takes 1/4 of total the method time -- mostly spent on CHMap lookup.
       val id = ID.findById(indexUniqueId)
       if (id != null && id !is StubIndexKey<*, *>) {
         val stamp = IndexVersion.getIndexCreationStamp(id)

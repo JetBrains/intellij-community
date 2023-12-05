@@ -647,4 +647,63 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
     }
   }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test Gradle test distribution nodes are hidden by default`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "7.5")
+    testJunit5Project(gradleVersion) {
+      writeText("settings.gradle", """
+        plugins {
+            id "com.gradle.enterprise" version "3.15.1"
+        }
+
+        gradleEnterprise {
+            server = "https://something.com"
+        }
+
+        rootProject.name = 'gradle-test-demo-system-exit'
+        include('lib')
+      """.trimIndent())
+
+      appendText("build.gradle", """
+        tasks.withType(Test).configureEach() {
+          distribution {
+              enabled = true
+              remoteExecutionPreferred = false
+              maxRemoteExecutors = 0
+          }
+        }
+      """.trimMargin())
+
+      writeText("src/test/java/org/example/AppTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class AppTest {
+        |   @Test public void test1() {}
+        |}
+      """.trimMargin())
+      writeText("src/test/java/org/example/LibTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class LibTest {
+        |   @Test public void testLib() {}
+        |}
+      """.trimMargin())
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("Distributed Test Run :test") {
+          assertNode("LibTest") {
+            assertNode("testLib")
+          }
+          assertNode("AppTest") {
+            assertNode("test1")
+          }
+        }
+      }
+    }
+  }
+
+
+
 }

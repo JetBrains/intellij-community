@@ -42,6 +42,23 @@ internal class KeymapKind(val value: String, @Nls val displayName: String, @Nls 
       else -> WIN
     }
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as KeymapKind
+
+    return value == other.value
+  }
+
+  override fun hashCode(): Int {
+    return value.hashCode()
+  }
+
+  override fun toString(): String {
+    return "KeymapKind(value='$value', displayName='$displayName', defaultLabel='$defaultLabel', keymap=$keymap, isMac=$isMac)"
+  }
 }
 
 private val String.containsMacOS: Boolean get() = contains("macOS") || contains("Mac OS") || contains("OSX")

@@ -54,7 +54,7 @@ import static java.util.Arrays.asList;
 public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable {
   private static final int POSTPONE_MAPPINGS_LOADING_PANEL = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final @Nls String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
@@ -439,6 +439,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
       .setDefaultInsets(JBUI.insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultWeightX(1)
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
+
+    if (!TrustedProjects.isTrusted(myProject)) {
+      EditorNotificationPanel notificationPanel = new EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error);
+      notificationPanel.setText(VcsBundle.message("configuration.project.not.trusted.label"));
+      panel.add(notificationPanel, gb.nextLine().next());
+    }
 
     JComponent mappingsTable = createMappingsTable();
     // don't start loading automatically

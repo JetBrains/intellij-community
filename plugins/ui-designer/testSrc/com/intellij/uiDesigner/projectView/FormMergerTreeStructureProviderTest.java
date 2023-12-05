@@ -44,7 +44,6 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
         PsiClass:Class2
         PsiClass:Class3
        PsiJavaFile:Class4.java
-        PsiUnnamedClass
        PsiFile(plain text):Form2.form
        Form:Form1
         PsiClass:Form1
@@ -73,7 +72,6 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
         PsiClass:Class2
         PsiClass:Class3
        PsiJavaFile:Class4.java
-        PsiUnnamedClass
        PsiFile(plain text):Form2.form
        Form:Form1
         PsiClass:Form1

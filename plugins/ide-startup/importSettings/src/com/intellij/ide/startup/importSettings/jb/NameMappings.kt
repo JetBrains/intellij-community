@@ -2,121 +2,101 @@
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.ide.startup.importSettings.StartupImportIcons
+import com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.*
+import com.intellij.ide.startup.importSettings.data.DialogImportItem
 import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.jb.IDEData.Companion.IDE_MAP
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.PlatformUtils
 import javax.swing.Icon
 
 object NameMappings {
 
-  private val ideName2Abbreviation = mapOf(
-    "AppCode" to "AC",
-    "Aqua" to "Aqua",
-    "CLion" to "CL",
-    "CLionNova" to "CL",
-    "DataGrip" to "DG",
-    "DataSpell" to "DS",
-    "GoLand" to "GO",
-    "IdeaIC" to "IC",
-    "IntelliJIdea" to "IU",
-    "MPS" to "MPS",
-    "PyCharm" to "PY",
-    "PhpStorm" to "PS",
-    "PyCharmCE" to "PC",
-    "Rider" to "RD",
-    "RubyMine" to "RM",
-    "RustRover" to "RR",
-    "WebStorm" to "WS",
-  )
-
-  private val ideName2Icon20 = mapOf(
-    "AppCode" to StartupImportIcons.IdeIcons.AC_20,
-    "Aqua" to StartupImportIcons.IdeIcons.Aqua_20,
-    "CLion" to StartupImportIcons.IdeIcons.CL_20,
-    "CLionNova" to StartupImportIcons.IdeIcons.CL_20,
-    "DataGrip" to StartupImportIcons.IdeIcons.DG_20,
-    "DataSpell" to StartupImportIcons.IdeIcons.DS_20,
-    "GoLand" to StartupImportIcons.IdeIcons.GO_20,
-    "IdeaIC" to StartupImportIcons.IdeIcons.IC_20,
-    "IntelliJIdea" to StartupImportIcons.IdeIcons.IU_20,
-    "MPS" to StartupImportIcons.IdeIcons.MPS_20,
-    "PyCharm" to StartupImportIcons.IdeIcons.PY_20,
-    "PhpStorm" to StartupImportIcons.IdeIcons.PS_20,
-    "PyCharmCE" to StartupImportIcons.IdeIcons.PC_20,
-    "Rider" to StartupImportIcons.IdeIcons.RD_20,
-    "RubyMine" to StartupImportIcons.IdeIcons.RM_20,
-    "RustRover" to StartupImportIcons.IdeIcons.RR_20,
-    "WebStorm" to StartupImportIcons.IdeIcons.WS_20
-  )
-  private val ideName2Icon24 = mapOf(
-    "AppCode" to StartupImportIcons.IdeIcons.AC_24,
-    "Aqua" to StartupImportIcons.IdeIcons.Aqua_24,
-    "CLion" to StartupImportIcons.IdeIcons.CL_24,
-    "CLionNova" to StartupImportIcons.IdeIcons.CL_24,
-    "DataGrip" to StartupImportIcons.IdeIcons.DG_24,
-    "DataSpell" to StartupImportIcons.IdeIcons.DS_24,
-    "GoLand" to StartupImportIcons.IdeIcons.GO_24,
-    "IdeaIC" to StartupImportIcons.IdeIcons.IC_24,
-    "IntelliJIdea" to StartupImportIcons.IdeIcons.IU_24,
-    "MPS" to StartupImportIcons.IdeIcons.MPS_24,
-    "PyCharm" to StartupImportIcons.IdeIcons.PY_24,
-    "PhpStorm" to StartupImportIcons.IdeIcons.PS_24,
-    "PyCharmCE" to StartupImportIcons.IdeIcons.PC_24,
-    "Rider" to StartupImportIcons.IdeIcons.RD_24,
-    "RubyMine" to StartupImportIcons.IdeIcons.RM_24,
-    "RustRover" to StartupImportIcons.IdeIcons.RR_24,
-    "WebStorm" to StartupImportIcons.IdeIcons.WS_24
-  )
-  private val ideName2Icon48 = mapOf(
-    "AppCode" to StartupImportIcons.IdeIcons.AC_48,
-    "Aqua" to StartupImportIcons.IdeIcons.Aqua_48,
-    "CLion" to StartupImportIcons.IdeIcons.CL_48,
-    "CLionNova" to StartupImportIcons.IdeIcons.CL_48,
-    "DataGrip" to StartupImportIcons.IdeIcons.DG_48,
-    "DataSpell" to StartupImportIcons.IdeIcons.DS_48,
-    "GoLand" to StartupImportIcons.IdeIcons.GO_48,
-    "IdeaIC" to StartupImportIcons.IdeIcons.IC_48,
-    "IntelliJIdea" to StartupImportIcons.IdeIcons.IU_48,
-    "MPS" to StartupImportIcons.IdeIcons.MPS_48,
-    "PyCharm" to StartupImportIcons.IdeIcons.PY_48,
-    "PhpStorm" to StartupImportIcons.IdeIcons.PS_48,
-    "PyCharmCE" to StartupImportIcons.IdeIcons.PC_48,
-    "Rider" to StartupImportIcons.IdeIcons.RD_48,
-    "RubyMine" to StartupImportIcons.IdeIcons.RM_48,
-    "RustRover" to StartupImportIcons.IdeIcons.RR_48,
-    "WebStorm" to StartupImportIcons.IdeIcons.WS_48
-  )
-
-  private val ideName2FullName = mapOf(
-    "AppCode" to "AppCode",
-    "Aqua" to "Aqua",
-    "CLion" to "CLion",
-    "CLionNova" to "CLion with Radler",
-    "DataGrip" to "DataGrip",
-    "DataSpell" to "DataSpell",
-    "GoLand" to "GoLand",
-    "IdeaIC" to "IDEA CE",
-    "IntelliJIdea" to "IDEA Ultimate",
-    "MPS" to "MPS",
-    "PyCharm" to "PyCharm",
-    "PhpStorm" to "PhpStorm",
-    "PyCharmCE" to "PyCharm CE",
-    "Rider" to "Rider",
-    "RubyMine" to "RubyMine",
-    "RustRover" to "RustRover",
-    "WebStorm" to "WebStorm",
-  )
-
   fun getIcon(ideName: String, iconSize: IconProductSize): Icon? {
-    if (iconSize == IconProductSize.SMALL) {
-      return ideName2Icon20[ideName]
-    } else if (iconSize == IconProductSize.MIDDLE) {
-      return ideName2Icon24[ideName]
-    } else {
-      return ideName2Icon48[ideName]
+    when (iconSize) {
+      IconProductSize.SMALL -> {
+        return IDE_MAP[ideName]?.icon20
+      }
+      IconProductSize.MIDDLE -> {
+        return IDE_MAP[ideName]?.icon24
+      }
+      IconProductSize.LARGE -> {
+        return IDE_MAP[ideName]?.icon48
+      }
+      else -> {
+        return null
+      }
     }
   }
 
   fun getFullName(ideName: String) : String {
-    return ideName2FullName[ideName] ?: ideName
+    return IDE_MAP[ideName]?.fullName ?: ideName
   }
 
+  fun canImportDirectly(prevIdeName: String): Boolean {
+    val prevIdeData = IDE_MAP[prevIdeName] ?: return false
+    val currentIdeData = IDEData.getSelf() ?: return false
+    return prevIdeData == currentIdeData || supportedDirectImports.contains(Pair(prevIdeData, currentIdeData))
+  }
+
+  private val supportedDirectImports = listOf(
+    Pair(IDEData.CLION, IDEData.CLION_NOVA),
+    Pair(IDEData.CLION_NOVA, IDEData.CLION),
+    Pair(IDEData.CLION, IDEData.RUSTROVER),
+    Pair(IDEData.IDEA_COMMUNITY, IDEData.IDEA_ULTIMATE),
+    Pair(IDEData.PYCHARM_CE, IDEData.PYCHARM)
+  )
+}
+
+private enum class IDEData(val code: String,
+                           val folderName: String,
+                           val fullName: String,
+                           val icon20: Icon?,
+                           val icon24: Icon?,
+                           val icon48: Icon?
+                            ) {
+  APPCODE("AC", "AppCode", "AppCode", AC_20, AC_24, AC_48),
+  AQUA("Aqua", "Aqua", "Aqua", Aqua_20, Aqua_24, Aqua_48),
+  CLION("CL", "CLion", "CLion", CL_20, CL_24, CL_48),
+  CLION_NOVA("CL", "CLionNova", "CLion with Radler", CL_20, CL_24, CL_48),
+  DATAGRIP("DG", "DataGrip", "DataGrip", DG_20, DG_24, DG_48),
+  DATASPELL("DS", "DataSpell", "DataSpell", DS_20, DS_24, DS_48),
+  GOLAND("GO", "GoLand", "GoLand", GO_20, GO_24, GO_48),
+  IDEA_COMMUNITY("IC","IdeaIC", "IntelliJ IDEA Community", IC_20, IC_24, IC_48),
+  IDEA_ULTIMATE("IU", "IntelliJIdea", "IntelliJ IDEA Ultimate", IU_20, IU_24,IU_48),
+  MPS("MPS", "MPS", "MPS", MPS_20, MPS_24, MPS_48),
+  PYCHARM("PY", "PyCharm", "PyCharm Professional", PY_20, PY_24, PY_48),
+  PYCHARM_CE("PC", "PyCharmCE", "PyCharm Community", PC_20, PC_24, PC_48),
+  PHPSTORM("PS", "PhpStorm", "PhpStorm", PS_20, PS_24, PS_48),
+  RIDER("RD", "Rider", "Rider", RD_20, RD_24, RD_48),
+  RUBYMINE("RM", "RubyMine", "RubyMine", RM_20, RM_24, RM_48),
+  RUSTROVER("RR", "RustRover", "RustRover", RR_20, RR_24, RR_48),
+  WEBSTORM("WS", "WebStorm", "WebStorm", WS_20, WS_24, WS_48)
+  ;
+
+  companion object {
+    val IDE_MAP = entries.associateBy { it.folderName }
+
+    @Suppress("DEPRECATION")
+    fun getSelf(): IDEData? = when {
+      PlatformUtils.isAppCode() -> APPCODE
+      PlatformUtils.isAqua() -> AQUA
+      PlatformUtils.isCLion() -> CLION
+      PlatformUtils.isDataGrip() -> DATAGRIP
+      PlatformUtils.isDataSpell() -> DATASPELL
+      PlatformUtils.isGoIde() -> GOLAND
+      PlatformUtils.isIdeaCommunity() -> IDEA_COMMUNITY
+      PlatformUtils.isIdeaUltimate() -> IDEA_ULTIMATE
+      PlatformUtils.isPhpStorm() -> PHPSTORM
+      PlatformUtils.isPyCharmCommunity() -> PYCHARM_CE
+      PlatformUtils.isPyCharmPro() -> PYCHARM
+      PlatformUtils.isRider() -> RIDER
+      PlatformUtils.isRubyMine() -> RUBYMINE
+      PlatformUtils.isRustRover() -> RUSTROVER
+      PlatformUtils.isWebStorm() -> WEBSTORM
+      else -> {
+        null
+      }
+    }
+  }
 }

@@ -5,8 +5,6 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
-import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import kotlin.io.path.Path
 
@@ -16,10 +14,6 @@ abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
             IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, editor.caretModel.offset).firstOrNull()
                 ?: return null
         return computeDocumentationBlocking(target.createPointer())?.html
-    }
-
-    override fun getProjectDescriptor(): KotlinLightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
     }
 
     override fun isFirPlugin(): Boolean {

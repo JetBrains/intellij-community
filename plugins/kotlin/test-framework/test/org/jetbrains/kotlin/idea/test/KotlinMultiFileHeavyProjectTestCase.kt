@@ -138,4 +138,6 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
 
         VfsUtil.findFile(contentPath, true)!!.refresh(false, true)
     }
+
+    open fun isFirPlugin(): Boolean = false
 }

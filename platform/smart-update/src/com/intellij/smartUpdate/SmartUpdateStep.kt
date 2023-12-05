@@ -13,6 +13,13 @@ val EP_NAME = ExtensionPointName.create<SmartUpdateStep>("com.intellij.smartUpda
 interface SmartUpdateStep {
   val id: @NonNls String
   val stepName: @Nls String
+
+  /**
+   * Perform update step and proceed by invoking onSuccess()
+   *
+   * @param e null if task is invoked after restart or by scheduler, otherwise user-initiated
+   * @param onSuccess must be called to proceed to next step
+   */
   fun performUpdateStep(project: Project, e: AnActionEvent? = null, onSuccess: () -> Unit)
   fun isAvailable(project: Project): Boolean = true
   fun getDetailsComponent(project: Project): JComponent? = null

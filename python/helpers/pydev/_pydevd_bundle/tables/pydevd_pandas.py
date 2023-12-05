@@ -1,6 +1,7 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
 import pandas as pd
+import typing
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH_PYTHON_2 = 100000
@@ -120,12 +121,13 @@ class ColumnVisualisationType:
 
 class ColumnVisualisationUtils:
     NUM_BINS = 5
-    MAX_UNIQUE_VALUES = 3
-    UNIQUE_VALUES_PERCENT = 60
+    MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 3
+    UNIQUE_VALUES_PERCENT = 50
 
     TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
     TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
     TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR = '__pydev_table_occurrences_count_dict__'
+    TABLE_OCCURRENCES_COUNT_OTHER = '__pydev_table_other__'
 
 def get_value_occurrences_count(table):
     df = __convert_to_df(table)
@@ -134,7 +136,7 @@ def get_value_occurrences_count(table):
     for col_name in df.columns:
         column_visualisation_type, result = analyze_column(df[col_name])
 
-        bin_counts.append(str({column_visualisation_type: result}))
+        bin_counts.append(str({column_visualisation_type:result}))
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
 
 
@@ -143,14 +145,9 @@ def analyze_column(column):
 
     if col_type == bool:
         return ColumnVisualisationType.HISTOGRAM, analyze_boolean_column(column)
-    elif col_type.kind in ['O', 'S', 'U', 'M', 'c'] or column.isna().all():
-        value_counts = column.value_counts(dropna=False)
-        all_values = len(column)
-        if len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
-            return ColumnVisualisationType.PERCENTAGE, analyze_categorical_column(column)
-        else:
-            return ColumnVisualisationType.UNIQUE, len(value_counts)
-    elif col_type.kind in ['i', 'f']:
+    elif col_type.kind in ['O', 'S', 'U', 'M', 'm', 'c'] or column.isna().all():
+        return analyze_categorical_column(column)
+    elif col_type.kind in ['i', 'f', 'u']:
         return ColumnVisualisationType.HISTOGRAM, analyze_numeric_column(column)
 
 
@@ -160,23 +157,30 @@ def analyze_boolean_column(column):
 
 
 def analyze_categorical_column(column):
+    # Processing of unhashable types (lists, dicts, etc.).
+    # In Polars these types are NESTED and can be processed separately, but in Pandas they are Objects
+    if not isinstance(column.iloc[0], typing.Hashable):
+        return None, "{}"
+
     value_counts = column.value_counts(dropna=False)
     all_values = len(column)
-    if len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
-        top_values = value_counts.iloc[:ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1].apply(lambda count: int(count / all_values * 100)).to_dict()
-        others_count = value_counts.iloc[ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1:].sum()
-        top_values["Other"] = int(others_count / all_values * 100)
-        result = ""
-        index = 0
-        for key, val in top_values.items():
-            index += 1
-            result += '{}{}{}'.format(key, ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR, val)
-            if index < len(top_values):
-                result += ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR
+    vis_type = ColumnVisualisationType.PERCENTAGE
+    if len(value_counts) <= 3 or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
+        # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
+        num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS - (0 if len(value_counts) == 3 else 1)
+
+        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda count: round(count / all_values * 100, 1)).to_dict()
+        if len(value_counts) == 3:
+            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
+        else:
+            others_count = value_counts.iloc[num_unique_values_to_show_in_vis:].sum()
+            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count / all_values * 100, 1)
+        result = add_custom_key_value_separator(top_values.items())
     else:
+        vis_type = ColumnVisualisationType.UNIQUE
         top_values = len(value_counts)
         result = top_values
-    return result
+    return vis_type, result
 
 
 def analyze_numeric_column(column):
@@ -190,7 +194,8 @@ def analyze_numeric_column(column):
         else:
             format_function = lambda x: round(x, 1)
 
-        bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
+        # so the long dash will be correctly viewed both on Mac and Windows
+        bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
         bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
         res = bin_count_dict
     return add_custom_key_value_separator(res.items())

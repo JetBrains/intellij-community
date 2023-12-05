@@ -3,7 +3,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.daemon.impl.Divider
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
@@ -78,7 +77,7 @@ class InlayHintsPass(
     applyCollected(sharedSink.complete(), rootElement, editor)
     positionKeeper.restorePosition(false)
     if (rootElement === myFile) {
-      InlayHintsPassFactory.putCurrentModificationStamp(myEditor, myFile)
+      InlayHintsPassFactoryInternal.putCurrentModificationStamp(myEditor, myFile)
     }
   }
 

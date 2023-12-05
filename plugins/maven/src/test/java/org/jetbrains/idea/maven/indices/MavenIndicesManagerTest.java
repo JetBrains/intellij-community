@@ -21,6 +21,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class MavenIndicesManagerTest extends MavenIndicesTestCase {
+  @Override
+  public boolean runInDispatchThread() {
+    return true;
+  }
+
   private MavenIndicesTestFixture myIndicesFixture;
 
   @Override

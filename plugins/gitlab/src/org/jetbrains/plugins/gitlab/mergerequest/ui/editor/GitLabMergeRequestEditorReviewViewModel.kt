@@ -10,13 +10,15 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.withLocation
 import com.intellij.diff.util.Side
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.commands.Git
@@ -26,6 +28,7 @@ import git4idea.remote.hosting.changesSignalFlow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
@@ -34,10 +37,12 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
+  project: Project,
   private val projectMapping: GitLabProjectMapping,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
@@ -49,6 +54,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs.childScope(CoroutineName("GitLab Merge Request Editor Review VM")),
   currentUser, mergeRequest
 ) {
+  private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
   val mergeRequestIid: String = mergeRequest.iid
 
@@ -113,6 +119,9 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
         }
       }
     }
+    if (!preferences.editorReviewEnabled) {
+      setDiscussionsViewOption(DiscussionsViewOption.DONT_SHOW)
+    }
   }
 
   //TODO: do not recreate all VMs on changes change
@@ -147,8 +156,8 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   /**
    * Show merge request details in a standard view
    */
-  fun showMergeRequest() {
-    projectVm.showTab(GitLabReviewTab.ReviewSelected(mergeRequestIid))
+  fun showMergeRequest(place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
+    projectVm.showTab(GitLabReviewTab.ReviewSelected(mergeRequestIid), place)
     projectVm.twVm.activate()
   }
 
@@ -161,13 +170,18 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   fun toggleReviewMode() {
     val currentOption = discussionsViewOption.value
-    val newOption = if(currentOption != DiscussionsViewOption.DONT_SHOW) {
+    val newOption = if (currentOption != DiscussionsViewOption.DONT_SHOW) {
       DiscussionsViewOption.DONT_SHOW
     }
     else {
       DiscussionsViewOption.UNRESOLVED_ONLY
     }
     setDiscussionsViewOption(newOption)
+  }
+
+  override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
+    super.setDiscussionsViewOption(viewOption)
+    preferences.editorReviewEnabled = viewOption != DiscussionsViewOption.DONT_SHOW
   }
 
   /**

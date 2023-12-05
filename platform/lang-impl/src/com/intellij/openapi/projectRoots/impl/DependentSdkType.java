@@ -72,10 +72,10 @@ public abstract class DependentSdkType extends SdkType {
                                        @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     final Ref<Sdk> result = new Ref<>(null);
     SdkConfigurationUtil.selectSdkHome(sdkType, home -> {
-      final ProjectJdkImpl newJdk = SdkConfigurationUtil.createSdk(Arrays.asList(sdkModel.getSdks()), home, sdkType, null, null);
+      final Sdk newSdk = SdkConfigurationUtil.createSdk(Arrays.asList(sdkModel.getSdks()), home, sdkType, null, null);
 
-      sdkCreatedCallback.consume(newJdk);
-      result.set(newJdk);
+      sdkCreatedCallback.consume(newSdk);
+      result.set(newSdk);
     });
     return result.get();
   }

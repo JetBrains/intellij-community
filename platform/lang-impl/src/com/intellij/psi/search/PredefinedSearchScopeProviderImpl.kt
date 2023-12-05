@@ -366,9 +366,9 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         component = component.content
       }
 
-      val hierarchyBrowserBase = component as HierarchyBrowserBase
-      val elements = hierarchyBrowserBase.getAvailableElements()
-      if (elements.isNotEmpty()) {
+      val hierarchyBrowserBase = component as? HierarchyBrowserBase
+      val elements = hierarchyBrowserBase?.getAvailableElements()
+      if (!elements.isNullOrEmpty()) {
         result.add(LocalSearchScope(elements, LangBundle.message("predefined.search.scope.hearchy.scope.display.name", name)))
       }
     }

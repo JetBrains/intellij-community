@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiscussionViewModel>>
@@ -43,20 +44,13 @@ interface GitLabMergeRequestDiscussionsViewModels {
   }
 }
 
-fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? {
-  val revision = side.select(position.startSha, position.headSha) ?: return null
-  val lineIndex = side.select(position.oldLineIndex, position.newLineIndex) ?: return null
-
-  if ((position.paths.oldPath != null && !diffData.contains(position.startSha, position.paths.oldPath)) &&
-      (position.paths.newPath != null && !diffData.contains(position.headSha, position.paths.newPath))) return null
-
-  return diffData.mapLine(revision, lineIndex, side)
-}
+fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? =
+  position.mapToLocation(diffData, side)
 
 private val LOG = logger<GitLabMergeRequestDiscussionsViewModelsImpl>()
 
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
@@ -81,34 +75,23 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()
 
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
-    _newDiscussions.updateAndGet {
-      if (!it.containsKey(position)) {
-        val vm = DelegatingGitLabNoteEditingViewModel(cs, "",
-                                                      { createDiscussion(position, it, false) },
-                                                      { createDiscussion(position, it, true) })
-          .apply {
-            onDoneIn(cs) {
-              cancelNewDiscussion(position)
-            }
-          }.forNewNote(currentUser)
-        it + (position to vm)
+    _newDiscussions.updateAndGet { currentNewDiscussions ->
+      if (!currentNewDiscussions.containsKey(position) && mergeRequest.canAddNotes) {
+        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, mergeRequest, currentUser, position.position).apply {
+          onDoneIn(cs) {
+            cancelNewDiscussion(position)
+          }
+        }
+        currentNewDiscussions + (position to vm)
       }
       else {
-        it
+        currentNewDiscussions
       }
     }.apply {
       if (focus) {
         get(position)?.requestFocus()
       }
     }
-  }
-
-  private suspend fun createDiscussion(
-    position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
-    body: String,
-    asDraft: Boolean
-  ) {
-    mergeRequest.addNote(position.position, body, asDraft)
   }
 
   override fun cancelNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition) {

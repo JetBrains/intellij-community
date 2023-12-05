@@ -18,7 +18,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
@@ -31,9 +30,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -296,7 +297,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           else if (configurator.isEdtRequired) {
             withContext(Dispatchers.EDT) {
               blockingContext {
-                configurator.configureProject(project, virtualFile, moduleRef, newProject)
+                SlowOperations.knownIssue("IDEA-319905, EA-808639").use {
+                  configurator.configureProject(project, virtualFile, moduleRef, newProject)
+                }
               }
             }
           }

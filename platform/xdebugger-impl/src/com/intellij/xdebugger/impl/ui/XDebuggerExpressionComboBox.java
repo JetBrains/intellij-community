@@ -199,7 +199,6 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         @Override
         protected void onEditorCreate(EditorEx editor) {
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
-          RemoteTransferUIManager.forbidBeControlizationInLux(editor, "debugger");   // TODO(GTW-6142): Remove after RDCT-543 is done
           prepareEditor(editor);
           if (showMultiline) {
             setExpandable(editor);
