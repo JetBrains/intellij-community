@@ -2,14 +2,13 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoKt;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -41,9 +40,6 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
                                 final EditorColorsScheme scheme,
                                 final boolean addScheme) {
     var name = scheme.getDisplayName();
-    if (UIThemeLookAndFeelInfoKt.isDefaultForTheme(scheme, LafManager.getInstance().getCurrentUIThemeLookAndFeel())) {
-      name += " *";
-    }
     group.add(new DumbAwareAction(name, "", scheme == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -53,6 +49,18 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
         EditorColorsScheme oldScheme = EditorColorsManager.getInstance().getGlobalScheme();
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
         changeLafIfNecessary(oldScheme, scheme);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (UIThemeLookAndFeelInfoKt.isDefaultForTheme(scheme, LafManager.getInstance().getCurrentUIThemeLookAndFeel())) {
+          e.getPresentation().putClientProperty(Presentation.PROP_VALUE, IdeBundle.message("scheme.theme.default"));
+        }
       }
     });
   }
