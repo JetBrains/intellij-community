@@ -1,8 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-/**
- * @author nik
- */
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.AppLifecycleListener
@@ -26,7 +22,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
-enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
+internal enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
   SMALL(0, IdeBundle.message("presentation.assistant.configurable.size.small")),
   MEDIUM(1, IdeBundle.message("presentation.assistant.configurable.size.medium")),
   LARGE(2, IdeBundle.message("presentation.assistant.configurable.size.large"));
@@ -40,7 +36,7 @@ enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: 
   }
 }
 
-enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val displayName: String) {
+internal enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val displayName: String) {
   TOP_LEFT(0, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.left")),
   TOP_CENTER(1, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.center")),
   TOP_RIGHT(2, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.right")),
@@ -66,7 +62,7 @@ enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val 
   }
 }
 
-enum class PresentationAssistantTheme(val value: Int, @Nls val displayName: String, val foreground: Color,
+internal enum class PresentationAssistantTheme(val value: Int, @Nls val displayName: String, val foreground: Color,
                                       val background: Color, val border: Color, val keymapLabel: Color) {
   BRIGHT(0,
          IdeBundle.message("presentation.assistant.configurable.theme.bright"),
@@ -140,12 +136,21 @@ internal fun PresentationAssistantState.resetDelta() {
   deltaY = null
 }
 
-internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistantPopupAlignment? get() =
-  if (deltaX == null || deltaY == null) PresentationAssistantPopupAlignment.from(horizontalAlignment, verticalAlignment)
-  else null
+internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistantPopupAlignment?
+  get() {
+    if (deltaX == null || deltaY == null) {
+      return PresentationAssistantPopupAlignment.from(horizontalAlignment, verticalAlignment)
+    }
+    else {
+      return null
+    }
+  }
 
-internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymapName)
-internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymapName.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
+internal fun PresentationAssistantState.mainKeymapKind(): KeymapKind = KeymapKind.from(mainKeymapName)
+
+internal fun PresentationAssistantState.alternativeKeymapKind(): KeymapKind? {
+  return alternativeKeymapName.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
+}
 
 @State(name = "PresentationAssistantIJ", storages = [Storage("presentation-assistant-ij.xml")])
 class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
@@ -154,6 +159,7 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
   private var presenter: ShortcutPresenter? = null
 
   override fun getState() = configuration
+
   override fun loadState(p: PresentationAssistantState) {
     XmlSerializerUtil.copyBean(p, configuration)
   }
@@ -205,14 +211,15 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
   }
 
   companion object {
-    val INSTANCE get() = service<PresentationAssistant>()
+    val INSTANCE: PresentationAssistant
+      get() = service<PresentationAssistant>()
 
-    val isThemeEnabled: Boolean get() = ExperimentalUI.isNewUI()
-                                        && Registry.`is`("ide.presentation.assistant.theme.enabled", false)
+    val isThemeEnabled: Boolean
+      get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.presentation.assistant.theme.enabled", false)
   }
 }
 
-class PresentationAssistantListenerRegistrar : AppLifecycleListener, DynamicPluginListener {
+private class PresentationAssistantListenerRegistrar : AppLifecycleListener, DynamicPluginListener {
   override fun appFrameCreated(commandLineArgs: MutableList<String>) {
     PresentationAssistant.INSTANCE.initialize()
   }
