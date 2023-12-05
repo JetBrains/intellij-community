@@ -96,7 +96,11 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertContainsElements(elements, intf.findMethodsByName("xxx1", false)[0]);
     assertContainsElements(elements, intf.findMethodsByName("xxx2", false)[0]);
     assertContainsElements(elements, impl.findMethodsByName("xxx3", false)[0]);
-    assertDoesntContain(elements, impl.findMethodsByName("xxx1", false)[0]);
+    if (DumbService.isDumb(myFixture.getProject())) { // in dumb mode overridden are also shown
+      assertOrderedEquals(elements, List.of(impl.getMethods()[0], intf.getMethods()[0], intf.getMethods()[1], impl.getMethods()[1]));
+    } else {
+      assertDoesntContain(elements, impl.findMethodsByName("xxx1", false)[0]);
+    }
   }
 
   public void test_goto_symbol_inner_class_dollar_sign() {
@@ -344,7 +348,9 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     List<PsiElement> withLibs = filterJavaOnly(gotoSymbol("run ", true));
     withLibs.remove(sdkRun2);
     withLibs.remove(sdkRun3);
-    assertOrderedEquals(withLibs, Arrays.asList(sdkRun));
+    if (!DumbService.isDumb(myFixture.getProject())) { // in dumb mode overridden are also shown
+      assertOrderedEquals(withLibs, Arrays.asList(sdkRun));
+    }
     assertDoesntContain(withLibs, ourRun);
 
     List<PsiElement> noLibs = filterJavaOnly(gotoSymbol("run ", false));
@@ -543,7 +549,11 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiMethod m1 = myFixture.addClass("interface HttpRequest { void start() {} }").getMethods()[0];
     PsiMethod m2 = myFixture.addClass("interface Request extends HttpRequest { void start() {} }").getMethods()[0];
     assertOrderedEquals(gotoSymbol("Request.start"), Arrays.asList(m1, m2));
-    assertOrderedEquals(gotoSymbol("start"), Arrays.asList(m1));
+    if (DumbService.getInstance(myFixture.getProject()).isDumb()) {
+      assertOrderedEquals(gotoSymbol("start"), List.of(m1, m2)); // can't remove overrides in dumb mode
+    } else {
+      assertOrderedEquals(gotoSymbol("start"), List.of(m1));
+    }
   }
 
   public void test_colon_in_search_end() {

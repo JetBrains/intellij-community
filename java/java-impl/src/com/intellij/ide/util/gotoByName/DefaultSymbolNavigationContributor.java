@@ -7,6 +7,7 @@ import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
@@ -77,11 +78,16 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     });
   }
 
-  private static boolean hasSuperMethod(PsiMethod method,
+  private static boolean hasSuperMethod(Project project,
+                                        PsiMethod method,
                                         GlobalSearchScope scope,
                                         Predicate<? super PsiMember> qualifiedMatcher,
                                         String pattern) {
     if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
+      return false;
+    }
+
+    if (DumbService.getInstance(project).isDumb()) {
       return false;
     }
 
@@ -136,11 +142,11 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
                           return true;
                         }, scope, filter);
       if (success) {
-        // hashSuperMethod accesses index and can not be invoked without risk of the deadlock in processMethodsWithName
+        // hashSuperMethod can access index and can not be invoked without risk of the deadlock in processMethodsWithName
         Iterator<PsiMethod> iterator = collectedMethods.iterator();
         while (iterator.hasNext()) {
           PsiMethod method = iterator.next();
-          if (!hasSuperMethod(method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) return;
+          if (!hasSuperMethod(project, method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) return;
           ProgressManager.checkCanceled();
           iterator.remove();
         }
