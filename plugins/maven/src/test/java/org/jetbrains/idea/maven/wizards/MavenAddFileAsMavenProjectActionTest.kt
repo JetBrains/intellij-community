@@ -13,8 +13,9 @@ import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import java.nio.file.Path
 
 class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
-  @Throws(Exception::class)
-  fun `test import non-default pom`() {
+  override fun runInDispatchThread() = false
+
+  fun `test import non-default pom`() = runBlocking {
     val pom1: Path = createPom()
     val pom2 = pom1.parent.resolve("pom2.xml")
     pom2.write(MavenTestCase.createPomXml(
@@ -32,10 +33,10 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
         else -> null
       }
     }
+
     val action = AddFileAsMavenProjectAction()
-    runBlocking {
-      action.actionPerformedAsync(event)
-    }
+    action.actionPerformedAsync(event)
+
     val projectsManager = MavenProjectsManager.getInstance(module.project)
     val paths = projectsManager.projectsTreeForTests.existingManagedFiles.map { it.toNioPath() }
     TestCase.assertEquals(1, paths.size)
