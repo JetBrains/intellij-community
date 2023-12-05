@@ -110,7 +110,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
-    myVfsData = new VfsData(app);
+    myVfsData = new VfsData(app, this);
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
               ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
@@ -155,7 +155,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   synchronized public void connect() {
     myIdToDirCache.clear();
-    myVfsData = new VfsData(app);
+    myVfsData = new VfsData(app, this);
     LOG.assertTrue(!myConnected.get());// vfsPeer could be !=null after disconnect
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
@@ -1930,7 +1930,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             cachedRootsIds.add(cachedRoot.getId());
           }
           IntOpenHashSet rootIds = new IntOpenHashSet();
-          for (final VirtualFile root : PersistentFS.getInstance().getRoots()) {
+          for (VirtualFile root : PersistentFSImpl.this.getRoots()) {
             rootIds.add(((VirtualFileWithId)root).getId());
           }
           int[] nonCachedRoots = rootIds.intStream()

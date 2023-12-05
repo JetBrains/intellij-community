@@ -151,7 +151,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      PersistentFS pfs = getPersistence();
+      PersistentFS pfs = owningPersistentFS();
       ChildInfo childInfo = pfs.findChildInfo(this, name, fs);
       if (childInfo == null) {
         myData.addAdoptedName(name, isCaseSensitive);
@@ -364,11 +364,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull Iterable<VirtualFile> iterInDbChildren() {
-    if (!getPersistence().wereChildrenAccessed(this)) {
+    if (!owningPersistentFS().wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }
 
-    if (getPersistence().areChildrenLoaded(this)) {
+    if (owningPersistentFS().areChildrenLoaded(this)) {
       return Arrays.asList(getChildren()); // may load VFS from other projects
     }
 
@@ -379,17 +379,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
-    if (!getPersistence().wereChildrenAccessed(this)) {
+    if (!owningPersistentFS().wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }
-    if (!getPersistence().areChildrenLoaded(this)) {
+    if (!owningPersistentFS().areChildrenLoaded(this)) {
       loadPersistedChildren();
     }
     return getCachedChildren();
   }
 
   private void loadPersistedChildren() {
-    String[] names = getPersistence().listPersisted(this);
+    String[] names = owningPersistentFS().listPersisted(this);
     NewVirtualFileSystem fs = getFileSystem();
     for (String name : names) {
       findChild(name, false, false, fs);
@@ -410,8 +410,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private VirtualFile @NotNull [] loadAllChildren() {
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
-      boolean wasChildrenLoaded = getPersistence().areChildrenLoaded(this);
-      List<? extends ChildInfo> children = getPersistence().listAll(this);
+      boolean wasChildrenLoaded = owningPersistentFS().areChildrenLoaded(this);
+      List<? extends ChildInfo> children = owningPersistentFS().listAll(this);
       int[] result = ArrayUtil.newIntArray(children.size());
       VirtualFile[] files;
       if (children.isEmpty()) {
@@ -426,7 +426,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           int cmp = compareNames(name1, name2, isCaseSensitive);
           if (cmp == 0 && name1 != name2) {
             if (errorCount[0]++ == 0) {
-              LOG.error(getPersistence() + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
+              LOG.error(owningPersistentFS() + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
                         " caseSensitive: " + isCaseSensitive +
                         " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
                         " isCaseSensitive(): " + isCaseSensitive +
@@ -455,8 +455,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           prevChildren.remove(id);
           VirtualFileSystemEntry file = vfsData.getFileById(id, this, true);
           if (file == null) {
-            int attributes = getPersistence().getFileAttributes(id);
-            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !getPersistence().mayHaveChildren(id);
+            int attributes = owningPersistentFS().getFileAttributes(id);
+            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !owningPersistentFS().mayHaveChildren(id);
             file = createChildImpl(id, child.getNameId(), attributes, isEmptyDirectory);
           }
           files[i] = file;
@@ -561,7 +561,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     // 'By name' lookup is scanning the same myData.myChildrenIds array, as was already scanned while looking
     // for id.
 
-    PersistentFS persistence = getPersistence();
+    PersistentFS persistence = owningPersistentFS();
     String name = persistence.getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {

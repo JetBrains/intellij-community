@@ -72,6 +72,7 @@ public final class VfsData {
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
   private final Application app;
+  private final PersistentFSImpl persistentFS;
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
@@ -83,8 +84,10 @@ public final class VfsData {
 
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
-  public VfsData(@NotNull Application app) {
+  public VfsData(@NotNull Application app,
+                 @NotNull PersistentFSImpl pfs) {
     this.app = app;
+    this.persistentFS = pfs;
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionFinished(@NotNull Object action) {
@@ -95,6 +98,10 @@ public final class VfsData {
         }
       }
     }, app);
+  }
+
+  @NotNull PersistentFSImpl owningPersistentFS(){
+    return persistentFS;
   }
 
   private void killInvalidatedFiles() {
@@ -113,8 +120,6 @@ public final class VfsData {
 
   @Nullable
   VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
-    //TODO RC: assign pfs in ctor, so instance is always the same, and the access is faster?
-    PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
     VirtualFileSystemEntry dir = persistentFS.getCachedDir(id);
     if (dir != null) return dir;
 
@@ -131,7 +136,7 @@ public final class VfsData {
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
       String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
-                       "; db.parent=" + FSRecords.getParent(id);
+                       "; db.parent=" + persistentFS.peer().getParent(id);
       final AssertionError error = new AssertionError(message);
       FSRecords.invalidateCaches(message, error);
       throw error;
@@ -195,7 +200,6 @@ public final class VfsData {
 
   @NotNull
   CharSequence getNameByFileId(int fileId) {
-    PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
     int nameId = getNameId(fileId);
     return persistentFS.getNameByNameId(nameId);
   }
@@ -245,7 +249,7 @@ public final class VfsData {
 
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
   static final class Segment {
-    final @NotNull VfsData ownerVfsData;
+    final @NotNull VfsData owningVfsData;
 
 
     /** user data (KeyFMap) for files, {@link DirectoryData} for folders */
@@ -261,27 +265,27 @@ public final class VfsData {
     /** the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result */
     @Nullable Segment replacement;
 
-    Segment(@NotNull VfsData ownerVfsData) {
-      this(ownerVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 3));
+    Segment(@NotNull VfsData owningVfsData) {
+      this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 3));
     }
 
-    private Segment(@NotNull VfsData ownerVfsData,
+    private Segment(@NotNull VfsData owningVfsData,
                     @NotNull AtomicReferenceArray<Object> objectArray,
                     @NotNull AtomicIntegerArray intArray) {
       myObjectArray = objectArray;
       myIntArray = intArray;
-      this.ownerVfsData = ownerVfsData;
+      this.owningVfsData = owningVfsData;
     }
 
     int getIndexedStamp(int fileId) {
-      if (isIndexedFlagDisabled(ownerVfsData.app)) {
+      if (isIndexedFlagDisabled(owningVfsData.app)) {
         return 0;
       }
       return myIntArray.get(getOffset(fileId) * 3 + 2);
     }
 
     void setIndexedStamp(int fileId, int stamp) {
-      if (isIndexedFlagDisabled(ownerVfsData.app)) {
+      if (isIndexedFlagDisabled(owningVfsData.app)) {
         return;
       }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
@@ -352,11 +356,11 @@ public final class VfsData {
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
       assert replacement == null;
-      replacement = new Segment(ownerVfsData, myObjectArray, myIntArray);
+      replacement = new Segment(owningVfsData, myObjectArray, myIntArray);
       int key = fileId >>> SEGMENT_BITS;
-      boolean replaced = ownerVfsData.mySegments.replace(key, this, replacement);
+      boolean replaced = owningVfsData.mySegments.replace(key, this, replacement);
       assert replaced;
-      ownerVfsData.changeParent(fileId, directory);
+      owningVfsData.changeParent(fileId, directory);
     }
   }
 
