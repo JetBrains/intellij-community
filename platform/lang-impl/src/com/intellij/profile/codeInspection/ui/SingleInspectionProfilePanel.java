@@ -96,7 +96,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private final Map<String, ToolDescriptors> myInitialToolDescriptors = new HashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
-  private List<InspectionTreeAdvertiser.CustomGroup> myCustomGroups = new ArrayList<>();
+  private final List<InspectionTreeAdvertiser.CustomGroup> myCustomGroups = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
   @NotNull
@@ -117,7 +117,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private InspectionsConfigTreeTable myTreeTable;
   private TreeExpander myTreeExpander;
   private boolean myIsInRestore;
-  private DefaultActionGroup myCreateInspectionActions;
+  private final DefaultActionGroup myCreateInspectionActions;
 
   private List<String> myInitialScopesOrder;
   private Disposable myDisposable = Disposer.newDisposable();
@@ -129,6 +129,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     myProjectProfileManager = projectProfileManager;
     myProfile = profile;
 
+    myCustomGroups.add(new InspectionTreeAdvertiser.CustomGroup(
+      new String[]{InspectionsBundle.message("group.names.user.defined")},
+      InspectionsBundle.message("group.descriptions.user.defined")
+    ));
     for (InspectionTreeAdvertiser advertiser : InspectionTreeAdvertiser.EP_NAME.getExtensionList()) {
       myCustomGroups.addAll(advertiser.getCustomGroups());
     }
