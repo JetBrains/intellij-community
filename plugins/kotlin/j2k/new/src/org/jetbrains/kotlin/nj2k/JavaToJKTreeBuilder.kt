@@ -630,7 +630,15 @@ class JavaToJKTreeBuilder(
                 it.withFormattingFrom(this)
             }
 
-        fun PsiClass.toJK(): JKClass =
+        fun PsiClass.toJK(): JKClass {
+            val jkClass = if (isRecord) toJKRecordClass() else toJKClass()
+            jkClass.psi = this
+            symbolProvider.provideUniverseSymbol(psi = this, jkClass)
+            jkClass.withFormattingFrom(psi = this)
+            return jkClass
+        }
+
+        fun PsiClass.toJKClass(): JKClass =
             JKClass(
                 nameIdentifier.toJK(),
                 inheritanceInfo(),
@@ -641,13 +649,20 @@ class JavaToJKTreeBuilder(
                 otherModifiers(),
                 visibility(),
                 modality(),
-                recordComponents(),
                 hasTrailingCommaAfterEnumEntries()
-            ).also { klass ->
-                klass.psi = this
-                symbolProvider.provideUniverseSymbol(this, klass)
-                klass.withFormattingFrom(this)
-            }
+            )
+
+        fun PsiClass.toJKRecordClass(): JKRecordClass =
+            JKRecordClass(
+                nameIdentifier.toJK(),
+                recordComponents(),
+                inheritanceInfo(),
+                typeParameterList?.toJK() ?: JKTypeParameterList(),
+                createClassBody(),
+                annotationList(this),
+                otherModifiers(),
+                visibility()
+            )
 
         private fun PsiClass.recordComponents(): List<JKJavaRecordComponent> =
             recordComponents.map { component ->

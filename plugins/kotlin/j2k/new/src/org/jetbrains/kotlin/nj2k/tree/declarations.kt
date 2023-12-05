@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import org.jetbrains.kotlin.nj2k.tree.Modality.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 
@@ -13,7 +14,7 @@ abstract class JKDeclaration : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
  * @param hasTrailingComma - Makes sense only in an enum class,
  * which can have a trailing comma after the last enum entry both in Java and in Kotlin
  */
-class JKClass(
+open class JKClass(
     name: JKNameIdentifier,
     inheritance: JKInheritanceInfo,
     var classKind: ClassKind,
@@ -23,7 +24,6 @@ class JKClass(
     otherModifierElements: List<JKOtherModifierElement>,
     visibilityElement: JKVisibilityModifierElement,
     modalityElement: JKModalityModifierElement,
-    recordComponents: List<JKJavaRecordComponent> = emptyList(),
     val hasTrailingComma: Boolean = false
 ) : JKDeclaration(), JKVisibilityOwner, JKOtherModifiersOwner, JKModalityOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
     override fun accept(visitor: JKVisitor) = visitor.visitClass(this)
@@ -38,8 +38,6 @@ class JKClass(
     override var visibilityElement by child(visibilityElement)
     override var modalityElement by child(modalityElement)
 
-    var recordComponents: List<JKJavaRecordComponent> by children(recordComponents)
-
     enum class ClassKind(val text: String) {
         ANNOTATION("annotation class"),
         CLASS("class"),
@@ -49,6 +47,29 @@ class JKClass(
         COMPANION("companion object"),
         RECORD("data class")
     }
+}
+
+class JKRecordClass(
+    name: JKNameIdentifier,
+    recordComponents: List<JKJavaRecordComponent>,
+    inheritance: JKInheritanceInfo,
+    typeParameterList: JKTypeParameterList,
+    classBody: JKClassBody,
+    annotationList: JKAnnotationList,
+    otherModifierElements: List<JKOtherModifierElement>,
+    visibilityElement: JKVisibilityModifierElement,
+) : JKClass(
+    name,
+    inheritance,
+    ClassKind.RECORD,
+    typeParameterList,
+    classBody,
+    annotationList,
+    otherModifierElements,
+    visibilityElement,
+    JKModalityModifierElement(FINAL) // A record class is implicitly final
+) {
+    var recordComponents: List<JKJavaRecordComponent> by children(recordComponents)
 }
 
 abstract class JKVariable : JKDeclaration(), JKAnnotationListOwner {
