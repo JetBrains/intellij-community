@@ -9,8 +9,7 @@ fun use() {
     consumeCommonMainExpect(produceJvmMainExpect())
 
     // Refinement on expects works
-    // Issue: KTIJ-27569
-    produceCommonMainExpect().<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'jvmApi'.'")!>jvmApi<!>()
+    produceCommonMainExpect().jvmApi()
 
     // iosMain API is not visible
     <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'produceIosMainExpect'.'")!>produceIosMainExpect<!>()

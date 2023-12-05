@@ -46,22 +46,22 @@ fun test() {
 
     val fn2r1: RT_GENERIC_JVM = fn2<Unit>(Unit)
     val fn2r2: RT_ANY_JVM = fn2(Unit)
-    val fn2r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn2(0)<!>
+    val fn2r3: RT_INT_JVM = fn2(0)
 
     val fn3r1: RT_GENERIC_JVM = fn3<Unit>(Unit)
     val fn3r2: RT_ANY_JVM = fn3(Unit)
     val fn3r3: RT_INT_JVM = fn3(0)
 
     val fn4r1: RT_GENERIC_JVM = fn4<Unit>(Unit)
-    val fn4r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn4(Unit)<!>
+    val fn4r2: RT_ANY_JVM = fn4(Unit)
     val fn4r3: RT_INT_JVM = fn4(0)
 
     val fn5r1: RT_GENERIC_JVM = fn5<Unit>(Unit)
-    val fn5r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn5(Unit)<!>
-    val fn5r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn5(0)<!>
+    val fn5r2: RT_ANY_JVM = fn5(Unit)
+    val fn5r3: RT_INT_JVM = fn5(0)
 
     val fn6r1: RT_GENERIC_JVM = fn6<Unit>(Unit)
-    val fn6r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn6(Unit)<!>
+    val fn6r2: RT_ANY_JVM = fn6(Unit)
     val fn6r3: RT_INT_JVM = fn6(0)
 
     val fn7r1: RT_GENERIC_JVM = fn7<Unit>(Unit)
@@ -70,45 +70,45 @@ fun test() {
 
     val fn8r1: RT_GENERIC_JVM = fn8<Unit>(Unit)
     val fn8r2: RT_ANY_JVM = fn8(Unit)
-    val fn8r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn8(0)<!>
+    val fn8r3: RT_INT_JVM = fn8(0)
 
     val fn9r1: RT_GENERIC_JVM = fn9<Unit>(Unit)
     val fn9r2: RT_ANY_JVM = fn9(Unit)
     val fn9r3: RT_INT_JVM = fn9(0)
 
-    val fn10r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn10<Unit>(Unit)<!>
+    val fn10r1: RT_GENERIC_JVM = fn10<Unit>(Unit)
     val fn10r2: RT_ANY_JVM = fn10(Unit)
     val fn10r3: RT_INT_JVM = fn10(0)
 
-    val fn11r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn11<Unit>(Unit)<!>
+    val fn11r1: RT_GENERIC_JVM = fn11<Unit>(Unit)
     val fn11r2: RT_ANY_JVM = fn11(Unit)
-    val fn11r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn11(0)<!>
+    val fn11r3: RT_INT_JVM = fn11(0)
 
-    val fn12r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn12<Unit>(Unit)<!>
+    val fn12r1: RT_GENERIC_JVM = fn12<Unit>(Unit)
     val fn12r2: RT_ANY_JVM = fn12(Unit)
     val fn12r3: RT_INT_JVM = fn12(0)
 
-    val fn13r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn13<Unit>(Unit)<!>
-    val fn13r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn13(Unit)<!>
+    val fn13r1: RT_GENERIC_JVM = fn13<Unit>(Unit)
+    val fn13r2: RT_ANY_JVM = fn13(Unit)
     val fn13r3: RT_INT_JVM = fn13(0)
 
-    val fn14r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn14<Unit>(Unit)<!>
-    val fn14r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn14(Unit)<!>
-    val fn14r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn14(0)<!>
+    val fn14r1: RT_GENERIC_JVM = fn14<Unit>(Unit)
+    val fn14r2: RT_ANY_JVM = fn14(Unit)
+    val fn14r3: RT_INT_JVM = fn14(0)
 
-    val fn15r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn15<Unit>(Unit)<!>
-    val fn15r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn15(Unit)<!>
+    val fn15r1: RT_GENERIC_JVM = fn15<Unit>(Unit)
+    val fn15r2: RT_ANY_JVM = fn15(Unit)
     val fn15r3: RT_INT_JVM = fn15(0)
 
-    val fn16r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn16<Unit>(Unit)<!>
+    val fn16r1: RT_GENERIC_JVM = fn16<Unit>(Unit)
     val fn16r2: RT_ANY_JVM = fn16(Unit)
     val fn16r3: RT_INT_JVM = fn16(0)
 
-    val fn17r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn17<Unit>(Unit)<!>
+    val fn17r1: RT_GENERIC_JVM = fn17<Unit>(Unit)
     val fn17r2: RT_ANY_JVM = fn17(Unit)
-    val fn17r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn17(0)<!>
+    val fn17r3: RT_INT_JVM = fn17(0)
 
-    val fn18r1: RT_GENERIC_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_GENERIC_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_GENERIC_JVM' was expected.'")!>fn18<Unit>(Unit)<!>
+    val fn18r1: RT_GENERIC_JVM = fn18<Unit>(Unit)
     val fn18r2: RT_ANY_JVM = fn18(Unit)
     val fn18r3: RT_INT_JVM = fn18(0)
 
@@ -118,22 +118,22 @@ fun test() {
 
     val fn20r1: RT_GENERIC_JVM = fn20<Unit>(Unit)
     val fn20r2: RT_ANY_JVM = fn20(Unit)
-    val fn20r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn20(0)<!>
+    val fn20r3: RT_INT_JVM = fn20(0)
 
     val fn21r1: RT_GENERIC_JVM = fn21<Unit>(Unit)
     val fn21r2: RT_ANY_JVM = fn21(Unit)
     val fn21r3: RT_INT_JVM = fn21(0)
 
     val fn22r1: RT_GENERIC_JVM = fn22<Unit>(Unit)
-    val fn22r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn22(Unit)<!>
+    val fn22r2: RT_ANY_JVM = fn22(Unit)
     val fn22r3: RT_INT_JVM = fn22(0)
 
     val fn23r1: RT_GENERIC_JVM = fn23<Unit>(Unit)
-    val fn23r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn23(Unit)<!>
-    val fn23r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn23(0)<!>
+    val fn23r2: RT_ANY_JVM = fn23(Unit)
+    val fn23r3: RT_INT_JVM = fn23(0)
 
     val fn24r1: RT_GENERIC_JVM = fn24<Unit>(Unit)
-    val fn24r2: RT_ANY_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_ANY_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_ANY_JVM' was expected.'")!>fn24(Unit)<!>
+    val fn24r2: RT_ANY_JVM = fn24(Unit)
     val fn24r3: RT_INT_JVM = fn24(0)
 
     val fn25r1: RT_GENERIC_JVM = fn25<Unit>(Unit)
@@ -142,7 +142,7 @@ fun test() {
 
     val fn26r1: RT_GENERIC_JVM = fn26<Unit>(Unit)
     val fn26r2: RT_ANY_JVM = fn26(Unit)
-    val fn26r3: RT_INT_JVM = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'pkg.RT_INT_JVM', actual 'kotlin.Unit'.'"), HIGHLIGHTING("severity='ERROR'; descr='[TYPE_MISMATCH] Type mismatch: inferred type is 'kotlin.Unit', but 'pkg.RT_INT_JVM' was expected.'")!>fn26(0)<!>
+    val fn26r3: RT_INT_JVM = fn26(0)
 
     val fn27r1: RT_GENERIC_JVM = fn27<Unit>(Unit)
     val fn27r2: RT_ANY_JVM = fn27(Unit)
