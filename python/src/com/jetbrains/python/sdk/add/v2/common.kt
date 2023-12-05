@@ -2,11 +2,18 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.icons.AllIcons
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.installSdkIfNeeded
@@ -26,7 +33,7 @@ class PythonAddSdkService(val coroutineScope: CoroutineScope)
 interface PythonTargetEnvironmentInterpreterCreator {
   fun buildPanel(outerPanel: Panel, validationRequestor: DialogValidationRequestor)
   fun onShown() {}
-  fun getSdk(): Sdk
+  fun getSdk(): Sdk?
   fun createStatisticsInfo(): InterpreterStatisticsInfo = throw NotImplementedError()
 }
 
@@ -39,7 +46,7 @@ abstract class PythonAddEnvironment(val presenter: PythonAddInterpreterPresenter
 
   abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor)
   open fun onShown() {}
-  abstract fun getOrCreateSdk(): Sdk
+  abstract fun getOrCreateSdk(): Sdk?
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
@@ -75,8 +82,25 @@ enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
 
-internal fun setupBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk {
-  return setupSdkIfDetected(installSdkIfNeeded(sdk, null,  existingSdks)!!, existingSdks)
+internal fun setupBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
+  val installed = installSdkIfNeeded(sdk, null, existingSdks)
+  if (installed == null) {
+    val notification = NotificationGroupManager.getInstance()
+      .getNotificationGroup("Python interpreter installation")
+      .createNotification(message("python.sdk.installation.balloon.error.message"), NotificationType.ERROR)
+    notification.collapseDirection
+
+    notification.addAction(NotificationAction.createSimple(message("python.sdk.installation.balloon.error.action")) {
+        notification.expire()
+        HelpManager.getInstance().invokeHelp("reference.settings.project.interpreter")
+      })
+
+    NotificationsManager
+      .getNotificationsManager()
+      .showNotification(notification, IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project)
+    return null
+  }
+  return setupSdkIfDetected(installed, existingSdks)
 }
 
 internal fun setupSdkIfDetected(sdk: Sdk, existingSdks: List<Sdk>): Sdk = when (sdk) {
