@@ -17,8 +17,6 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LocalTimeCounter;
@@ -110,7 +108,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return data;
   }
 
-  PersistentFS owningPersistentFS() {
+  PersistentFSImpl owningPersistentFS() {
     return getVfsData().owningPersistentFS();
   }
 
@@ -412,13 +410,20 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NonNls String toString() {
-    PersistentFSImpl persistentFs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (persistentFs != null && !persistentFs.isOwnData(getSegment().owningVfsData)) {
-      return "Alien file!";
+    VfsData owningVfsData = getSegment().owningVfsData;
+    //don't use .owningPersistentFS() since it throws assertion if pFS not own current segment anymore,
+    // but here we want to return some string always:
+    PersistentFSImpl persistentFs = owningVfsData.owningPersistentFS();
+    if (!persistentFs.isOwnData(owningVfsData)) {
+      //PersistentFSImpl re-creates VfsData on (re-)connect
+      return "'Alien' file object: was created before PersistentFS (re-)connected " +
+             "(id=" + myId + ", parent=" + myParent + ")";
     }
-    if (persistentFs == null || exists()) {
+
+    if (exists()) {
       return getUrl();
     }
+
     String reason = getInvalidationInfo();
     return getUrl() + " (invalid" + (reason == null ? "" : ", reason: " + reason) + ")";
   }
@@ -428,11 +433,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IllegalArgumentException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
+    PersistentFSImpl pFS = owningPersistentFS();
+
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
-    getSegment().setNameId(myId, FSRecords.getInstance().getNameId(newName));
+
+    int newNameId = pFS.peer().getNameId(newName);
+    getSegment().setNameId(myId, newNameId);
     parent.addChild(this);
-    ((PersistentFSImpl)owningPersistentFS()).incStructuralModificationCount();
+
+    pFS.incStructuralModificationCount();
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
@@ -444,8 +454,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
     getSegment().changeParent(myId, directory);
     directory.addChild(this);
+
     updateLinkStatus(directory);
-    ((PersistentFSImpl)owningPersistentFS()).incStructuralModificationCount();
+
+    owningPersistentFS().incStructuralModificationCount();
   }
 
   @Override

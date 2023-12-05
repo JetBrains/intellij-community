@@ -34,7 +34,6 @@ import static org.openjdk.jmh.runner.options.TimeValue.seconds;
  * how much space for optimization is left.
  */
 @State(Scope.Benchmark)
-@SuppressWarnings("FieldMayBeStatic")
 public class PersistentFSStoragesBenchmarks {
   //@Param
   public static final int RECORDS_COUNT = 1 << 22;
