@@ -596,7 +596,7 @@ fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
         ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
     ];
 
-    if std::io::stdout().is_terminal() {
+    if !std::io::stdout().is_terminal() {
         remote_dev_env_var_values.push(("REMOTE_DEV_NON_INTERACTIVE", "1"))
     }
 
