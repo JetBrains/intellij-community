@@ -5,7 +5,6 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -14,10 +13,12 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.XmlSerializerUtil
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
@@ -152,7 +153,7 @@ internal fun PresentationAssistantState.alternativeKeymapKind(): KeymapKind? {
 }
 
 @State(name = "PresentationAssistantIJ", storages = [Storage("presentation-assistant-ij.xml")])
-class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
+class PresentationAssistant(private val coroutineScope: CoroutineScope) : PersistentStateComponent<PresentationAssistantState> {
   internal val configuration = PresentationAssistantState()
   private var warningAboutMacKeymapWasShown = false
   private var presenter: ShortcutPresenter? = null
@@ -165,23 +166,19 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
 
   fun initialize() {
     if (configuration.showActionDescriptions && presenter == null) {
-      presenter = ShortcutPresenter()
+      presenter = ShortcutPresenter(coroutineScope.childScope())
     }
-  }
-
-  override fun dispose() {
-    presenter?.disable()
   }
 
   fun updatePresenter(project: Project? = null, showInitialAction: Boolean = false) {
     val isEnabled = configuration.showActionDescriptions
     if (isEnabled && presenter == null) {
-      presenter = ShortcutPresenter().apply {
-        if (showInitialAction) {
-          showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID,
-                                                      project,
-                                                      TogglePresentationAssistantAction.name.get()))
-        }
+      val presenter = ShortcutPresenter(coroutineScope.childScope())
+      this.presenter = presenter
+      if (showInitialAction) {
+        presenter.showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID,
+                                                              project,
+                                                              TogglePresentationAssistantAction.name.get()))
       }
     }
     else if (presenter != null) {
@@ -205,9 +202,12 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
       return
     }
 
+    @Suppress("SpellCheckingInspection")
     val pluginId = PluginId.getId("com.intellij.plugins.macoskeymap")
     val plugin = PluginManagerCore.getPlugin(pluginId)
-    if (plugin != null && plugin.isEnabled) return
+    if (plugin != null && plugin.isEnabled) {
+      return
+    }
 
     warningAboutMacKeymapWasShown = true
     showInstallMacKeymapPluginNotification(pluginId)

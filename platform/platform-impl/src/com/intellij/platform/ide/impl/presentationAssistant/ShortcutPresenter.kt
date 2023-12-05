@@ -1,23 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.platform.ide.impl.presentationAssistant
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.awt.Font
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-internal class ShortcutPresenter : Disposable {
-  private val movingActions = setOf(
+internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
+  private val movingActions = java.util.Set.of(
     "EditorLeft", "EditorRight", "EditorDown", "EditorUp",
     "EditorLineStart", "EditorLineEnd", "EditorPageUp", "EditorPageDown",
     "EditorPreviousWord", "EditorNextWord",
@@ -36,21 +42,20 @@ internal class ShortcutPresenter : Disposable {
   private var lastPresentedActionData: ActionData? = null
 
   init {
-    enable()
+    enable(coroutineScope)
   }
 
-  private fun enable() {
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(AnActionListener.TOPIC, object : AnActionListener {
+  private fun enable(coroutineScope: CoroutineScope) {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(AnActionListener.TOPIC, object : AnActionListener {
       override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         // Show popups a bit later after action is called, to avoid too many UI processes get triggered.
         // Otherwise, popups may be presented with visible blinks.
-        ApplicationManager.getApplication().invokeLater {
-          val actionId = ActionManager.getInstance().getId(action) ?: return@invokeLater
-
+        coroutineScope.launch(Dispatchers.EDT) {
+          val actionId = serviceAsync<ActionManager>().getId(action) ?: return@launch
           if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
             val project = event.project
             val text = event.presentation.text
-            showActionInfo(ActionData(actionId, project, text))
+            showActionInfo(ActionData(actionId = actionId, project = project, actionText = text))
           }
         }
       }
@@ -96,14 +101,12 @@ internal class ShortcutPresenter : Disposable {
 
   }
 
-  class ActionData(val actionId: String, val project: Project?, val actionText: String?)
-
-  private fun MutableList<Pair<String, Font?>>.addText(text: String) {
-    this.add(Pair(text, null))
-  }
+  internal class ActionData(@JvmField val actionId: String, @JvmField val project: Project?, @JvmField val actionText: String?)
 
   fun showActionInfo(actionData: ActionData) {
-    if (actionData.actionId == "UiInspector") return
+    if (actionData.actionId == "UiInspector") {
+      return
+    }
 
     val fragments = getActionFragments(actionData)
 
@@ -237,14 +240,15 @@ internal class ShortcutPresenter : Disposable {
     }
 
   fun disable() {
-    if (infoPopupGroup != null) {
-      infoPopupGroup!!.close()
-      infoPopupGroup = null
+    try {
+      infoPopupGroup?.let {
+        it.close()
+        infoPopupGroup = null
+      }
     }
-    Disposer.dispose(this)
-  }
-
-  override fun dispose() {
+    finally {
+      coroutineScope.cancel()
+    }
   }
 }
 
