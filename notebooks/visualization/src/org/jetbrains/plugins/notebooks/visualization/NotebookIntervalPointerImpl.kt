@@ -74,7 +74,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     get() = field?.takeIf { !project.isDisposed }
 
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
-    ThreadingAssertions.softAssertReadAccess()
+    ThreadingAssertions.assertReadAccess()
     return pointers[interval.ordinal].also {
       require(it.interval == interval)
     }
@@ -90,12 +90,14 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
 
     validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
       override fun undo() {
+        ThreadingAssertions.assertWriteAccess()
         val invertedChanges = invertChanges(eventChanges)
         updatePointersByChanges(invertedChanges)
         onUpdated(NotebookIntervalPointersEvent(invertedChanges, cellLinesEvent = null, EventSource.UNDO_ACTION))
       }
 
       override fun redo() {
+        ThreadingAssertions.assertWriteAccess()
         updatePointersByChanges(eventChanges)
         onUpdated(NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.REDO_ACTION))
       }
