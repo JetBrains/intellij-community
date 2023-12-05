@@ -4,16 +4,21 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.testFramework.PlatformTestUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
 
 abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
-  override fun tearDown() {
+  override fun tearDown() = runBlocking {
     try {
       MavenServerManager.getInstance().shutdown(true)
-      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
+      withContext(Dispatchers.EDT) {
+        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
+      }
     }
     catch (e: Throwable) {
       addSuppressedException(e)
