@@ -117,6 +117,22 @@ public sealed interface ModCommand
   }
 
   /**
+   * @param target element to move to
+   * @return a command that navigates to a given element in the editor, assuming that it's opened in the editor
+   */
+  static @NotNull ModCommand moveTo(@NotNull PsiElement target) {
+    PsiFile psiFile = target.getContainingFile();
+    TextRange range = target.getTextRange();
+    Document document = psiFile.getViewProvider().getDocument();
+    if (document instanceof DocumentWindow window) {
+      range = window.injectedToHost(range);
+      psiFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
+    }
+    VirtualFile file = psiFile.getVirtualFile();
+    return new ModNavigate(file, range.getStartOffset(), range.getStartOffset(), range.getStartOffset());
+  }
+
+  /**
    * @param attributes attributes to use for highlighting 
    * @param elements elements to highlight
    * @return a command to highlight the elements, assuming that nothing will be changed in the file
