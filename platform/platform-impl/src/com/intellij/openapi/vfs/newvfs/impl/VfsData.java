@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.TestModeFlags;
@@ -75,6 +76,12 @@ public final class VfsData {
   private final PersistentFSImpl persistentFS;
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
+
+  //TODO RC: seems like the segments are only cached, but never evicted -- this could create memory problems
+  //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore.
+  //         we could remove Segment.indexingFlag immediately (not used anymore), we could probably remove Segment.nameId
+  //         and replace it with direct FSRecordsImpl access. Not sure about remaining (flag+modCount) field though --
+  //         on the first sight they look like an additional data, independent from persistent VFS data?
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = ConcurrentBitSet.create();
@@ -190,9 +197,12 @@ public final class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
+      FSRecordsImpl vfs = segment.owningVfsData.owningPersistentFS().peer();
+      //FIXME RC: move .describeAlreadyCreatedFile() from FSRecordsImpl -- here, and replace static call with
+      //  vfs instance call:
       String msg = FSRecords.describeAlreadyCreatedFile(id, nameId);
       final FileAlreadyCreatedException exception = new FileAlreadyCreatedException(msg);
-      FSRecords.invalidateCaches(msg, exception);
+      vfs.scheduleRebuild(msg, exception);
       throw exception;
     }
     segment.myObjectArray.set(offset, data);
@@ -200,6 +210,7 @@ public final class VfsData {
 
   @NotNull
   CharSequence getNameByFileId(int fileId) {
+    //MAYBE RC: persistentFS.peer().getName(fileId) ?
     int nameId = getNameId(fileId);
     return persistentFS.getNameByNameId(nameId);
   }
