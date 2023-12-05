@@ -7,16 +7,18 @@ import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.teamcity.TeamCityClient;
 import com.intellij.testFramework.*;
-import com.intellij.util.MathUtil;
+import com.intellij.testFramework.bucketing.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import kotlin.text.StringsKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,14 +27,11 @@ import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
@@ -62,8 +61,6 @@ public class TestCaseLoader {
   public static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
   public static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
-  private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
-  private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
   /**
    * Distribute tests equally among the buckets
    */
@@ -103,13 +100,34 @@ public class TestCaseLoader {
   private final TestClassesFilter myTestClassesFilter;
   private final boolean myForceLoadPerformanceTests;
 
-  private static final AtomicBoolean isNastradamusCacheInitialized = new AtomicBoolean();
+  private static final ThreadLocal<Boolean> ourBucketingSchemeInitRecursionLock = new ThreadLocal<>();
+  private static final Lazy<BucketingScheme> ourBucketingScheme = LazyKt.lazy(() -> {
+    BucketingScheme scheme;
 
-  private static final NastradamusClient nastradamusClient = initNastradamus();
+    if (IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
+      scheme = new NastradamusBucketingScheme();
+    }
+    else if (IS_FAIR_BUCKETING) {
+      scheme = new CyclicCounterBucketingScheme();
+    }
+    else {
+      scheme = new HashingBucketingScheme();
+    }
 
-  static {
-    initFairBuckets(false);
-  }
+    // run tests "as usual", but send the data to Nastradamus
+    if (IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED && !(scheme instanceof NastradamusBucketingScheme)) {
+      scheme = new NastradamusDataCollectingBucketingScheme(scheme);
+    }
+
+    if (ourBucketingSchemeInitRecursionLock.get() == Boolean.TRUE) throw new IllegalStateException("recursion detected");
+    ourBucketingSchemeInitRecursionLock.set(Boolean.TRUE);
+    try {
+      scheme.initialize();
+    } finally {
+      ourBucketingSchemeInitRecursionLock.remove();
+    }
+    return scheme;
+  });
 
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
@@ -239,20 +257,14 @@ public class TestCaseLoader {
     return true;
   }
 
-  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
+  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName, boolean initializing) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass &&
         testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      // fair bucketing initialization
-      if (IS_FAIR_BUCKETING && BUCKETS.isEmpty()) return true;
-
-      // warmup caches from nastradamus (if it's not fully initialized)
-      if ((IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED || IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED)
-          && !isNastradamusCacheInitialized.get()) {
-        return true;
-      }
+      // fair bucketing initialization or warmup caches from nastradamus (if it's not fully initialized)
+      if (initializing) return true;
 
       if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
         return true;
@@ -260,20 +272,6 @@ public class TestCaseLoader {
     }
 
     return false;
-  }
-
-  private static boolean matchesBucketViaNastradamus(@NotNull String testIdentifier) {
-    try {
-      return nastradamusClient.isClassInBucket(testIdentifier, (testClassName) -> matchesCurrentBucketViaHashing(testClassName));
-    }
-    catch (Exception e) {
-      // if fails, just fallback to consistent hashing
-      return matchesCurrentBucketViaHashing(testIdentifier);
-    }
-  }
-
-  static boolean matchesCurrentBucketViaHashing(@NotNull String testIdentifier) {
-    return TEST_RUNNERS_COUNT == 1 || MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
   }
 
   /**
@@ -284,31 +282,19 @@ public class TestCaseLoader {
    * @see TestCaseLoader#TEST_RUNNER_INDEX
    */
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
-    // just run aggregator "as usual", but send the data to Nastradamus
-    if (IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED) {
-      // do not return result until Nastradamus is "production-ready"
-      matchesBucketViaNastradamus(testIdentifier);
-    }
-
-    if (IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) return matchesBucketViaNastradamus(testIdentifier);
-
-    if (!IS_FAIR_BUCKETING) {
-      return matchesCurrentBucketViaHashing(testIdentifier);
-    }
-
-    initFairBuckets(false);
-
-    return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
+    if (!shouldBucketTests()) return true;
+    return ourBucketingScheme.getValue().matchesCurrentBucket(testIdentifier);
   }
 
-  private static List<Class<?>> loadClassesForWarmup() {
+  @ApiStatus.Internal
+  public static List<Class<?>> loadClassesForWarmup() {
     var groupsTestCaseLoader = new TestCaseLoader(COMMON_TEST_GROUPS_RESOURCE_NAME);
 
     for (Path classesRoot : TestAll.getClassRoots()) {
       ClassFinder classFinder = new ClassFinder(classesRoot, "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
 
       Collection<String> foundTestClasses = classFinder.getClasses();
-      groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses);
+      groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses, true);
     }
 
     var testCaseClasses = groupsTestCaseLoader.getClasses(false);
@@ -322,92 +308,23 @@ public class TestCaseLoader {
     return testCaseClasses;
   }
 
-  private static synchronized NastradamusClient initNastradamus() {
-    if (!(IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED || IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED)) return null;
-
-    if (isNastradamusCacheInitialized.get()) return nastradamusClient;
-
-    var testCaseClasses = loadClassesForWarmup();
-    NastradamusClient nastradamus = null;
-    try {
-      System.out.println("Caching data from Nastradamus and TeamCity ...");
-      nastradamus = new NastradamusClient(
-        new URI(System.getProperty("idea.nastradamus.url")).normalize(),
-        testCaseClasses,
-        new TeamCityClient()
-      );
-      nastradamus.getRankedClasses();
-      System.out.println("Caching data from Nastradamus and TeamCity finished");
-    }
-    catch (Exception e) {
-      System.err.println("Unexpected exception during Nastradamus client instance initialization");
-      e.printStackTrace();
-    }
-
-    isNastradamusCacheInitialized.set(true);
-    return nastradamus;
-  }
-
   public static void sendTestRunResultsToNastradamus() {
-    if (!(IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED || IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED)) return;
+    // Don't initialize if it wasn't used
+    if (!ourBucketingScheme.isInitialized()) return;
+
+    BucketingScheme scheme = ourBucketingScheme.getValue();
+    if (!(scheme instanceof NastradamusBucketingScheme)) return;
+    NastradamusClient client = ((NastradamusBucketingScheme)scheme).getNastradamusClient();
+    if (client == null) return;
 
     try {
-      var testRunRequest = nastradamusClient.collectTestRunResults();
-      nastradamusClient.sendTestRunResults(testRunRequest, IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED);
+      var testRunRequest = client.collectTestRunResults();
+      client.sendTestRunResults(testRunRequest, IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED);
     }
     catch (Exception e) {
       System.err.println("Unexpected error happened during sending test results to Nastradamus");
       e.printStackTrace();
     }
-  }
-
-  /**
-   * Init fair buckets for all test classes
-   */
-  public static synchronized void initFairBuckets(boolean useAsNastradamusFallback) {
-    if (useAsNastradamusFallback) {
-      // buckets were already initialized
-      if (!BUCKETS.isEmpty()) return;
-    }
-    else if (!IS_FAIR_BUCKETING || !BUCKETS.isEmpty()) return;
-
-    System.out.println("Fair bucketing initialization started ...");
-
-    var testCaseClasses = loadClassesForWarmup();
-    Collections.shuffle(testCaseClasses, new Random(TEST_RUNNERS_COUNT));
-
-    testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
-    System.out.println("Fair bucketing initialization finished.");
-  }
-
-  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
-    var value = BUCKETS.get(testIdentifier);
-
-    if (value != null) {
-      var isMatchedBucket = value == testRunnerIndex;
-
-      if (IS_VERBOSE_LOG_ENABLED) {
-        System.out.printf(
-          "Fair bucket match: test identifier `%s` (already sieved to buckets), runner count %s, runner index %s, is matching bucket %s%n",
-          testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
-      }
-
-      return isMatchedBucket;
-    }
-    else {
-      BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
-    }
-
-    if (CYCLIC_BUCKET_COUNTER.get() == testRunnerCount) CYCLIC_BUCKET_COUNTER.set(0);
-
-    var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
-
-    if (IS_VERBOSE_LOG_ENABLED) {
-      System.out.printf("Fair bucket match: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s%n",
-                        testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
-    }
-
-    return isMatchedBucket;
   }
 
   /**
@@ -471,13 +388,17 @@ public class TestCaseLoader {
   }
 
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
+    loadTestCases(moduleName, classNamesIterator, false);
+  }
+
+  private void loadTestCases(final String moduleName, final Collection<String> classNamesIterator, boolean initialization) {
     for (String className : classNamesIterator) {
       if (!isPotentiallyTestCase(className, moduleName)) {
         continue;
       }
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
-        if (isClassTestCase(candidateClass, moduleName)) {
+        if (isClassTestCase(candidateClass, moduleName, initialization)) {
           myClassSet.add(candidateClass);
         }
       }
@@ -564,7 +485,7 @@ public class TestCaseLoader {
   private static TestSorter loadTestSorter() {
     String sorter = System.getProperty("intellij.build.test.sorter");
 
-    // use Nostradamus test sorter in case, if no other is specified
+    // use Nastradamus test sorter if no other is specified
     if (sorter == null && IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
       sorter = "com.intellij.nastradamus.NastradamusTestCaseSorter";
     }

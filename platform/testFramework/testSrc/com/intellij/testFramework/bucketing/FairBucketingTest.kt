@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testFramework
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.testFramework.bucketing
 
-import com.intellij.TestCaseLoader
 import org.junit.Assert
 import org.junit.Test
 
@@ -9,6 +8,7 @@ class FairBucketingTest {
   private data class BucketedClass(var className: String, var expectedBucket: Int)
 
   private val totalBucketsCount = 5
+  private val scheme = CyclicCounterBucketingScheme(totalBucketsCount)
   private val testClasses: List<BucketedClass> = listOf(
     BucketedClass("com.intellij.integrationTests.smoke.idea.IdeaBuildOnJavaTest", 0),
     BucketedClass("com.intellij.integrationTests.smoke.idea.IdeaBuildOnKotlinTest", 1),
@@ -29,13 +29,10 @@ class FairBucketingTest {
 
   @Test
   fun fairBucketingWorks() {
-    for (currentBucket in 0 until totalBucketsCount) {
-      for (testData in testClasses) {
-        val isMatchedBucket = testData.expectedBucket == currentBucket
-        Assert.assertEquals(String.format("Class `%s` should be in bucket %s", testData.className, currentBucket),
-                            isMatchedBucket,
-                            TestCaseLoader.matchesCurrentBucketFair(testData.className, totalBucketsCount, currentBucket))
-      }
+    for (testData in testClasses) {
+      Assert.assertEquals(String.format("Class `%s` should be in bucket %s", testData.className, testData.expectedBucket),
+                          testData.expectedBucket,
+                          scheme.getBucketNumber(testData.className, -1 /* used only for debug logs */))
     }
   }
 
@@ -48,6 +45,6 @@ class FairBucketingTest {
 
   @Test
   fun initTestBucketsDoesNotThrow() {
-    TestCaseLoader.initFairBuckets(false)
+    CyclicCounterBucketingScheme(totalBucketsCount).initialize()
   }
 }
