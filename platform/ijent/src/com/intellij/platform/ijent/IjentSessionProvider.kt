@@ -34,6 +34,8 @@ interface IjentSessionProvider {
    * When calling the method, there's no need to wire [communicationCoroutineScope] to [epCoroutineScope],
    * since it is already performed by factory methods.
    *
+   * [communicationCoroutineScope] must be a supervisor scope.
+   *
    * Automatically registers the result in [IjentSessionRegistry].
    */
   @OverrideOnly

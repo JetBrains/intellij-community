@@ -24,7 +24,6 @@ import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -47,7 +46,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
       val validOldHolder = when (oldHolder?.isInitialized()) {
         true ->
-          if (oldHolder.getInitialized().coroutineScope.isActive) oldHolder
+          if (oldHolder.getInitialized().isRunning()) oldHolder
           else null
         false -> oldHolder
         null -> null
@@ -102,7 +101,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
         pty = pty,
         workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
       )) {
-        is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(ijentApi.coroutineScope, pty != null)
+        is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, pty != null)
         is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
       }
     }

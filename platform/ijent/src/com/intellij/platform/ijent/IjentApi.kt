@@ -2,9 +2,6 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,12 +18,14 @@ interface IjentApi : AutoCloseable {
   val platform: IjentExecFileProvider.SupportedPlatform
 
   /**
-   * Every [IjentId] must have its own child scope. Cancellation of this scope doesn't directly lead to cancellation of any coroutine
-   * from the parent job.
+   * Checks if the API is active and is safe to use. If it returns false, IJent on the other side is certainly unavailable.
+   * If it returns true, it's likely available.
    *
-   * Cancellation of this scope must lead to termination of the IJent process on the other side.
+   * The methods must return true as soon as [close] is called.
+   *
+   * The method must not perform any blocking operation and must work fast.
    */
-  val coroutineScope: CoroutineScope
+  fun isRunning(): Boolean
 
   /**
    * Returns basic info about the process that doesn't change during the lifetime of the process.
@@ -36,10 +35,7 @@ interface IjentApi : AutoCloseable {
   /**
    * Explicitly terminates the process on the remote machine.
    */
-  override fun close() {
-    coroutineScope.cancel(CancellationException("Closed via Closeable interface"))
-    // The javadoc of the method doesn't clarify if the method supposed to wait for the resource destruction.
-  }
+  override fun close()
 
   /** Docs: [IjentExecApi] */
   val exec: IjentExecApi
