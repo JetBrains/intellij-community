@@ -115,7 +115,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   @Override
   public void setVersion(int expectedVersion) throws IOException {
-    ((AppendOnlyLogOverMMappedFile)contentStorage).setUserDefinedHeaderField(EXTERNAL_VERSION_FIELD_NO, expectedVersion);
+    contentStorage.setUserDefinedHeaderField(EXTERNAL_VERSION_FIELD_NO, expectedVersion);
   }
 
   @Override
