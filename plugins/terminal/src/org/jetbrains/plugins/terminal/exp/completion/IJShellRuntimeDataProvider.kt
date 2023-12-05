@@ -95,8 +95,8 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
     private val LOG: Logger = logger<IJShellRuntimeDataProvider>()
 
     private fun TerminalSession.isBashOrZsh(): Boolean {
-      val shellType = shellIntegration?.shellType
-      return shellType == ShellType.ZSH || shellType == ShellType.BASH
+      return shellIntegration.shellType == ShellType.ZSH
+             || shellIntegration.shellType == ShellType.BASH
     }
   }
 }

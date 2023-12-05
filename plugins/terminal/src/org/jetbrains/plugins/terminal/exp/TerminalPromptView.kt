@@ -93,11 +93,8 @@ class TerminalPromptView(
   }
 
   private fun createPromptTextField(session: TerminalSession): LanguageTextField {
-    val shellType = session.shellIntegration?.shellType
-    val language = if (shellType != null) {
-      TerminalShellSupport.findByShellType(shellType)?.promptLanguage ?: PlainTextLanguage.INSTANCE
-    }
-    else PlainTextLanguage.INSTANCE
+    val language = TerminalShellSupport.findByShellType(session.shellIntegration.shellType)?.promptLanguage
+                   ?: PlainTextLanguage.INSTANCE
     val textField = object : LanguageTextField(language, project, "", false) {
       override fun setBackground(bg: Color?) {
         // do nothing to not set background to editor in super method

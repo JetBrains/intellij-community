@@ -88,7 +88,7 @@ class BlockTerminalTest(private val shellPath: String) {
   fun `concurrent command and generator execution`() {
     val session = startBlockTerminalSession()
     // ShellType.FISH doesn't support generators yet
-    Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH).contains(session.shellIntegration?.shellType))
+    Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH).contains(session.shellIntegration.shellType))
     runBlocking {
       for (stepId in 1..100) {
         val startTime = TimeSource.Monotonic.markNow()

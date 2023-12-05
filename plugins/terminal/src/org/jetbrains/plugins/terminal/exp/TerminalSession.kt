@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
                       val colorPalette: TerminalColorPalette,
-                      val shellIntegration: ShellIntegration?) : Disposable {
+                      val shellIntegration: ShellIntegration) : Disposable {
   val model: TerminalModel
   internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 

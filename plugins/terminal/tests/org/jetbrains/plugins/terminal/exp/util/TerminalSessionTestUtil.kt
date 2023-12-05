@@ -40,7 +40,7 @@ object TerminalSessionTestUtil {
     val ttyConnector = runner.createTtyConnector(process)
 
     val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().globalScheme)
-    val session = TerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration)
+    val session = TerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration!!)
     Disposer.register(parentDisposable, session)
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model

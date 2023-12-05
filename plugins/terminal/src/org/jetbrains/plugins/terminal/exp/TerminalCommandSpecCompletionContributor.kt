@@ -29,8 +29,7 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAw
     if (session == null || parameters.completionType != CompletionType.BASIC) {
       return
     }
-    val shellType = session.shellIntegration?.shellType ?: return
-    val shellSupport = TerminalShellSupport.findByShellType(shellType) ?: return
+    val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
 
     val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
