@@ -39,7 +39,6 @@ import com.intellij.ui.dsl.builder.HyperlinkEventAction;
 import com.intellij.ui.dsl.builder.components.DslLabel;
 import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -66,7 +65,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.util.SlowOperations.IDEA_PLUGIN_SANDBOX_MODE;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
