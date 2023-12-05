@@ -59,7 +59,6 @@ import com.intellij.util.containers.with
 import com.intellij.util.containers.without
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -902,7 +901,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                              module = module,
                                              actionRegistrar = actionPostInitRegistrar) ?: return
             parentGroup.remove(action)
-            actionPostInitRegistrar.state.idToGroupId.get(actionId)?.remove(groupId)
+            if (groupId != null) {
+              actionPostInitRegistrar.state.idToDescriptor.get(actionId)?.removeGroupMapping(groupId)
+            }
           }
         }
         else -> {
@@ -989,7 +990,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   override val registrationOrderComparator: Comparator<String>
-    get() = Comparator.comparingInt { key -> actionPostInitRegistrar.state.idToIndex.getInt(key) }
+    get() {
+      val idToDescriptor = actionPostInitRegistrar.state.idToDescriptor
+      return Comparator.comparingInt { key -> idToDescriptor.get(key)?.index ?: -1 }
+    }
 
   override fun getPluginActions(pluginId: PluginId): Array<String> {
     return ArrayUtilRt.toStringArray(actionPostInitRegistrar.state.pluginToId.get(pluginId))
@@ -1743,25 +1747,6 @@ private fun addToMap(actionId: String,
   }
 }
 
-private class ActionManagerState {
-  @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-  @Volatile
-  @JvmField var prohibitedActionIds: MutableSet<String> = java.util.Set.of()
-
-  @JvmField val actionToId = HashMap<Any, String>(5_000, 0.5f)
-  @JvmField val idToGroupId = HashMap<String, MutableList<String>>( )
-
-  @JvmField val pluginToId = HashMap<PluginId, MutableList<String>>()
-  @JvmField val idToIndex: Object2IntOpenHashMap<String> = Object2IntOpenHashMap<String>().also { it.defaultReturnValue(-1) }
-  @JvmField var registeredActionCount: Int = 0
-
-  @JvmField val baseActions = HashMap<String, AnAction>()
-
-  @JvmField val lock = Any()
-
-  fun getGroupIdListById(groupId: String): List<String> = idToGroupId.get(groupId) ?: java.util.List.of()
-}
-
 @Internal
 private sealed interface ActionRegistrar {
   val state: ActionManagerState
@@ -2079,7 +2064,7 @@ private fun addToGroup(group: AnAction,
       .setAsSecondary(secondary)
     if (actionId != null) {
       state.actionToId.get(group)?.let { groupId ->
-        state.idToGroupId.computeIfAbsent(actionId) { mutableListOf() }.add(groupId)
+        state.idToDescriptor.computeIfAbsent(actionId) { ActionManagerStateActionItemDescriptor() }.addGroupMapping(groupId)
       }
     }
   }
@@ -2112,7 +2097,8 @@ private fun registerAction(actionId: String,
                            action: AnAction,
                            pluginId: PluginId?,
                            projectType: ProjectType?,
-                           actionRegistrar: ActionRegistrar) {
+                           actionRegistrar: ActionRegistrar,
+                           oldIndex: Int = -1) {
   val state = actionRegistrar.state
   if (state.prohibitedActionIds.contains(actionId)) {
     return
@@ -2143,7 +2129,8 @@ private fun registerAction(actionId: String,
   }
 
   action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
-  state.idToIndex.put(actionId, state.registeredActionCount++)
+  state.idToDescriptor
+    .computeIfAbsent(actionId) { ActionManagerStateActionItemDescriptor() }.index = if (oldIndex >= 0) oldIndex else state.registeredActionCount++
   if (pluginId != null) {
     state.pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
   }
@@ -2188,7 +2175,7 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
 
   val state = actionRegistrar.state
   state.actionToId.remove(actionToRemove)
-  state.idToIndex.removeInt(actionId)
+  state.idToDescriptor.remove(actionId)
   for (value in state.pluginToId.values) {
     value.remove(actionId)
   }
@@ -2226,8 +2213,8 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
   }
 
   if (actionToRemove is ActionGroup) {
-    for (value in state.idToGroupId.values) {
-      value.remove(actionId)
+    for (value in state.idToDescriptor.values) {
+      value.removeGroupMapping(actionId)
     }
   }
   updateHandlers(actionToRemove)
@@ -2246,7 +2233,7 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
     getAction(id = actionId, canReturnStub = true, actionRegistrar = actionRegistrar)
   }
   // valid indices >= 0
-  val oldIndex = state.idToIndex.getInt(actionId)
+  val oldIndex = state.idToDescriptor.get(actionId)?.index ?: -1
   if (oldAction != null) {
     state.baseActions.put(actionId, oldAction)
     val isGroup = oldAction is ActionGroup
@@ -2266,10 +2253,8 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
                  action = newAction,
                  pluginId = pluginId,
                  projectType = null,
-                 actionRegistrar = actionRegistrar)
-  if (oldIndex >= 0) {
-    state.idToIndex.put(actionId, oldIndex)
-  }
+                 actionRegistrar = actionRegistrar,
+                 oldIndex = oldIndex)
   return oldAction
 }
 
