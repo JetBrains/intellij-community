@@ -31,12 +31,6 @@ import org.junit.Test
 import java.io.IOException
 import java.util.*
 import java.util.Set
-import kotlin.collections.ArrayList
-import kotlin.collections.List
-import kotlin.collections.MutableList
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mutableListOf
 
 class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   @Test
@@ -596,8 +590,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testSendingNotificationsWhenResolveFailed() {
+  fun testSendingNotificationsWhenResolveFailed() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -867,8 +860,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun testHandlingSelfInheritance() {
+  fun testHandlingSelfInheritance() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -887,8 +879,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun testHandlingRecursiveInheritance() {
+  fun testHandlingRecursiveInheritance() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -989,8 +980,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun testRecursiveInheritanceAndAggregation() {
+  fun testRecursiveInheritanceAndAggregation() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -1780,8 +1770,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testSaveLoad() {
+  fun testSaveLoad() = runBlocking {
     //todo: move to resolver test
     // stripping down plugins
     // stripping down Xpp3Dom fields
@@ -1850,8 +1839,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCollectingProfilesFromSettingsXmlAndPluginsXml() {
+  fun testCollectingProfilesFromSettingsXmlAndPluginsXml() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1879,8 +1867,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCollectingProfilesFromSettingsXmlAndPluginsXmlAfterResolve() {
+  fun testCollectingProfilesFromSettingsXmlAndPluginsXmlAfterResolve() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1920,8 +1907,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCollectingProfilesFromParentsAfterResolve() {
+  fun testCollectingProfilesFromParentsAfterResolve() = runBlocking {
     createModulePom("parent1",
                     """
                       <groupId>test</groupId>
@@ -2032,8 +2018,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() {
+  fun testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -2087,8 +2072,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun testDeletingAndRestoringActiveProfilesWhenProjectDeletes() {
+  fun testDeletingAndRestoringActiveProfilesWhenProjectDeletes() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -2189,8 +2173,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testOutputPathsAreBasedOnTargetPathWhenResolving() {
+  fun testOutputPathsAreBasedOnTargetPathWhenResolving() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

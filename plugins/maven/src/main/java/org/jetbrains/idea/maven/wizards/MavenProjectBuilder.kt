@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModels
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -173,7 +174,10 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
   private fun readMavenProjectTree(process: MavenProgressIndicator) {
     val tree = MavenProjectsTree(projectOrDefault)
     tree.addManagedFilesWithProfiles(parameters.myFiles, MavenExplicitProfiles.NONE)
-    tree.updateAll(false, generalSettings, process.indicator)
+
+    runBlockingMaybeCancellable {
+      tree.updateAll(false, generalSettings, process.indicator)
+    }
 
     parameters.myMavenProjectTree = tree
     parameters.mySelectedProjects = tree.rootProjects

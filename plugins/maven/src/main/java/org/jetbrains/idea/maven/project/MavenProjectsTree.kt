@@ -5,9 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
@@ -15,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ArrayListSet
 import com.intellij.util.containers.ContainerUtil
@@ -363,49 +366,61 @@ class MavenProjectsTree(val project: Project) {
 
   @Deprecated("use {@link MavenProjectsManager#updateAllMavenProjects(MavenImportSpec)} instead")
   fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, process: MavenProgressIndicator) {
-    updateAll(force, generalSettings, process.indicator)
+    runBlockingMaybeCancellable { updateAll(force, generalSettings, process.indicator) }
   }
 
   @ApiStatus.Internal
-  fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+    return updateAll(force, generalSettings, toRawProgressReporter(process))
+  }
+
+  @ApiStatus.Internal
+  suspend fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     val managedFiles = existingManagedFiles
     val explicitProfiles = explicitProfiles
 
     val projectReader = MavenProjectReader(project)
-    val updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process)
+    val updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, progressReporter)
 
     val obsoleteFiles = ContainerUtil.subtract(
       rootProjectsFiles, managedFiles)
-    val deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process)
+    val deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, progressReporter)
 
     return updated.plus(deleted)
   }
 
   @ApiStatus.Internal
-  fun update(files: Collection<VirtualFile>,
-             force: Boolean,
-             generalSettings: MavenGeneralSettings?,
-             process: ProgressIndicator): MavenProjectsTreeUpdateResult {
-    return update(files, false, force, explicitProfiles, MavenProjectReader(project), generalSettings, process)
-  }
-
-  private fun update(files: Collection<VirtualFile>,
-                     updateModules: Boolean,
-                     forceRead: Boolean,
-                     explicitProfiles: MavenExplicitProfiles,
-                     projectReader: MavenProjectReader,
+  suspend fun update(files: Collection<VirtualFile>,
+                     force: Boolean,
                      generalSettings: MavenGeneralSettings?,
                      process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+    return update(files, false, force, explicitProfiles, MavenProjectReader(project), generalSettings, toRawProgressReporter(process))
+  }
+
+  private suspend fun update(files: Collection<VirtualFile>,
+                             updateModules: Boolean,
+                             forceRead: Boolean,
+                             explicitProfiles: MavenExplicitProfiles,
+                             projectReader: MavenProjectReader,
+                             generalSettings: MavenGeneralSettings?,
+                             progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     val updateContext = MavenProjectsTreeUpdateContext(this)
 
-    val updater =
-      MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings!!, process, updateModules)
+    val updater = MavenProjectsTreeUpdater(
+      this,
+      explicitProfiles,
+      updateContext,
+      projectReader,
+      generalSettings!!,
+      progressReporter,
+      updateModules)
+
     val filesToAddModules = HashSet<VirtualFile>()
     for (file in files) {
       if (null == findProject(file)) {
         filesToAddModules.add(file)
       }
-      updater.updateProjectsBlocking(java.util.List.of(UpdateSpec(file, forceRead)))
+      updater.updateProjects(listOf(UpdateSpec(file, forceRead)))
     }
 
     for (aggregator in projects) {
@@ -433,6 +448,14 @@ class MavenProjectsTree(val project: Project) {
     updateContext.fireUpdatedIfNecessary()
 
     return updateContext.toUpdateResult()
+  }
+
+  private fun toRawProgressReporter(progressIndicator: ProgressIndicator): RawProgressReporter {
+    return object : RawProgressReporter {
+      override fun text(text: @NlsContexts.ProgressText String?) {
+        progressIndicator.text = text
+      }
+    }
   }
 
   override fun toString(): String {
@@ -467,14 +490,14 @@ class MavenProjectsTree(val project: Project) {
 
   @ApiStatus.Internal
   fun delete(files: List<VirtualFile>, generalSettings: MavenGeneralSettings?, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
-    return delete(MavenProjectReader(project), files, explicitProfiles, generalSettings, process)
+    return delete(MavenProjectReader(project), files, explicitProfiles, generalSettings, toRawProgressReporter(process))
   }
 
   private fun delete(projectReader: MavenProjectReader,
                      files: Collection<VirtualFile>,
                      explicitProfiles: MavenExplicitProfiles,
                      generalSettings: MavenGeneralSettings?,
-                     process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+                     progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     val updateContext = MavenProjectsTreeUpdateContext(this)
 
     val inheritorsToUpdate: MutableSet<MavenProject> = HashSet()
@@ -485,9 +508,17 @@ class MavenProjectsTree(val project: Project) {
       inheritorsToUpdate.addAll(findInheritors(mavenProject))
       doDelete(findAggregator(mavenProject), mavenProject, updateContext)
     }
-    inheritorsToUpdate.removeAll(updateContext.deletedProjects)
+    inheritorsToUpdate.removeAll(updateContext.deletedProjects.toSet())
 
-    val updater = MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings!!, process, false)
+    val updater = MavenProjectsTreeUpdater(
+      this,
+      explicitProfiles,
+      updateContext,
+      projectReader,
+      generalSettings!!,
+      progressReporter,
+      false)
+
     val updateSpecs = ArrayList<UpdateSpec>()
     for (mavenProject in inheritorsToUpdate) {
       updateSpecs.add(UpdateSpec(mavenProject.file, false))

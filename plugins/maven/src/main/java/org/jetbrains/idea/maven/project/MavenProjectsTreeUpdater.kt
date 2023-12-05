@@ -2,13 +2,13 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -25,7 +25,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
                                         private val updateContext: MavenProjectsTreeUpdateContext,
                                         private val reader: MavenProjectReader,
                                         private val generalSettings: MavenGeneralSettings,
-                                        private val process: ProgressIndicator?,
+                                        private val process: RawProgressReporter?,
                                         private val updateModules: Boolean) {
   private val updated = ConcurrentHashMap<VirtualFile, Boolean>()
   private val userSettingsFile = generalSettings.effectiveUserSettingsIoFile
@@ -48,10 +48,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
       MavenLog.LOG.trace("Has already been updated ($previousUpdate): $mavenProjectFile; forceRead: $forceRead")
       return false
     }
-    if (null != process) {
-      process.text = MavenProjectBundle.message("maven.reading.pom", projectPath)
-      process.text2 = ""
-    }
+    process?.text(MavenProjectBundle.message("maven.reading.pom", projectPath))
     return true
   }
 
