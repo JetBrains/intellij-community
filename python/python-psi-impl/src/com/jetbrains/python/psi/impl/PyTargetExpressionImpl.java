@@ -436,14 +436,27 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   private static PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
-    if (results != null && !results.isEmpty()) {
-      final RatedResolveResult result = results.get(0);
-      final PsiElement element = result.getElement();
-      if (element instanceof PyFunction) {
-        return (PyFunction)element;
-      }
+    if (results != null) {
+      List<PyFunction> allMethods = StreamEx.of(results)
+        .map(RatedResolveResult::getElement)
+        .select(PyFunction.class)
+        .toList();
+      // TODO Migrate this ad-hoc logic to the normal process of resolving overloads in PyCallExpressionHelper
+      PyFunction matchingBySelf = ContainerUtil.find(allMethods, method -> selfParameterMatchesReceiver(method, type, context));
+      return matchingBySelf != null ? matchingBySelf : ContainerUtil.getFirstItem(allMethods);
     }
     return null;
+  }
+
+  private static boolean selfParameterMatchesReceiver(@NotNull PyFunction method,
+                                                      @NotNull PyType receiverType,
+                                                      @NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = method.getParameters(context);
+    if (parameters.isEmpty()) return false;
+    PyCallableParameter firstParameter = parameters.get(0);
+    if (!firstParameter.isSelf()) return false;
+    PyType selfParameterType = firstParameter.getType(context);
+    return PyTypeChecker.match(selfParameterType, receiverType, context);
   }
 
   @Nullable

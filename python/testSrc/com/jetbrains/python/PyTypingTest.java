@@ -4379,6 +4379,34 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-64481
+  public void testIterationOverRegularStrEmitsStrNotLiteralString() {
+    doTest("str",
+           """
+             s = "foo"
+             for expr in s:
+                 pass
+             """);
+  }
+
+  // PY-64481
+  public void testForLoopTargetTypeComesFromCorrectDunderIterOverload() {
+    doTest("Super",
+           """
+             from typing import overload
+                   
+             class Super:
+                 @overload
+                 def __iter__(self: 'Sub') -> list['Sub']: ...
+                 @overload
+                 def __iter__(self) -> list['Super']: ...
+                   
+             class Sub(Super): ...
+                   
+             for expr in Super():
+                 pass
+             """);
+  }
 
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
