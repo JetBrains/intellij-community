@@ -11,6 +11,7 @@ internal fun MutableTWorkspace.generateK2SearchTests() {
         testClass<AbstractDirectKotlinInheritorsSearcherTest> {
             model("inheritorsSearch/kotlinClass", testMethodName = "doTestKotlinClass", pattern = Patterns.KT_WITHOUT_DOTS)
             model("inheritorsSearch/javaClass", testMethodName = "doTestJavaClass", pattern = Patterns.JAVA)
+            model("inheritorsSearch/javaMethod", testMethodName = "doTestJavaMethod", pattern = Patterns.JAVA)
             model("inheritorsSearch/kotlinFunction", testMethodName = "doTestCallable", pattern = Patterns.KT_WITHOUT_DOTS)
             model("inheritorsSearch/allInheritors", testMethodName = "doTestFindAllOverridings", pattern = Patterns.KT_WITHOUT_DOTS)
         }

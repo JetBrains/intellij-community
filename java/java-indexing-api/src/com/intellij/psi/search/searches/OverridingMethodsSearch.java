@@ -47,6 +47,7 @@ public final class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMet
 
   /**
    * @param checkDeep false means that processing would be stopped after the first found item
+   *                  Because search is done in parallel, it can happen that multiple items would be actually found
    */
   @NotNull
   public static Query<PsiMethod> search(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {

@@ -55,6 +55,19 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inheritorsSearch/javaMethod")
+    public static class JavaMethod extends AbstractDirectKotlinInheritorsSearcherTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestJavaMethod, this, testDataFilePath);
+        }
+
+        @TestMetadata("fromJavaMethod.java")
+        public void testFromJavaMethod() throws Exception {
+            runTest("../testData/inheritorsSearch/javaMethod/fromJavaMethod.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inheritorsSearch/kotlinFunction")
     public static class KotlinFunction extends AbstractDirectKotlinInheritorsSearcherTest {
         private void runTest(String testDataFilePath) throws Exception {
