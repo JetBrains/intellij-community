@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.Build;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.model.internal.DependencyArtifactPolicyModel;
+import org.jetbrains.plugins.gradle.model.internal.ParentDependencyArtifactPolicyParameter;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 
@@ -196,7 +198,6 @@ public class GradleModelFetchAction {
       System.currentTimeMillis() - startTime
     );
   }
-
   private void addBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild gradleBuild,
@@ -204,6 +205,8 @@ public class GradleModelFetchAction {
   ) {
     Set<String> obtainedModels = new HashSet<>();
     long startTime = System.currentTimeMillis();
+
+    finalizeProjectsDependencyArtifactPolicies(controller, gradleBuild);
     modelProvider.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
       @Override
       public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
@@ -226,6 +229,30 @@ public class GradleModelFetchAction {
     );
   }
 
+  private void finalizeProjectsDependencyArtifactPolicies(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
+    Map<BasicGradleProject, DependencyArtifactPolicyModel> artifactPolicyModelMap = new HashMap<>();
+    for (BasicGradleProject project : bfsTraversal(gradleBuild)) {
+      DependencyArtifactPolicyModel parentArtifactPolicyModel =
+        project.getParent() != null ? artifactPolicyModelMap.get(project.getParent()) : null;
+
+      // Fetching of this model has a side-effect of setting finalized values for
+      // ideaModule.downloadSources/downloadJavadocs
+      DependencyArtifactPolicyModel artifactPolicyModel =
+        controller.getModel(
+          project,
+          DependencyArtifactPolicyModel.class,
+          ParentDependencyArtifactPolicyParameter.class,
+          new ParentDependencyArtifactPolicyParameter.Initializer(parentArtifactPolicyModel)
+        );
+
+      artifactPolicyModelMap.put(project, artifactPolicyModel);
+    }
+  }
+
+  private List<BasicGradleProject> bfsTraversal(GradleBuild gradleBuild) {
+    // traversal implementation
+    return new LinkedList<>();
+  }
   private void addProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
     myModelConverterExecutor.execute(() -> {
       Object converted = myModelConverter.convert(object);

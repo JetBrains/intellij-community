@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class GradleDependencyArtifactPolicyUtil {
 
-  private static final String DOWNLOAD_SOURCES_FORCE_PROPERTY_NAME = "idea.gradle.download.sources.force";
-  private static final String DOWNLOAD_SOURCES_PROPERTY_NAME = "idea.gradle.download.sources";
+  public static final String DOWNLOAD_SOURCES_FORCE_PROPERTY_NAME = "idea.gradle.download.sources.force";
+  public static final String DOWNLOAD_SOURCES_PROPERTY_NAME = "idea.gradle.download.sources";
 
   public static boolean shouldDownloadSources(@NotNull Project project) {
     // this is necessary for the explicit 'Download sources' action, and also to ensure that sources can be disabled for the headless idea
