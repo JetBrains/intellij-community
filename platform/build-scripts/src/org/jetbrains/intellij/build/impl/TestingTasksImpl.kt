@@ -386,7 +386,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       runBlocking(Dispatchers.IO) {
         val runtime = getRuntimeExecutablePath().toString()
         messages.info("Runtime: ${runtime}")
-        runProcess(args = listOf(runtime, "-version"), inheritOut = true)
+        runProcess(args = listOf(runtime, "-version"), inheritOut = true, inheritErrToOut = true)
       }
       messages.info("Runtime options: ${allJvmArgs}")
       messages.info("System properties: ${systemProperties}")

@@ -203,7 +203,8 @@ suspend fun runProcess(args: List<String>,
                        workingDir: Path? = null,
                        timeout: Duration = DEFAULT_TIMEOUT,
                        additionalEnvVariables: Map<String, String> = emptyMap(),
-                       inheritOut: Boolean = false) {
+                       inheritOut: Boolean = false,
+                       inheritErrToOut: Boolean = false) {
   @Suppress("NAME_SHADOWING")
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
   spanBuilder("runProcess")
@@ -227,6 +228,7 @@ suspend fun runProcess(args: List<String>,
               }
               if (inheritOut) {
                 builder.inheritIO()
+                builder.redirectErrorStream(inheritErrToOut)
               }
               else {
                 builder.redirectOutput(outputFile!!.toFile())
