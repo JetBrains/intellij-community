@@ -29,7 +29,6 @@ import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.exists
 
 fun createBuildOptionsForTest(productProperties: ProductProperties, skipDependencySetup: Boolean = false): BuildOptions {
   val options = BuildOptions()
@@ -99,52 +98,49 @@ fun runTestBuild(
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) },
   onSuccess: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
-) {
-  runBlocking(Dispatchers.Default) {
-    asSingleTraceFile("${productProperties.baseFileName}-$traceSpanName") {
-      if (isReproducibilityTestAllowed) {
-        val reproducibilityTest = BuildArtifactsReproducibilityTest()
-        repeat(reproducibilityTest.iterations) { iterationNumber ->
-          launch {
-            val buildContext = BuildContextImpl.createContext(
-              communityHome = communityHomePath,
-              projectHome = homePath,
-              productProperties = productProperties,
-              proprietaryBuildTools = buildTools,
-              setupTracer = false,
-              options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
-                reproducibilityTest.configure(it)
-              },
-            )
-            doRunTestBuild(
-              context = buildContext,
-              traceSpanName = "#$iterationNumber",
-              build = { context ->
-                build(context)
-                onSuccess(context)
-                reproducibilityTest.iterationFinished(iterationNumber, context)
-              }
-            )
-          }
-        }
-      }
-      else {
+) = runBlocking(Dispatchers.Default) {
+  if (isReproducibilityTestAllowed) {
+    val reproducibilityTest = BuildArtifactsReproducibilityTest()
+    repeat(reproducibilityTest.iterations) { iterationNumber ->
+      launch {
+        val buildContext = BuildContextImpl.createContext(
+          communityHome = communityHomePath,
+          projectHome = homePath,
+          productProperties = productProperties,
+          proprietaryBuildTools = buildTools,
+          setupTracer = false,
+          options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
+            reproducibilityTest.configure(it)
+          },
+        )
         doRunTestBuild(
-          context = BuildContextImpl.createContext(communityHome = communityHomePath,
-                                                   projectHome = homePath,
-                                                   productProperties = productProperties,
-                                                   proprietaryBuildTools = buildTools,
-                                                   setupTracer = false,
-                                                   options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer)),
-          traceSpanName = traceSpanName,
+          context = buildContext,
+          traceSpanName = "#$iterationNumber",
+          writeTelemetry = false,
           build = { context ->
             build(context)
             onSuccess(context)
+            reproducibilityTest.iterationFinished(iterationNumber, context)
           }
         )
-        return@asSingleTraceFile
       }
     }
+  }
+  else {
+    doRunTestBuild(
+      context = BuildContextImpl.createContext(communityHome = communityHomePath,
+                                               projectHome = homePath,
+                                               productProperties = productProperties,
+                                               proprietaryBuildTools = buildTools,
+                                               setupTracer = false,
+                                               options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer)),
+      writeTelemetry = true,
+      traceSpanName = traceSpanName,
+      build = { context ->
+        build(context)
+        onSuccess(context)
+      }
+    )
   }
 }
 
@@ -154,14 +150,24 @@ suspend fun runTestBuild(
   traceSpanName: String,
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  asSingleTraceFile("${context.productProperties.baseFileName}-$traceSpanName") {
-    doRunTestBuild(context = context, traceSpanName = traceSpanName, build = build)
-  }
+  doRunTestBuild(context = context, traceSpanName = traceSpanName, writeTelemetry = true, build = build)
 }
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?, build: suspend (context: BuildContext) -> Unit) {
+private suspend fun doRunTestBuild(context: BuildContext,
+                                   traceSpanName: String?,
+                                   writeTelemetry: Boolean,
+                                   build: suspend (context: BuildContext) -> Unit) {
+  val traceFile = if (writeTelemetry) {
+    val traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json")
+    JaegerJsonSpanExporterManager.setOutput(traceFile, addShutDownHook = false)
+    traceFile
+  }
+  else {
+    null
+  }
+
   val outDir = context.paths.buildOutputDir
   var error: Throwable? = null
   try {
@@ -176,7 +182,6 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
             RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(jetBrainsClientMainModule, ProductMode.FRONTEND, context, softly)
             softly.assertAll()
           }
-
         }
         catch (e: CancellationException) {
           throw e
@@ -201,6 +206,11 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
   }
   finally {
     closeKtorClient()
+
+    if (traceFile != null) {
+      TraceManager.shutdown()
+      println("Performance report is written to $traceFile")
+    }
 
     // close debug logging to prevent locking of output directory on Windows
     (context.messages as BuildMessagesImpl).close()
@@ -229,40 +239,13 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
     val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
     val debugLogFile = messages.debugLogFile
-    if (debugLogFile?.exists() == true) {
+    if (debugLogFile != null && Files.exists(debugLogFile)) {
       Files.copy(debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
       Span.current().addEvent("debug log copied to $targetFile")
     }
   }
   catch (e: Throwable) {
     Span.current().addEvent("failed to copy debug log: ${e.message}")
-    e.printStackTrace(System.err)
-  }
-}
-
-private suspend inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
-  val traceFile = TestLoggerFactory.getTestLogDir().resolve("$traceSpanName-trace.json")
-  JaegerJsonSpanExporterManager.setOutput(traceFile)
-  try {
-    build()
-  }
-  finally {
-    publishTraceFile(traceFile)
-  }
-}
-
-private suspend fun publishTraceFile(traceFile: Path) {
-  try {
-    TraceManager.shutdown()
-    if (Files.notExists(traceFile)) {
-      return
-    }
-
-    println("Performance report is written to $traceFile")
-    println("##teamcity[publishArtifacts '$traceFile']")
-  }
-  catch (e: Exception) {
-    System.err.println("cannot write performance report:")
     e.printStackTrace(System.err)
   }
 }
