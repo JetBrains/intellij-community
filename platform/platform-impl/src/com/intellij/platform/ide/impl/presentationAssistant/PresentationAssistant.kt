@@ -3,7 +3,6 @@ package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
@@ -220,7 +219,7 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
   }
 }
 
-private class PresentationAssistantListenerRegistrar : AppLifecycleListener, DynamicPluginListener {
+private class PresentationAssistantListenerRegistrar : AppLifecycleListener {
   override fun appFrameCreated(commandLineArgs: MutableList<String>) {
     service<PresentationAssistant>().initialize()
   }
