@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
@@ -22,7 +23,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.FontUtil;
 import com.intellij.util.JavaCoroutines;
 import kotlin.Unit;
@@ -73,7 +74,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
     }
 
-    final Project project = e.getProject();
+    Project project = e.getProject();
     if (project != null && !LightEdit.owns(project)) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_RUN_ANYTHING);
 
@@ -94,8 +95,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     return ActionUpdateThread.BGT;
   }
 
-  private static void updateShortcut() {
-    if (!getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).hasShortcuts()) {
+  private static void updateShortcut(KeymapManager keymapManager) {
+    if (!getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID, keymapManager).hasShortcuts()) {
       registerDblCtrlClick();
     }
     else if (ourDoubleCtrlRegistered) {
@@ -112,7 +113,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static void initShortcutTracker() {
-    updateShortcut();
+    KeymapManager keymapManager = ApplicationManager.getApplication().getServiceIfCreated(KeymapManager.class);
+    if (keymapManager != null) {
+      updateShortcut(keymapManager);
+    }
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
@@ -120,14 +124,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           registerDblCtrlClick();
         }
         else {
-          updateShortcut();
+          updateShortcut(KeymapManager.getInstance());
         }
       }
 
       @Override
       public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
         if (RUN_ANYTHING_ACTION_ID.equals(actionId)) {
-          updateShortcut();
+          updateShortcut(KeymapManager.getInstance());
         }
       }
     });
@@ -160,7 +164,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       @Override
       public void setToolTipText(String s) {
         String shortcutText = getShortcutText();
-        super.setToolTipText(StringUtil.isNotEmpty(shortcutText) ? (s + " (" + shortcutText + ")") : s);
+        super.setToolTipText(Strings.isNotEmpty(shortcutText) ? (s + " (" + shortcutText + ")") : s);
       }
     };
   }
