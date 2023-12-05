@@ -9,8 +9,6 @@
 λ 40 Highlight range: '{ println() }'
 λ 42 Highlight range: '{ /// M, λ\n    println() /// L\n}'
   Preview: Highlight range: '{ /// M, λ'
-L 47 Highlight whole line
-  Preview: Highlight range: '{ println() }'
 λ 47 Highlight range: '{ println() }'
 λ 49 Highlight range: '{ /// *, L, M, λ\n    println() /// L\n}'
   Preview: Highlight range: '{ /// *, L, M, λ'

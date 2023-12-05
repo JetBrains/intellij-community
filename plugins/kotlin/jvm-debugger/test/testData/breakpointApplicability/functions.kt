@@ -44,7 +44,7 @@ fun foo7_1() = { /// M, λ
 } /// L
 
 fun foo7_2() = /// M
-    { println() } /// *, L, λ
+    { println() } /// λ
 
 fun foo8() = (3 + 5).run { /// *, L, M, λ
     println() /// L

@@ -113,7 +113,8 @@ class KotlinLineBreakpointType :
 
         val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
         val elementAt = pos.elementAt?.parentsWithSelf?.firstIsInstance<KtElement>() ?: return emptyList()
-        val mainMethod = elementAt.getContainingMethod(excludingElement = false)
+        val isLambdaElement = elementAt is KtFunction && (elementAt is KtFunctionLiteral || elementAt.name == null)
+        val mainMethod = elementAt.getContainingMethod(excludingElement = isLambdaElement)
         var lineBreakpointAdded = false
         if (mainMethod != null) {
             val bodyExpression = if (mainMethod is KtDeclarationWithBody) mainMethod.bodyExpression else null
