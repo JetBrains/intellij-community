@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
@@ -10,8 +9,6 @@ import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener.Companion.fireSchemaChanged
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.setCustomizationSchemaForCurrentProjects
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -44,7 +41,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
-import javax.swing.Icon
 import javax.swing.JComponent
 
 private const val STRIPE_ACTION_GROUP_ID = "TopStripeActionGroup"
@@ -219,8 +215,6 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
 }
 
-private fun getPinIcon(pinned: Boolean): Icon = if (pinned) AllIcons.Actions.DeleteTag else AllIcons.Actions.PinTab
-
 private open class TogglePinActionBase(val toolWindowId: String): DumbAwareAction(ActionsBundle.messagePointer("action.TopStripePinButton.text")) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun update(e: AnActionEvent) {
@@ -301,12 +295,12 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
 
     @Suppress("SameParameterValue")
     private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
-      return getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
+      return CustomActionsSchema.getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
     }
 
     @Suppress("SameParameterValue")
     private fun updateActionGroup(add: Boolean, groupPath: List<String>, actionId: String) {
-      val globalSchema = getInstance()
+      val globalSchema = CustomActionsSchema.getInstance()
       val actions = globalSchema.getActions().toMutableList()
       actions.removeIf { it.groupPath == groupPath && matchesId(it.component, actionId) }
       if (add) {
@@ -314,7 +308,7 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
       }
       globalSchema.setActions(actions)
       fireSchemaChanged()
-      setCustomizationSchemaForCurrentProjects()
+      globalSchema.setCustomizationSchemaForCurrentProjects()
     }
 
     private fun matchesId(component: Any?, actionId: String) = when (component) {
@@ -325,7 +319,7 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
 
     @Suppress("SameParameterValue")
     private fun getGroupPath(vararg ids: String): List<String>? {
-      val globalSchema = getInstance()
+      val globalSchema = CustomActionsSchema.getInstance()
       val groupPath = ArrayList<String>()
       groupPath += "root"
       for (id in ids) {

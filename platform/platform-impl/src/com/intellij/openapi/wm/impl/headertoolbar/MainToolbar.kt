@@ -43,7 +43,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -81,7 +80,7 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
 
 private data object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-@ApiStatus.Internal
+@Internal
 class MainToolbar(
   private val coroutineScope: CoroutineScope,
   private val frame: JFrame,
@@ -512,8 +511,9 @@ class RemoveMainToolbarActionsAction private constructor() : DumbAwareAction("Re
 }
 
 private fun schemaChanged() {
-  CustomActionsSchema.getInstance().initActionIcons()
-  CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
+  val customActionsSchema = CustomActionsSchema.getInstance()
+  customActionsSchema.initActionIcons()
+  customActionsSchema.setCustomizationSchemaForCurrentProjects()
   if (SystemInfoRt.isMac) {
     TouchbarSupport.reloadAllActions()
   }

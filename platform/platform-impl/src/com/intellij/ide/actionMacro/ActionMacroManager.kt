@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.setCustomizationSchemaForCurrentProjects
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -425,7 +424,7 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
       }
     }
     if (!renamingMap.isEmpty()) {
-      setCustomizationSchemaForCurrentProjects()
+      customActionsSchema.setCustomizationSchemaForCurrentProjects()
     }
   }
 

@@ -136,18 +136,17 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
 
     suspend fun getInstanceAsync(): CustomActionsSchema = serviceAsync<CustomActionsSchema>()
+  }
 
-    @JvmStatic
-    fun setCustomizationSchemaForCurrentProjects() {
-      // increment myModificationStamp clear children cache in CustomisedActionGroup
-      //  as a result do it *before* update all toolbars, menu bars and popups
-      getInstance().incrementModificationStamp()
-      val windowManager = WindowManagerEx.getInstanceEx()
-      for (project in ProjectManager.getInstance().openProjects) {
-        windowManager.getFrameHelper(project)?.updateView()
-      }
-      windowManager.getFrameHelper(null)?.updateView()
+  fun setCustomizationSchemaForCurrentProjects() {
+    // increment myModificationStamp clear children cache in CustomisedActionGroup
+    //  as a result do it *before* update all toolbars, menu bars and popups
+    incrementModificationStamp()
+    val windowManager = WindowManagerEx.getInstanceEx()
+    for (project in ProjectManager.getInstance().openProjects) {
+      windowManager.getFrameHelper(project)?.updateView()
     }
+    windowManager.getFrameHelper(null)?.updateView()
   }
 
   fun addAction(url: ActionUrl) {

@@ -5,20 +5,21 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 
 class ToolbarAddQuickActionsAction(private val info: ToolbarAddQuickActionInfo) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun actionPerformed(e: AnActionEvent) {
     val schema = CustomActionsSchema(null)
-    schema.copyFrom(CustomActionsSchema.getInstance())
+    val customActionSchema = CustomActionsSchema.getInstance()
+    schema.copyFrom(customActionSchema)
     info.insertStrategy.addActions(info.actionIDs, schema)
-    CustomActionsSchema.getInstance().copyFrom(schema)
+    customActionSchema.copyFrom(schema)
 
-    CustomActionsSchema.getInstance().initActionIcons()
-    CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
-    if (SystemInfo.isMac) {
+    customActionSchema.initActionIcons()
+    customActionSchema.setCustomizationSchemaForCurrentProjects()
+    if (SystemInfoRt.isMac) {
       TouchbarSupport.reloadAllActions()
     }
     CustomActionsListener.fireSchemaChanged()

@@ -183,8 +183,9 @@ public class CustomizableActionsPanel {
     }
     restorePathsAfterTreeOptimization(treePaths);
     updateGlobalSchema();
-    CustomActionsSchema.getInstance().initActionIcons();
-    CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
+    CustomActionsSchema customActionsSchema = CustomActionsSchema.getInstance();
+    customActionsSchema.initActionIcons();
+    customActionsSchema.setCustomizationSchemaForCurrentProjects();
     if (SystemInfo.isMac) {
       TouchbarSupport.reloadAllActions();
     }
@@ -451,7 +452,7 @@ public class CustomizableActionsPanel {
       if (selectedItem instanceof ActionIconInfo selectedInfo) {
         if (setCustomIcon(mySelectedSchema, myNode, selectedInfo, getContentPane())) {
           myActionsTree.repaint();
-          CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
+          CustomActionsSchema.getInstance().setCustomizationSchemaForCurrentProjects();
         }
       }
       super.doOKAction();
