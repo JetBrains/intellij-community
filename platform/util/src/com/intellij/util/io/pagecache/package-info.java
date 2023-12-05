@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /**
  * TODO RC: Basically I want _all_ classes around file-page caching to be moved in
@@ -15,4 +15,7 @@
  * uses them -- and I dont' want to move legacy impls because a lot of classes depend
  * on them, so it is too much changes for nothing.
  */
+@ApiStatus.Internal
 package com.intellij.util.io.pagecache;
+
+import org.jetbrains.annotations.ApiStatus;
