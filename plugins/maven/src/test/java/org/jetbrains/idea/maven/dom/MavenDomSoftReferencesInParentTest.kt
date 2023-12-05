@@ -106,6 +106,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
 
   private suspend fun checkHighlightingEdt() {
     withContext(Dispatchers.EDT) {
+      FileDocumentManager.getInstance().saveAllDocuments()
       checkHighlighting()
       FileDocumentManager.getInstance().saveAllDocuments()
     }
