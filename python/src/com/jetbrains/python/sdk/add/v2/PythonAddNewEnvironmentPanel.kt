@@ -129,7 +129,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
     }
   }
 
-  fun getSdk(): Sdk {
+  fun getSdk(): Sdk? {
     presenter.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> presenter.setupVirtualenv(Path.of(projectPath.get(), ".venv"),

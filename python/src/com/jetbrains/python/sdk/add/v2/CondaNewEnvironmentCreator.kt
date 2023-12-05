@@ -51,7 +51,7 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     envName.set(state.projectPath.get().substringAfterLast(File.separator))
   }
 
-  override fun getOrCreateSdk(): Sdk {
+  override fun getOrCreateSdk(): Sdk? {
     return presenter.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), envName.get()))
   }
 

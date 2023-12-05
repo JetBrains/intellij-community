@@ -43,9 +43,9 @@ internal fun PythonAddInterpreterPresenter.getPathOnTarget(path: Path): @NlsSafe
   path.convertToPathOnTarget(targetEnvironmentConfiguration)
 
 
-internal fun PythonAddInterpreterPresenter.setupVirtualenv(venvPath: Path, projectPath: String, baseSdk: Sdk): Sdk {
+internal fun PythonAddInterpreterPresenter.setupVirtualenv(venvPath: Path, projectPath: String, baseSdk: Sdk): Sdk? {
   val venvPathOnTarget = getPathOnTarget(venvPath)
-  val savedSdk = setupBaseSdk(baseSdk, state.allSdks.get())
+  val savedSdk = setupBaseSdk(baseSdk, state.allSdks.get()) ?: return null
   val sdk = createVirtualEnvSynchronously(savedSdk, state.allSdks.get(), venvPathOnTarget,
                                           projectPath, null, null) ?: error("Failed to create SDK")
   SdkConfigurationUtil.addSdk(sdk)

@@ -104,7 +104,7 @@ class PythonLocalEnvironmentCreator(val presenter: PythonAddInterpreterPresenter
     existingInterpreterSelectors.values.forEach(PythonAddEnvironment::onShown)
   }
 
-  override fun getSdk(): Sdk = currentSdkManager.getOrCreateSdk()
+  override fun getSdk(): Sdk? = currentSdkManager.getOrCreateSdk()
 
   override fun createStatisticsInfo(): InterpreterStatisticsInfo {
     return currentSdkManager.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE)
