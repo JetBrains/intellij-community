@@ -1,12 +1,10 @@
 [versions]
 composeDesktop = "1.5.11"
-coroutines = "1.7.3"
 detekt = "1.23.1"
 dokka = "1.8.20"
 idea232 = "232.10227.8"
 idea233 = "233.11799.196-EAP-SNAPSHOT"
 ideaGradlePlugin = "1.16.0"
-javaSarif = "2.0"
 jna = "5.13.0"
 kotlin = "1.8.21"
 kotlinSarif = "0.4.0"
@@ -15,15 +13,11 @@ kotlinterGradlePlugin = "3.16.0"
 kotlinxSerialization = "1.5.1"
 kotlinxBinaryCompat = "0.13.2"
 poko = "0.13.1"
-semVer = "1.2.0"
-simpleXml = "2.7.1"
 
 [libraries]
-javaSarif = { module = "com.contrastsecurity:java-sarif", version.ref = "javaSarif" }
 kotlinSarif = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "kotlinSarif" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 
 ij-platform-ide-core-232 = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea232" }
 ij-platform-ide-impl-232 = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea232" }
@@ -32,8 +26,6 @@ ij-platform-core-ui-232 = { module = "com.jetbrains.intellij.platform:core-ui", 
 ij-platform-ide-core-233 = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea233" }
 ij-platform-ide-impl-233 = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea233" }
 ij-platform-core-ui-233 = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea233" }
-semVer = { module = "net.swiftzer.semver:semver", version.ref = "semVer" }
-simpleXml = { module = "org.simpleframework:simple-xml", version.ref = "simpleXml" }
 
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 
