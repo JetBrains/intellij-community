@@ -489,6 +489,16 @@ fun <T : CommandChain> T.importMavenProject(): T = apply {
   addCommand("${CMD_PREFIX}importMavenProject")
 }
 
+fun <T : CommandChain> T.setModuleJdk(moduleName: String, jdk: SdkObject): T {
+  val command = mutableListOf("${CMD_PREFIX}setModuleJdk")
+  command.add("-moduleName=$moduleName")
+  command.add("-jdkName=${jdk.sdkName}")
+  command.add("-jdkType=${jdk.sdkType}")
+  command.add("-jdkPath=${jdk.sdkPath}")
+  addCommandWithSeparator("|", *command.toTypedArray())
+  return this
+}
+
 fun <T : CommandChain> T.toggleMavenProfiles(profileIds: Set<String>, enable: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}toggleMavenProfiles ${profileIds.joinToString(",")} $enable")
 }
