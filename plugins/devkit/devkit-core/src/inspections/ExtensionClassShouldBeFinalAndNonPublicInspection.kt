@@ -13,6 +13,12 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import org.jetbrains.idea.devkit.DevKitBundle
 
+private inline val visibleForTestingAnnotations get() = listOf(
+  "com.google.common.annotations.VisibleForTesting",
+  "com.android.annotations.VisibleForTesting",
+  "org.jetbrains.annotations.VisibleForTesting"
+)
+
 internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInspection() {
 
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
@@ -37,7 +43,7 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
           sink.highlight(message, *fixes)
         }
-        if (isPublic) {
+        if (isPublic && !isAnnotatedAsVisibleForTesting(clazz)) {
           val message = DevKitBundle.message("inspection.extension.class.should.not.be.public.text")
           val fixes = extensionClassShouldNotBePublicProvider.provideQuickFix(clazz, file)
           sink.highlight(message, *fixes)
@@ -50,4 +56,8 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
 
 private fun haveInheritors(aClass: PsiClass): Boolean {
   return DirectClassInheritorsSearch.search(aClass).any()
+}
+
+private fun isAnnotatedAsVisibleForTesting(clazz: JvmClass): Boolean {
+  return clazz.annotations.any { visibleForTestingAnnotations.contains(it.qualifiedName) }
 }

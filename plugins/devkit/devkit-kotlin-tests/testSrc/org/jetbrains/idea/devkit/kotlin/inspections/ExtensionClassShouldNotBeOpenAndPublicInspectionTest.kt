@@ -31,4 +31,8 @@ internal class ExtensionClassShouldNotBeOpenAndPublicInspectionTest : ExtensionC
   fun testHasInheritor() {
     doTest()
   }
+
+  fun testVisibleForTestingAnnotation() {
+    doTest()
+  }
 }

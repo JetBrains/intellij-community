@@ -7,5 +7,11 @@ abstract class ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase : Light
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(ExtensionClassShouldBeFinalAndNonPublicInspection())
+    myFixture.addClass(
+      """
+      package org.jetbrains.annotations;
+
+      public @interface VisibleForTesting { }
+    """)
   }
 }
