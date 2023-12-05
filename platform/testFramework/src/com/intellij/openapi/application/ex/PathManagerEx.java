@@ -249,7 +249,7 @@ public final class PathManagerEx {
       if (determineLookupStrategy(clazz) == TestDataLookupStrategy.ULTIMATE) {
         return TestDataLookupStrategy.ULTIMATE;
       }
-      if ((clazz.getModifiers() & Modifier.ABSTRACT) == 0) {
+      if (!Modifier.isAbstract(clazz.getModifiers())) {
         testClass = clazz;
       }
       else {

@@ -994,7 +994,7 @@ public abstract class UsefulTestCase extends TestCase {
       String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
+        if (!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers) && !field.getType().isPrimitive()) {
           field.setAccessible(true);
           field.set(test, null);
         }

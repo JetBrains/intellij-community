@@ -430,7 +430,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldAddTestCase(Class<?> testCaseClass, String moduleName, boolean checkForExclusion) {
-    if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
+    if (Modifier.isAbstract(testCaseClass.getModifiers())) return false;
 
     if (checkForExclusion) {
       if (shouldExcludeTestClass(moduleName, testCaseClass)) return false;
@@ -445,7 +445,7 @@ public class TestCaseLoader {
 
     try {
       final Method suiteMethod = testCaseClass.getMethod("suite");
-      if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
+      if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && Modifier.isStatic(suiteMethod.getModifiers())) {
         return true;
       }
     }

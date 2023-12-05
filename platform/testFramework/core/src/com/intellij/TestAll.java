@@ -339,7 +339,7 @@ public class TestAll implements Test {
   @Nullable
   private Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
-      if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
+      if (!Modifier.isPublic(testCaseClass.getModifiers())) {
         return null;
       }
 
