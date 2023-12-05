@@ -9,6 +9,7 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.input.CloseShieldInputStream
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.normalizeEntryName
 import org.w3c.dom.Element
 import java.io.BufferedInputStream
 import java.io.IOException
@@ -31,13 +32,12 @@ object BuildDependenciesUtil {
 
   val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
 
-  @JvmStatic
   @Suppress("HttpUrlsUsage")
+  @JvmStatic
   fun createDocumentBuilder(): DocumentBuilder {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
     val dbf = DocumentBuilderFactory.newDefaultInstance()
     return try {
-
       // This is the PRIMARY defense. If DTDs (doctype) are disallowed, almost all
       // XML entity attacks are prevented
       // Xerces 2 only - http://xerces.apache.org/xerces2-j/features.html#disallow-doctype-decl
@@ -91,27 +91,23 @@ object BuildDependenciesUtil {
     return result
   }
 
-  @JvmStatic
   fun getComponentElement(root: Element, componentName: String): Element {
     val elements = getChildElements(root, "component").filter { x -> componentName == x.getAttribute("name") }
     check(elements.size == 1) { "Expected one and only one component with name '$componentName'" }
     return elements[0]
   }
 
-  @JvmStatic
   fun getSingleChildElement(parent: Element, tagName: String): Element {
     val result = getChildElements(parent, tagName)
     check(result.size == 1) { "Expected one and only one element by tag '$tagName'" }
     return result[0]
   }
 
-  @JvmStatic
   fun tryGetSingleChildElement(parent: Element, tagName: String): Element? {
     val result = getChildElements(parent, tagName)
     return if (result.size == 1) result[0] else null
   }
 
-  @JvmStatic
   fun getLibraryMavenId(libraryXml: Path): String {
     return try {
       val documentBuilder = createDocumentBuilder()
@@ -127,7 +123,6 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
   fun getLibraryElement(root: Element, libraryName: String, iml: Path): Element {
     val rootManager = getComponentElement(root, "NewModuleRootManager")
     val library = getChildElements(rootManager, "orderEntry")
@@ -139,7 +134,6 @@ object BuildDependenciesUtil {
     return library
   }
 
-  @JvmStatic
   @Throws(IOException::class)
   fun extractZip(archiveFile: Path, target: Path, stripRoot: Boolean) {
     ZipFile(FileChannel.open(archiveFile)).use { zipFile ->
@@ -174,13 +168,11 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
   @Throws(IOException::class)
   fun extractTarBz2(archiveFile: Path, target: Path, stripRoot: Boolean) {
     extractTarBasedArchive(archiveFile, target, stripRoot) { BZip2CompressorInputStream(it) }
   }
 
-  @JvmStatic
   @Throws(IOException::class)
   fun extractTarGz(archiveFile: Path, target: Path, stripRoot: Boolean) {
     extractTarBasedArchive(archiveFile, target, stripRoot) { GzipCompressorInputStream(it) }
@@ -272,7 +264,6 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
   fun normalizeEntryName(name: String): String {
     val normalized = name.replace('\\', '/').trim('/')
     assertValidEntryName(normalized)
@@ -288,29 +279,24 @@ object BuildDependenciesUtil {
     check(!(normalizedEntryName.contains("..") && normalizedEntryName.split('/').contains(".."))) { "Invalid entry name: ${normalizedEntryName}" }
   }
 
-  @JvmStatic
   fun deleteFileOrFolder(file: Path) {
     @Suppress("UnstableApiUsage")
     MoreFiles.deleteRecursively(file, RecursiveDeleteOption.ALLOW_INSECURE)
   }
 
-  @JvmStatic
   fun cleanDirectory(directory: Path) {
     Files.createDirectories(directory)
     directory.listDirectoryEntries().forEach { deleteFileOrFolder(it) }
   }
 
-  @JvmStatic
-  fun loadPropertiesFile(file: Path): Map<String, String> =
-    Files.newBufferedReader(file).use { val properties = Properties(); properties.load(it); properties }
+  fun loadPropertiesFile(file: Path): Map<String, String> {
+    return Files.newBufferedReader(file).use { val properties = Properties(); properties.load(it); properties }
       .map { (k, v) -> k as String to v as String }
       .toMap()
+  }
 
-  @JvmStatic
-  fun listDirectory(directory: Path): List<Path> =
-    Files.newDirectoryStream(directory).use { it.toList() }
+  fun listDirectory(directory: Path): List<Path> = Files.newDirectoryStream(directory).use { it.toList() }
 
-  @JvmStatic
   fun directoryContentToString(directory: Path, humanReadableName: String?): String {
     val contents = listDirectory(directory)
     val sb = StringBuilder()
@@ -341,28 +327,28 @@ object BuildDependenciesUtil {
     val linkTarget: String?
     val inputStream: InputStream
   }
+}
 
-  private class EntryNameConverter(private val archiveFile: Path, private val target: Path, private val stripRoot: Boolean) {
-    private var leadingComponentPrefix: String? = null
-    fun getOutputPath(entryName: String, isDirectory: Boolean): Path? {
-      val normalizedName = normalizeEntryName(entryName)
-      if (!stripRoot) {
-        return target.resolve(normalizedName)
-      }
-      if (leadingComponentPrefix == null) {
-        val split = normalizedName.split('/'.toString().toRegex(), limit = 2).toTypedArray()
-        leadingComponentPrefix = split[0] + '/'
-        return if (split.size < 2) {
-          check(isDirectory) { "$archiveFile: first top-level entry must be a directory if strip root is enabled" }
-          null
-        }
-        else {
-          target.resolve(split[1])
-        }
-      }
-      check(normalizedName.startsWith(
-        leadingComponentPrefix!!)) { "$archiveFile: entry name '$normalizedName' should start with previously found prefix '$leadingComponentPrefix'" }
-      return target.resolve(normalizedName.substring(leadingComponentPrefix!!.length))
+private class EntryNameConverter(private val archiveFile: Path, private val target: Path, private val stripRoot: Boolean) {
+  private var leadingComponentPrefix: String? = null
+  fun getOutputPath(entryName: String, isDirectory: Boolean): Path? {
+    val normalizedName = normalizeEntryName(entryName)
+    if (!stripRoot) {
+      return target.resolve(normalizedName)
     }
+    if (leadingComponentPrefix == null) {
+      val split = normalizedName.split('/'.toString().toRegex(), limit = 2).toTypedArray()
+      leadingComponentPrefix = split[0] + '/'
+      return if (split.size < 2) {
+        check(isDirectory) { "$archiveFile: first top-level entry must be a directory if strip root is enabled" }
+        null
+      }
+      else {
+        target.resolve(split[1])
+      }
+    }
+    check(normalizedName.startsWith(
+      leadingComponentPrefix!!)) { "$archiveFile: entry name '$normalizedName' should start with previously found prefix '$leadingComponentPrefix'" }
+    return target.resolve(normalizedName.substring(leadingComponentPrefix!!.length))
   }
 }
