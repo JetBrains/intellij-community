@@ -77,6 +77,8 @@ internal open class EntityStorageSnapshotImpl(
 
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
+  //
+  // Do not use ConcurrentLongObjectHashMap here as it causes large performance degradation IDEA-335856
   private val entityCache: Long2ObjectMap<WorkspaceEntity> = Long2ObjectOpenHashMap() // guarded by entityCache
 
   override fun <T> cached(query: StorageQuery<T>): T {
