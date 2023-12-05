@@ -88,7 +88,7 @@ public final class PopupImplUtil {
     return null;
   }
 
-  public static Dimension getPopupSize(final JBPopup popup) {
+  public static @NotNull Dimension getPopupSize(@NotNull JBPopup popup) {
     Dimension size = null;
     if (popup instanceof AbstractPopup) {
       final String dimensionKey = ((AbstractPopup)popup).getDimensionServiceKey();
