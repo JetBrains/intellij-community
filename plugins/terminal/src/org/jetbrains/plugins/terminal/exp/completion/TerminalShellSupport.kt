@@ -12,6 +12,12 @@ interface TerminalShellSupport {
 
   fun getCommandTokens(leafElement: PsiElement): List<String>? = null
 
+  /**
+   * @param aliasesDefinition the string with all aliases of the shell
+   * @return the map of aliases where the key is an alias and the value is an aliased command
+   */
+  fun parseAliases(aliasesDefinition: String): Map<String, String> = emptyMap()
+
   companion object {
     val EP_NAME: ExtensionPointName<KeyedLazyInstanceEP<TerminalShellSupport>> =
       ExtensionPointName.create("org.jetbrains.plugins.terminal.shellSupport")

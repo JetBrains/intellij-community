@@ -17,7 +17,7 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
   }
 
   override suspend fun getShellEnvironment(): ShellEnvironment? {
-    return executeCommand(GetEnvironmentCommand())
+    return executeCommand(GetEnvironmentCommand(session))
   }
 
   private suspend fun <T> executeCommand(command: DataProviderCommand<T>): T {
@@ -55,7 +55,7 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
     }
   }
 
-  private class GetEnvironmentCommand : DataProviderCommand<ShellEnvironment?> {
+  private class GetEnvironmentCommand(private val session: TerminalSession) : DataProviderCommand<ShellEnvironment?> {
     override val functionName: String = "__jetbrains_intellij_get_environment"
     override val parameters: List<String> = emptyList()
     override val defaultResult: ShellEnvironment? = null
@@ -78,7 +78,20 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
         builtins = rawEnv.builtins.split("\n"),
         functions = rawEnv.functions.split("\n"),
         commands = rawEnv.commands.split("\n"),
+        aliases = parseAliases(rawEnv.aliases)
       )
+    }
+
+    private fun parseAliases(text: String): Map<String, String> {
+      val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType)
+                         ?: return emptyMap()
+      return try {
+        shellSupport.parseAliases(text)
+      }
+      catch (t: Throwable) {
+        LOG.error("Failed to parse aliases: $text")
+        emptyMap()
+      }
     }
 
     @Serializable
@@ -87,7 +100,8 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
       val keywords: String,
       val builtins: String,
       val functions: String,
-      val commands: String
+      val commands: String,
+      val aliases: String
     )
   }
 

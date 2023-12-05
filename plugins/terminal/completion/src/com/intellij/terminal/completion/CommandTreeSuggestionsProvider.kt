@@ -21,19 +21,24 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
   }
 
   /**
-   * Returns the list of the commands available in the Shell.
+   * Returns the list of the commands and aliases available in the Shell.
    * Returned [ShellCommand] objects contain only names, and a 'loadSpec' reference to load full command spec (if it exists).
    */
   suspend fun getAvailableCommands(): List<ShellCommand> {
     val shellEnv = runtimeDataProvider.getShellEnvironment() ?: return emptyList()
-    return sequence {
+    val commands = sequence {
       yieldAll(shellEnv.keywords)
       yieldAll(shellEnv.builtins)
       yieldAll(shellEnv.functions)
       yieldAll(shellEnv.commands)
-    }.distinct()
-      .map { ShellCommand(names = listOf(it), loadSpec = it) }
-      .toList()
+    }.map {
+      ShellCommand(names = listOf(it), loadSpec = it)
+    }
+    val aliases = shellEnv.aliases.asSequence().map { (alias, command) ->
+      ShellCommand(names = listOf(alias), description = """Alias for "${command}"""")
+    }
+    // place aliases first, so the alias will have preference over the command, if there is the command with the same name
+    return (aliases + commands).distinctBy { it.names.single() }.toList()
   }
 
   fun getAvailableArguments(node: OptionNode): List<ShellArgument> {
