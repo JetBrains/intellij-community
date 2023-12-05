@@ -41,7 +41,7 @@ val loadScriptDefinitionsOnDemand
     get() = Registry.`is`("kotlin.scripting.load.definitions.on.demand", true)
 
 internal class LoadScriptDefinitionsStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project) : Unit = blockingContextScope {
+    override suspend fun execute(project: Project): Unit = blockingContextScope {
         if (loadScriptDefinitionsOnDemand) return@blockingContextScope
 
         if (isUnitTestMode()) {
@@ -143,9 +143,8 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
         private val definitionsLock = ReentrantLock()
 
-        // @GuardedBy("definitionsLock")
         // Support for insertion order is crucial because 'getSources()' is based on EP order in XML (default configuration source goes last)
-        private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
+        private val definitionsBySource = ConcurrentHashMap<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
         @Volatile
         private var definitions: List<ScriptDefinition>? = null
@@ -188,25 +187,29 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
         override fun reloadDefinitionsBy(source: ScriptDefinitionsSource) = reloadDefinitionsInternal(listOf(source))
 
+        // This function is aimed to fix locks acquisition order.
+        // The internal block still may acquire the read lock, it just won't have an effect.
+        private fun withLocks(block: () -> Unit) = runReadAction { definitionsLock.withLock { block.invoke() } }
+
         private fun reloadDefinitionsInternal(sources: List<ScriptDefinitionsSource>): List<ScriptDefinition> {
             val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script setting not found")
 
-            val loadedDefinitions: List<ScriptDefinition>?
+            var loadedDefinitions: List<ScriptDefinition>? = null
 
-            definitionsLock.withLock {
-                val (ms, newDefinitionsBySource) = measureTimeMillisWithResult {
-                    sources.associateWith {
-                        val (ms, definitions) = measureTimeMillisWithResult { it.safeGetDefinitions() }
-                        scriptingDebugLog { "Loaded definitions: time = $ms ms, source = ${it.javaClass.name}, definitions = ${definitions.map { it.name }}" }
-                        definitions
-                    }
+            val (ms, newDefinitionsBySource) = measureTimeMillisWithResult {
+                sources.associateWith {
+                    val (ms, definitions) = measureTimeMillisWithResult { it.safeGetDefinitions() /* can acquire read-action inside */ }
+                    scriptingDebugLog { "Loaded definitions: time = $ms ms, source = ${it.javaClass.name}, definitions = ${definitions.map { it.name }}" }
+                    definitions
                 }
+            }
 
-                scriptingDebugLog { "Definitions loading total time: $ms ms" }
+            scriptingDebugLog { "Definitions loading total time: $ms ms" }
 
-                if (newDefinitionsBySource.isEmpty())
-                    return emptyList()
+            if (newDefinitionsBySource.isEmpty())
+                return emptyList()
 
+            withLocks {
                 definitionsBySource.putAll(newDefinitionsBySource)
 
                 loadedDefinitions = definitionsBySource.values.flattenTo(mutableListOf())
@@ -214,8 +217,8 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
                     .sortedBy(ScriptDefinition::order)
                     .takeIf { it.isNotEmpty() }
 
-                clearCache()
                 definitions = loadedDefinitions
+                clearCache()
             }
 
             activatedDefinitionSources.addAll(sources)
@@ -251,7 +254,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
             val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
             if (definitions == null) return
 
-            definitionsLock.withLock {
+            withLocks {
                 definitions?.let { list ->
                     list.forEach {
                         it.order = scriptingSettings.getScriptDefinitionOrder(it)
