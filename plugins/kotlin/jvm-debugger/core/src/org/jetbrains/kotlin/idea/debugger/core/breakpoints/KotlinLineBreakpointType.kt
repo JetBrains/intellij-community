@@ -159,7 +159,8 @@ class KotlinLineBreakpointType :
         // we should find the function parent to highlight lambda breakpoints properly
         val function = position.elementAt?.parentOfType<KtFunction>() ?: return null
         val updatedPosition = SourcePosition.createFromElement(function) ?: return null
-        return getLambdaByOrdinal(updatedPosition, lambdaOrdinal)?.textRange
+        val lambda = getLambdaByOrdinal(updatedPosition, lambdaOrdinal) ?: return null
+        return getTextRangeWithoutTrailingComments(lambda)
     }
 
     override fun getSourcePosition(breakpoint: XBreakpoint<JavaLineBreakpointProperties>): XSourcePosition? =
