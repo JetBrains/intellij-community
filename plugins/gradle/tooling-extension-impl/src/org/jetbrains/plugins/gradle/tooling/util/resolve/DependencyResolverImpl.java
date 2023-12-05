@@ -310,21 +310,19 @@ public final class DependencyResolverImpl implements DependencyResolver {
           ComponentArtifactsResult artifactsResult = auxiliaryArtifactsMap.get(artifact.getId().getComponentIdentifier());
           if (artifactsResult != null) {
             Set<ArtifactResult> sourceArtifactResults = artifactsResult.getArtifacts(SourcesArtifact.class);
-            for (ArtifactResult sourceArtifactResult : sourceArtifactResults) {
-              if (sourceArtifactResult instanceof ResolvedArtifactResult) {
-                libraryDependency.setSource(((ResolvedArtifactResult)sourceArtifactResult).getFile());
-                break;
-              }
+            File sourceFile = findArtifactComponentFile(artifact, sourceArtifactResults);
+            if (sourceFile != null) {
+              libraryDependency.setSource(sourceFile);
             }
             Set<ArtifactResult> javadocArtifactResults = artifactsResult.getArtifacts(JavadocArtifact.class);
-            for (ArtifactResult javadocArtifactResult : javadocArtifactResults) {
-              if (javadocArtifactResult instanceof ResolvedArtifactResult) {
-                libraryDependency.setJavadoc(((ResolvedArtifactResult)javadocArtifactResult).getFile());
-                break;
-              }
+            File javadocFile = findArtifactComponentFile(artifact, javadocArtifactResults);
+            if (javadocFile != null) {
+              libraryDependency.setJavadoc(javadocFile);
             }
           }
-          libraryDependency.setPackaging(artifact.getExtension());
+          if (artifact.getExtension() != null) {
+            libraryDependency.setPackaging(artifact.getExtension());
+          }
           libraryDependency.setScope(scope);
           libraryDependency.setClassifier(artifact.getClassifier());
 
@@ -537,6 +535,32 @@ public final class DependencyResolverImpl implements DependencyResolver {
         ((AbstractExternalDependency)compileDependency).setScope(PROVIDED_SCOPE);
       }
     }
+  }
+
+  private static @Nullable File findArtifactComponentFile(@NotNull ResolvedArtifact artifact,
+                                                          @NotNull Set<ArtifactResult> artifactResults) {
+    File fallback = null;
+    String exactArtifactName = artifact.getName();
+    for (ArtifactResult artifactResult : artifactResults) {
+      if (!(artifactResult instanceof ResolvedArtifactResult)) {
+        continue;
+      }
+      ResolvedArtifactResult resolvedArtifactResult = (ResolvedArtifactResult)artifactResult;
+      File artifactResultFile = resolvedArtifactResult.getFile();
+      if (exactArtifactName.equals(getFileWithoutExtensionAndClassifier(artifactResultFile.getName()))) {
+        return artifactResultFile;
+      }
+      fallback = resolvedArtifactResult.getFile();
+    }
+    return fallback;
+  }
+
+  private static @NotNull String getFileWithoutExtensionAndClassifier(@NotNull String fileWithExtensionAndClassifier) {
+    String[] particles = fileWithExtensionAndClassifier.split("\\.");
+    if (particles.length > 0) {
+      return particles[0];
+    }
+    return fileWithExtensionAndClassifier;
   }
 
   private void addAdditionalProvidedDependencies(@NotNull SourceSet sourceSet, @NotNull Collection<ExternalDependency> result) {
