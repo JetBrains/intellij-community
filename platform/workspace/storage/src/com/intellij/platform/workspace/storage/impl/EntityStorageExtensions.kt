@@ -119,6 +119,7 @@ public fun <Child : WorkspaceEntity> EntityStorage.extractOneToOneChild(connecti
   return this.instrumentation.getOneChild(connectionId, parent) as? Child
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 @Suppress("UNCHECKED_CAST")
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChild(connectionId: ConnectionId, parentId: EntityId): Child? {
   val entitiesList = entitiesByType[connectionId.childClass] ?: return null

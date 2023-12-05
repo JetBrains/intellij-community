@@ -485,7 +485,8 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
 
   public fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
 
-  public abstract fun createEntity(snapshot: EntityStorage): E
+  @OptIn(EntityStorageInstrumentationApi::class)
+  public abstract fun createEntity(snapshot: EntityStorageInstrumentation): E
 
   public abstract fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E>
 
@@ -561,14 +562,6 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
    */
   public abstract class WithCalculableSymbolicId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
     public abstract fun symbolicId(): SymbolicEntityId<*>
-  }
-
-  @OptIn(EntityStorageInstrumentationApi::class)
-  protected fun <T : WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
-    if (storage !is EntityStorageInstrumentation) {
-      error("Entities implementation is supposed to work with ${EntityStorageInstrumentation::class.simpleName} storage only")
-    }
-    return storage.initializeEntity(createEntityId(), init)
   }
 }
 

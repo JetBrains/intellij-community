@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.toClassId
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
@@ -61,6 +62,7 @@ internal val randomNames = Generator.sampledFrom(
   "reflection", "dad", "activity", "instance", "idea"
 )
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal inline fun <reified T : WorkspaceEntity> parentGenerator(storage: MutableEntityStorageImpl): Generator<T?> {
   return Generator.from {
     val classId = T::class.java.toClassId()

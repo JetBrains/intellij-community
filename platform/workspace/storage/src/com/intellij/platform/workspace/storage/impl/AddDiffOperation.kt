@@ -6,9 +6,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
-import org.jetbrains.annotations.TestOnly
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import java.util.*
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
   internal val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()

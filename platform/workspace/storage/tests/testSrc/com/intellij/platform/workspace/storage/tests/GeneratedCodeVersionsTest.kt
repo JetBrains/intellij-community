@@ -6,6 +6,8 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -223,7 +225,8 @@ class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
     return SuperSimpleEntity::class.java
   }
 
-  override fun createEntity(snapshot: EntityStorage): SuperSimpleEntity {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SuperSimpleEntity {
     val entity = SuperSimpleEntityImpl()
     entity.snapshot = snapshot
     entity.id = createEntityId()
