@@ -426,7 +426,7 @@ public class VFSCorruptionRecoveryTest {
     try {
       //add something to VFS so it is not empty
       int testFileId = fsRecords.createRecord();
-      fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
+      fsRecords.setName(testFileId, "test");
       try (var stream = fsRecords.writeContent(testFileId, false)) {
         stream.writeUTF("test");
       }
