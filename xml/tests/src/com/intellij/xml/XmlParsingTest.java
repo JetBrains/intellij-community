@@ -207,7 +207,7 @@ public class XmlParsingTest extends ParsingTestCase {
         PsiFile next = createPsiFile("test" + i, text);
         transformAllChildren(next.getNode());
       }
-    }).setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches()).assertTimingAsSubtest();
+    }).setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches()).assertTiming();
 
     LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
     int count = 0;

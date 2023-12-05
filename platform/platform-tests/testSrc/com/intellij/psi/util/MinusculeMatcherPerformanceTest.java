@@ -70,19 +70,19 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testMatchingLongStringWithAnotherLongStringWhereOnlyEndsDiffer() {
     String pattern = "*Then the large string is '{asdbsfafds adsfadasdfasdfasdfasdfasdfasdfsfasf adsfasdf sfasdfasdfasdfasdfasdfasdfd adsfadsfsafd adsfafdadsfsdfasdf sdf asdfasdfasfadsfasdfasfd asdfafd fasdfasdfasdfdsfas dadsfasfadsfafdsafddf  dsf dsasdfasdfsdafsdfsdfsdfasdffafdadfafafasdfasdf asdfasdfasdfasdfasdfasdfasdfasdfaasdfsdfasdfds adfafddfas aa afds}' is sent into the abyss\nThen";
     String name =     "Then the large string is '{asdbsfafds adsfadasdfasdfasdfasdfasdfasdfsfasf adsfasdf sfasdfasdfasdfasdfasdfasdfd adsfadsfsafd adsfafdadsfsdfasdf sdf asdfasdfasfadsfasdfasfd asdfafd fasdfasdfasdfdsfas dadsfasfadsfafdsafddf  dsf dsasdfasdfsdafsdfsdfsdfasdffafdadfafafasdfasdf asdfasdfasdfasdfasdfasdfasdfasdfaasdfsdfasdfds adfafddfas aa afds}' is sent into the abyss\nTh' is sent into the abyss";
-    assertDoesntMatchFast(pattern, name, "matching1");
+    assertDoesntMatchFast(pattern, name);
 
     pattern = "findFirstAdjLoanPlanTemplateByAdjLoanPlan_AdjLoanProgram_AdjLoanProgramCodeAndTemplateVersions";
     name =    "findFirstAdjLoanPlanTemplateByAdjLoanPlan_AdjLoanProgram_AdjLoanProgramCodeAndTemplateVersion_TemplateVersionCode";
-    assertDoesntMatchFast(pattern, name, "matching2");
+    assertDoesntMatchFast(pattern, name);
 
     pattern = "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bold";
     name    = "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bolid";
-    assertDoesntMatchFast(pattern, name, "matching3");
+    assertDoesntMatchFast(pattern, name);
   }
 
-  private void assertDoesntMatchFast(String pattern, String name, String subTestName) {
-    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> assertDoesntMatch(pattern, name)).assertTimingAsSubtest(subTestName);
+  private void assertDoesntMatchFast(String pattern, String name) {
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> assertDoesntMatch(pattern, name)).assertTiming();
   }
 
   public void testMatchingLongRuby() {

@@ -142,13 +142,13 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
       repeat(18) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
-    }.assertTimingAsSubtest()
+    }.assertTiming()
 
     PlatformTestUtil.startPerformanceTest("Create canonical path map - convert paths", 10000) {
       repeat(18) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
-    }.assertTimingAsSubtest()
+    }.assertTiming()
   }
 
   @Test fun testCanonicalPathMapWithManySymlinks() {
@@ -171,18 +171,18 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
       repeat(1_000_000) {
         map.mapToOriginalWatchRoots("$root/src/ln${(Math.random() * 200_000).toInt()}", true)
       }
-    }.assertTimingAsSubtest()
+    }.assertTiming()
 
     PlatformTestUtil.startPerformanceTest("Create canonical path map", 3000) {
       repeat(100) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
-    }.assertTimingAsSubtest()
+    }.assertTiming()
 
     PlatformTestUtil.startPerformanceTest("Create canonical path map - convert paths", 3000) {
       repeat(40) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
-    }.assertTimingAsSubtest()
+    }.assertTiming()
   }
 }
