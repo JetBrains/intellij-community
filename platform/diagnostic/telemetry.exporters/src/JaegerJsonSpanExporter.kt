@@ -124,6 +124,8 @@ class JaegerJsonSpanExporter(
   @Suppress("DuplicatedCode")
   suspend fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
     lock.withReentrantLock {
+      assert(!writer.isClosed)
+
       for (scopeSpan in scopeSpans) {
         for (span in scopeSpan.spans) {
           writer.writeStartObject()

@@ -72,7 +72,8 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     hasSpanExporters = !spanExporters.isEmpty()
     var otlpServiceCoroutineScope = coroutineScope
     batchSpanProcessor = if (hasSpanExporters) {
-      spanExporters.add(object : AsyncSpanExporter {
+      // must be first, before JaegerJsonSpanExporter
+      spanExporters.add(0, object : AsyncSpanExporter {
         override suspend fun export(spans: Collection<SpanData>) {
         }
 

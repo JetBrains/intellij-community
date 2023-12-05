@@ -55,7 +55,7 @@ internal class OtlpService {
       val scopeToSpans = HashMap<Scope, ScopeSpans>()
       try {
         var counter = 0
-        while (isActive) {
+        while (true) {
           val finished = select {
             spans.onReceive { span ->
               if (span == null) {
@@ -131,6 +131,7 @@ internal class OtlpService {
     if (scopeToSpans.isEmpty()) {
       return
     }
+
     try {
       batchSpanProcessor?.flushOtlp(scopeToSpans.values)
 
@@ -162,8 +163,8 @@ internal class OtlpService {
     spans.trySend(activity)
   }
 
-  fun stop() {
-    spans.trySend(null)
+  suspend fun stop() {
+    spans.send(null)
     spans.close()
   }
 }
