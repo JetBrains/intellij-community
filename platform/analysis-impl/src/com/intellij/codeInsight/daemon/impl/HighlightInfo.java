@@ -887,7 +887,7 @@ public class HighlightInfo implements Segment {
       return myProblemRange;
     }
 
-    public void setProblemRange(TextRange problemRange) {
+    void setProblemRange(@NotNull TextRange problemRange) {
       myProblemRange = problemRange;
     }
   }

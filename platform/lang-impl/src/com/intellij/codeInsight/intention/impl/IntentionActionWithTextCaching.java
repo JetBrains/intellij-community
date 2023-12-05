@@ -44,7 +44,7 @@ public final class IntentionActionWithTextCaching
   private final Icon myIcon;
   @Nullable
   private final String myToolId;
-  private final TextRange myProblemRange;
+  private final @Nullable TextRange myProblemRange;
 
   public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
     this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, null, (actWithText, act) -> {
@@ -55,7 +55,7 @@ public final class IntentionActionWithTextCaching
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
                                  @Nullable String toolId,
-                                 TextRange problemRange,
+                                 @Nullable TextRange problemRange,
                                  @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myToolId = toolId;
     myIcon = icon;
