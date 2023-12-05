@@ -26,6 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.milliseconds
 
 class WorkspaceModelAsyncTest {
   companion object {
@@ -69,6 +70,7 @@ class WorkspaceModelAsyncTest {
     }
 
     listenerIsReady.receive()
+    delay(10.milliseconds)
     workspaceModel.update("Test add new module asynchronously") {
       it addEntity ModuleEntity(moduleName, emptyList(), object : EntitySource {})
     }
