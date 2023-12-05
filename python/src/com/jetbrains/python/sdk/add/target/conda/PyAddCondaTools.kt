@@ -7,10 +7,11 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.psi.LanguageLevel
@@ -51,12 +52,16 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
     else -> PyTargetAwareAdditionalData(flavorAndData, targetConfig)
   }
 
-  val sdk = ProjectJdkImpl(SdkConfigurationUtil.createUniqueSdkName(condaIdentity.userReadableName, existingSdks),
-                           PythonSdkType.getInstance())
-  sdk.sdkAdditionalData = additionalData
+  val sdk = ProjectJdkTable.getInstance().createSdk(SdkConfigurationUtil.createUniqueSdkName(condaIdentity.userReadableName, existingSdks),
+                                                    PythonSdkType.getInstance())
+  val sdkModificator = sdk.sdkModificator
+  sdkModificator.sdkAdditionalData = additionalData
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
-  sdk.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
+  sdkModificator.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
+  writeAction {
+    sdkModificator.commitChanges()
+  }
   saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   return sdk
 }
