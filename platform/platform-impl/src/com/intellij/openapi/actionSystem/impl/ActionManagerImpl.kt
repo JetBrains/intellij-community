@@ -27,6 +27,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.*
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
@@ -135,7 +136,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val heavyTasks = mutableListOf<ActionConfigurationCustomizer.CustomizeStrategy>()
     ActionConfigurationCustomizer.EP.forEachExtensionSafe { extension ->
       val customizeStrategy = extension.customize()
-      if (customizeStrategy is ActionConfigurationCustomizer.LightCustomizeStrategy) {
+      if (customizeStrategy is LightCustomizeStrategy) {
         // same thread - mutator is not thread-safe by intention
         // todo use plugin-aware coroutineScope
         coroutineScope.launch(Dispatchers.Unconfined) {
@@ -163,11 +164,20 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             customizeStrategy.customize(asActionRuntimeRegistrar())
           }
         }
-        is ActionConfigurationCustomizer.LightCustomizeStrategy -> throw IllegalStateException("$customizeStrategy not expected")
+        is LightCustomizeStrategy -> throw IllegalStateException("$customizeStrategy not expected")
       }
     }
 
-    DYNAMIC_EP_NAME.forEachExtensionSafe { it.registerActions(this) }
+    DYNAMIC_EP_NAME.forEachExtensionSafe { customizer ->
+      if (customizer is LightCustomizeStrategy) {
+        coroutineScope.launch(Dispatchers.Unconfined) {
+          customizer.customize(mutator)
+        }
+      }
+      else {
+        customizer.registerActions(this)
+      }
+    }
 
     DYNAMIC_EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<DynamicActionConfigurationCustomizer> {
       override fun extensionAdded(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
