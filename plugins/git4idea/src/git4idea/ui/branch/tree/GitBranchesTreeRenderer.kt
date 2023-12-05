@@ -138,6 +138,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     val value = treeNode ?: return empty
     return when (value) {
       is GitBranch -> getIncomingOutgoingIconWithTooltip(value)
+      is BranchUnderRepository -> getIncomingOutgoingIconWithTooltip(value.branch)
       else -> empty
     }
   }
