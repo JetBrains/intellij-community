@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.RangeMarkerImpl
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -18,6 +19,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockStates: MutableMap<CommandBlock, List<BlockDecorationState>> = HashMap()
+  private var allHighlightingsCache: List<HighlightingInfo>? = null
 
   private val document: Document = editor.document
   private val listeners: MutableList<TerminalOutputListener> = CopyOnWriteArrayList()
@@ -73,6 +75,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     blocks.remove(block)
     decorations.remove(block)
     highlightings.remove(block)
+    allHighlightingsCache = null
     blockStates.remove(block)
   }
 
@@ -124,7 +127,26 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun getAllHighlightings(): List<HighlightingInfo> {
-    return highlightings.flatMap { it.value }
+    var result: List<HighlightingInfo>? = allHighlightingsCache
+    if (result == null) {
+      result = calcAllHighlightings()
+      allHighlightingsCache = result
+    }
+    return result
+  }
+
+  private fun calcAllHighlightings(): List<HighlightingInfo> {
+    val highlightings = highlightings.flatMap { it.value }
+    val result : MutableList<HighlightingInfo> = ArrayList(highlightings.size * 2)
+    var offset = 0
+    for (h in highlightings) {
+      if (offset < h.startOffset) {
+        result.add(HighlightingInfo(offset, h.startOffset, TextAttributes.ERASE_MARKER))
+      }
+      result.add(h)
+      offset = h.endOffset
+    }
+    return result
   }
 
   @RequiresEdt
@@ -135,6 +157,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   @RequiresEdt
   fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
+    allHighlightingsCache = null
   }
 
   @RequiresEdt
