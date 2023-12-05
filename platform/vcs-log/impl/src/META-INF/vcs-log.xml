@@ -14,6 +14,9 @@
                     interface="com.intellij.vcs.log.VcsLogFileHistoryHandler"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint name="fileHistoryPerformanceListener"
+                    interface="com.intellij.vcs.log.history.FileHistoryPerformanceListener"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
