@@ -814,6 +814,14 @@
         <constraint name="field" script="&quot;import com.intellij.psi.PsiField&#10;import com.intellij.psi.PsiModifier&#10;import com.intellij.psi.PsiReferenceExpression&#10;import com.intellij.psi.PsiVariable&#10;&#10;field instanceof PsiReferenceExpression &amp;&amp;&#10;((PsiReferenceExpression)field).resolve() instanceof PsiField &amp;&amp;&#10;((PsiField)((PsiReferenceExpression)field).resolve()).hasModifierProperty(PsiModifier.VOLATILE) &amp;&amp;&#10;var instanceof PsiReferenceExpression &amp;&amp;&#10;((PsiReferenceExpression)var).resolve() instanceof PsiVariable &amp;&amp;&#10;!((PsiVariable)((PsiReferenceExpression)var).resolve()).hasModifierProperty(PsiModifier.VOLATILE)&quot;" within="" contains="" />
         <constraint name="__context__" target="true" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="'suspendCoroutine' lacks cancellation guarantees" description="'suspendCoroutine' does not react on cancellation of the context 'Job', which may result in infinite suspension of the enclosing coroutine.&#10;It is better to use 'suspendCancellableCoroutine' if the intention is to work in the structured concurrency area." text="suspendCoroutine { &#10;  $Expr$ &#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="kotlinx.coroutines.suspendCancellableCoroutine {&#10;  $Expr$&#10;}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expr" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="'suspendCoroutine' lacks cancellation guarantees" text="suspendCoroutine($Block$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="kotlinx.coroutines.suspendCancellableCoroutine($Block$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Block" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="@HardwareAgentRequired should be applied only for performance tests" text="@com.intellij.idea.HardwareAgentRequired&#10;class $class$ {&#10;  &#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" regexp=".*Performance.*" negateName="true" within="" contains="" />
