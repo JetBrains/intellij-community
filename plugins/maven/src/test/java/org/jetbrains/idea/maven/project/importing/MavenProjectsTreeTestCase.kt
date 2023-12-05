@@ -48,7 +48,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
     myTree!!.update(listOf(file), false, mavenGeneralSettings, rawProgressReporter)
   }
 
-  protected fun deleteProject(file: VirtualFile) {
+  protected suspend fun deleteProject(file: VirtualFile) {
     myTree!!.delete(listOf(file), mavenGeneralSettings, rawProgressReporter)
   }
 

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -28,7 +28,6 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
-import java.io.IOException
 import java.util.*
 import java.util.Set
 
@@ -2101,11 +2100,11 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     updateAll(mutableListOf<String?>("one", "two"), myProjectPom)
     assertUnorderedElementsAreEqual(
       tree.explicitProfiles.enabledProfiles, "one", "two")
-    val finalM = m
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> {
-      finalM.delete(this)
-      deleteProject(finalM)
+    writeAction {
+      m.delete(this)
     }
+    deleteProject(m)
+
     assertUnorderedElementsAreEqual(
       tree.explicitProfiles.enabledProfiles, "one")
     m = createModulePom("m",

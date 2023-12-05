@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -217,11 +216,6 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
       )
     }
     updateProjects(childUpdates)
-  }
-
-  @Deprecated("Use {@link #updateProjects(List<UpdateSpec>)}}", ReplaceWith("updateProjects(List<UpdateSpec>)"))
-  fun updateProjectsBlocking(specs: List<UpdateSpec>) = runBlockingMaybeCancellable {
-    updateProjects(specs)
   }
 
   suspend fun updateProjects(specs: List<UpdateSpec>) {

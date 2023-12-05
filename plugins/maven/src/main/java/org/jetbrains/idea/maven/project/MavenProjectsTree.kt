@@ -489,15 +489,17 @@ class MavenProjectsTree(val project: Project) {
   }
 
   @ApiStatus.Internal
-  fun delete(files: List<VirtualFile>, generalSettings: MavenGeneralSettings?, progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
+  suspend fun delete(files: List<VirtualFile>,
+                     generalSettings: MavenGeneralSettings?,
+                     progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     return delete(MavenProjectReader(project), files, explicitProfiles, generalSettings, progressReporter)
   }
 
-  private fun delete(projectReader: MavenProjectReader,
-                     files: Collection<VirtualFile>,
-                     explicitProfiles: MavenExplicitProfiles,
-                     generalSettings: MavenGeneralSettings?,
-                     progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
+  private suspend fun delete(projectReader: MavenProjectReader,
+                             files: Collection<VirtualFile>,
+                             explicitProfiles: MavenExplicitProfiles,
+                             generalSettings: MavenGeneralSettings?,
+                             progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
     val updateContext = MavenProjectsTreeUpdateContext(this)
 
     val inheritorsToUpdate: MutableSet<MavenProject> = HashSet()
@@ -523,7 +525,7 @@ class MavenProjectsTree(val project: Project) {
     for (mavenProject in inheritorsToUpdate) {
       updateSpecs.add(UpdateSpec(mavenProject.file, false))
     }
-    updater.updateProjectsBlocking(updateSpecs)
+    updater.updateProjects(updateSpecs)
 
     for (mavenProject in inheritorsToUpdate) {
       if (reconnectRoot(mavenProject)) {
