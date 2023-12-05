@@ -372,10 +372,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public void setNameId(final int recordId,
-                        final int nameId) throws IOException {
+  public int setNameId(final int recordId,
+                       final int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
-    setIntField(recordId, RecordLayout.NAME_REF_OFFSET, nameId);
+    return getAndSetIntField(recordId, RecordLayout.NAME_REF_OFFSET, nameId);
   }
 
   @Override
@@ -732,6 +732,18 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     incrementRecordVersion(pageBuffer, recordOffsetOnPage);
   }
 
+  private int getAndSetIntField(final int recordId,
+                                @FieldOffset final int fieldRelativeOffset,
+                                final int fieldValue) throws IOException {
+    final long recordOffsetInFile = recordOffsetInFile(recordId);
+    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    int previousValue = getAndSetIntVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset, fieldValue);
+    incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+    return previousValue;
+  }
+
   private int getIntField(final int recordId,
                           @FieldOffset final int fieldRelativeOffset) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
@@ -808,6 +820,12 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                                      final int offsetInBuffer,
                                      final int value) {
     INT_HANDLE.setVolatile(pageBuffer, offsetInBuffer, value);
+  }
+
+  private static int getAndSetIntVolatile(final ByteBuffer pageBuffer,
+                                          final int offsetInBuffer,
+                                          final int value) {
+    return (int)INT_HANDLE.getAndSet(pageBuffer, offsetInBuffer, value);
   }
 
   private static void setLongVolatile(final ByteBuffer pageBuffer,

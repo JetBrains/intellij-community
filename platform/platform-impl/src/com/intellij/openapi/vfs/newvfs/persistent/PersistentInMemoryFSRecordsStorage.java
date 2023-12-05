@@ -161,10 +161,10 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
   }
 
   @Override
-  public void setNameId(final int recordId,
-                        final int nameId) throws IOException {
+  public int setNameId(final int recordId,
+                       final int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
-    setIntField(recordId, NAME_REF_OFFSET, nameId);
+    return setIntField(recordId, NAME_REF_OFFSET, nameId);
   }
 
   @Override
@@ -398,12 +398,13 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
     return (long)LONG_HANDLE.getVolatile(records, offset);
   }
 
-  private void setIntField(final int recordId,
-                           final int fieldRelativeOffset,
-                           final int fieldValue) {
+  private int setIntField(final int recordId,
+                          final int fieldRelativeOffset,
+                          final int fieldValue) {
     final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
-    INT_HANDLE.setVolatile(records, offset, fieldValue);
+    int previousValue = (int)INT_HANDLE.getAndSet(records, offset, fieldValue);
     markDirty();
+    return previousValue;
   }
 
   private int getIntField(final int recordId,

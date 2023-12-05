@@ -3,9 +3,9 @@ package com.intellij.openapi.vfs.newvfs.persistent.intercept
 
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage
 import com.intellij.util.io.storage.VFSContentStorage
 
 object InterceptorInjection {
@@ -98,7 +98,7 @@ object InterceptorInjection {
 
       override fun setParent(fileId: Int, parentId: Int) = setParent(fileId, parentId)
 
-      override fun setNameId(fileId: Int, nameId: Int) = setNameId(fileId, nameId)
+      override fun setNameId(fileId: Int, nameId: Int): Int = setNameId(fileId, nameId)
 
       override fun setFlags(fileId: Int, flags: Int): Boolean = setFlags(fileId, flags)
 

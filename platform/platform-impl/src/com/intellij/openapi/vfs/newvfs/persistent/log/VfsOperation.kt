@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.VirtualFile.PropName
@@ -122,15 +122,15 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       }
     }
 
-    class SetNameId(val fileId: Int, val nameId: Int, result: OperationResult<Unit>)
-      : RecordsOperation<Unit>(VfsOperationTag.REC_SET_NAME_ID, result) {
+    class SetNameId(val fileId: Int, val nameId: Int, result: OperationResult<Int>)
+      : RecordsOperation<Int>(VfsOperationTag.REC_SET_NAME_ID, result) {
       internal companion object : Serializer<SetNameId> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): SetNameId =
           DataInputStream(this).run {
             val fileId = readInt()
             val nameId = readInt()
-            val result = readResult<Unit>()
+            val result = readResult<Int>()
             return SetNameId(fileId, nameId, result)
           }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.RecordsInterceptor
@@ -45,12 +45,12 @@ class RecordsLogInterceptor(
       }
     }
 
-  override fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Unit): (fileId: Int, nameId: Int) -> Unit =
+  override fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Int): (fileId: Int, nameId: Int) -> Int =
     if (VfsOperationTag.REC_SET_NAME_ID !in interceptMask) underlying
     else { fileId, nameId ->
       context.trackPlainOperation(VfsOperationTag.REC_SET_NAME_ID,
                                   { VfsOperation.RecordsOperation.SetNameId(fileId, nameId, it) }) {
-        underlying(fileId, nameId)
+        return@trackPlainOperation underlying(fileId, nameId)
       }
     }
 

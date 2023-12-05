@@ -170,9 +170,12 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
-  public void setNameId(int id, int nameId) throws IOException {
+  public int setNameId(int id, int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
+    //FIXME RC: fake thread-unsafe implementation -- whole class is outdated and to be removed
+    int previousNameId = getNameId(id);
     putRecordInt(id, NAME_OFFSET, nameId);
+    return previousNameId;
   }
 
   @Override
