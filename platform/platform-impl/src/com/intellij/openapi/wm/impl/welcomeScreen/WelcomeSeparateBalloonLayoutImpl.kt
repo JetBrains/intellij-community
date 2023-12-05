@@ -289,7 +289,7 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
       for (balloon in balloons) {
         val balloonImpl = balloon as BalloonImpl
         balloonImpl.clipY = -1
-        balloonImpl.component.isVisible = true
+        balloonImpl.component?.isVisible = true
       }
     }
 
