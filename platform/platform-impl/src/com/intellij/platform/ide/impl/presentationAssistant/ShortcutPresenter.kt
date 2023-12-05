@@ -1,14 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-/**
- * @author nik
- */
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -19,7 +16,7 @@ import java.awt.Font
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-class ShortcutPresenter : Disposable {
+internal class ShortcutPresenter : Disposable {
   private val movingActions = setOf(
     "EditorLeft", "EditorRight", "EditorDown", "EditorUp",
     "EditorLineStart", "EditorLineEnd", "EditorPageUp", "EditorPageDown",
@@ -121,11 +118,11 @@ class ShortcutPresenter : Disposable {
         infoPopupGroup!!.updateText(realProject, fragments)
       }
     }
-    PresentationAssistant.INSTANCE.checkIfMacKeymapIsAvailable()
+    service<PresentationAssistant>().checkIfMacKeymapIsAvailable()
   }
 
   private fun getActionFragments(actionData: ActionData): List<TextData> {
-    val configuration = PresentationAssistant.INSTANCE.configuration
+    val configuration = service<PresentationAssistant>().configuration
 
     val actionId = actionData.actionId
     val parentGroupName = parentNames[actionId]

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
@@ -34,7 +35,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     val isDisposed: Boolean get() = popup.isDisposed
   }
 
-  private val configuration = PresentationAssistant.INSTANCE.configuration
+  private val configuration = service<PresentationAssistant>().configuration
   private val appearance = appearanceFromSize(PresentationAssistantPopupSize.from(configuration.popupSize),
                                               PresentationAssistantTheme.fromValueOrDefault(configuration.theme))
   private val actionBlocks = textFragments.map { fragment ->

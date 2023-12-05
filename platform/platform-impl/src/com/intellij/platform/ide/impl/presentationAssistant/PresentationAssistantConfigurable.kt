@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -12,14 +13,11 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 
-
-class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
-  private val assistant: PresentationAssistant = PresentationAssistant.INSTANCE
-
+internal class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
   override fun getDisplayName(): String = IdeBundle.message("presentation.assistant.settings")
 
   override fun createPanel(): DialogPanel {
-    val configuration = assistant.configuration
+    val configuration = service<PresentationAssistant>().configuration
 
     return panel {
       row {
@@ -133,12 +131,12 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
 
   override fun reset() {
     super<DslConfigurableBase>.reset()
-    PresentationAssistant.INSTANCE.updatePresenter()
+    service<PresentationAssistant>().updatePresenter()
   }
 
   override fun apply() {
     super.apply()
-    PresentationAssistant.INSTANCE.updatePresenter()
+    service<PresentationAssistant>().updatePresenter()
   }
 }
 

@@ -179,7 +179,9 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
     if (isEnabled && presenter == null) {
       presenter = ShortcutPresenter().apply {
         if (showInitialAction) {
-          showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID, project, TogglePresentationAssistantAction.name))
+          showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID,
+                                                      project,
+                                                      TogglePresentationAssistantAction.name.get()))
         }
       }
     }
@@ -200,7 +202,9 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
         || SystemInfo.isMac
         || alternativeKeymap == null
         || !alternativeKeymap.isMac
-        || alternativeKeymap.keymap != null) return
+        || alternativeKeymap.keymap != null) {
+      return
+    }
 
     val pluginId = PluginId.getId("com.intellij.plugins.macoskeymap")
     val plugin = PluginManagerCore.getPlugin(pluginId)
@@ -211,9 +215,6 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
   }
 
   companion object {
-    val INSTANCE: PresentationAssistant
-      get() = service<PresentationAssistant>()
-
     val isThemeEnabled: Boolean
       get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.presentation.assistant.theme.enabled", false)
   }
@@ -221,6 +222,6 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
 
 private class PresentationAssistantListenerRegistrar : AppLifecycleListener, DynamicPluginListener {
   override fun appFrameCreated(commandLineArgs: MutableList<String>) {
-    PresentationAssistant.INSTANCE.initialize()
+    service<PresentationAssistant>().initialize()
   }
 }
