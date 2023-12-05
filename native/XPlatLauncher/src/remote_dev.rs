@@ -63,7 +63,7 @@ fn legacy_per_project_configs() -> bool {
     if let Ok(legacy_var) = env::var("REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS") {
         legacy_var == "1" || legacy_var == "true"
     } else {
-        true
+        false
     }
 }
 

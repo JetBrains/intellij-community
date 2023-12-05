@@ -51,9 +51,17 @@ mod tests {
 
     #[test]
     fn remote_dev_known_command_with_project_path_test_1() {
-        let output = run_launcher(&LauncherRunSpec::remote_dev().with_args(&["run"])).stdout;
+        let env = HashMap::from([("REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS", "1")]);
+        let output = run_launcher(&LauncherRunSpec::remote_dev().with_args(&["run"]).with_env(&env)).stdout;
 
         assert!(output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
+    }
+
+    #[test]
+    fn remote_dev_known_command_with_project_path_test_2() {
+        let output = run_launcher(&LauncherRunSpec::remote_dev().with_args(&["run"])).stdout;
+
+        assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
     }
 
     #[test]
@@ -78,7 +86,10 @@ mod tests {
         // When starting the Launcher, we set this variable always with the value projectDir. For the test, we overwrite it with a non-existent directory
         let fake_config_dir_path: &Path = &test.project_dir.join("fakeDir");
 
-        let env = HashMap::from([("IJ_HOST_CONFIG_DIR", fake_config_dir_path.to_str().unwrap())]);
+        let env = HashMap::from([
+            ("IJ_HOST_CONFIG_DIR", fake_config_dir_path.to_str().unwrap()),
+            ("REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS", "1"),
+        ]);
         let remote_dev_command = &["run", &project_dir];
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
 
