@@ -7,6 +7,4 @@
 λ 28 Highlight range: '{ /// *, L, λ\n        println() /// L\n    }'
   Preview: Highlight range: '{ /// *, L, λ'
 λ 34 Highlight range: '{ println() }'
-L 38 Highlight whole line
-  Preview: Highlight range: 'fun local(block: () -> Unit = { println() }) {} /// *, L, λ'
 λ 38 Highlight range: '{ println() }'

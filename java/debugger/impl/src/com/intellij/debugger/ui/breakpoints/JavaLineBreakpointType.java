@@ -363,7 +363,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     @Override
     public TextRange getHighlightRange() {
-      if (myElement != null) {
+      if (myElement != null && myEncodedInlinePosition != -1) {
         return DebuggerUtilsEx.getHighlightingRangeInsideLine(myElement.getTextRange(), myElement.getContainingFile(), mySourcePosition.getLine());
       }
       return null;
