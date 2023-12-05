@@ -1,4 +1,4 @@
 def func():
-    var: [LiteralString]
+    var: [str]
     for var in 'spam':
         var
