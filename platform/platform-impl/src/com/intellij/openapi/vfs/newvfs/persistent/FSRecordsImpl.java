@@ -1048,7 +1048,7 @@ public final class FSRecordsImpl implements Closeable {
       int nameId = getNameId(name);
 
       //TODO RC: use previousNameId instead of oldNameId
-      int previousNameId = connection.getRecords().setNameId(fileId, nameId);
+      int previousNameId = connection.getRecords().updateNameId(fileId, nameId);
       connection.markDirty();
 
       invertedNameIndexLazy.getValue().updateFileName(fileId, nameId, oldNameId);

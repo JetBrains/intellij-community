@@ -28,7 +28,7 @@ public interface PersistentFSRecordsStorage extends CleanableStorage {
   int getNameId(int fileId) throws IOException;
 
   /** @return previous value of nameId */
-  int setNameId(int fileId, int nameId) throws IOException;
+  int updateNameId(int fileId, int nameId) throws IOException;
 
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)

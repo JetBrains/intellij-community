@@ -582,7 +582,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
         for (int i = 0; i < recordsPerThread; i++) {
           int recordId = storage.allocateRecord();
           storage.setParent(recordId, 1);
-          storage.setNameId(recordId, 11);
+          storage.updateNameId(recordId, 11);
           storage.setContentRecordId(recordId, 12);
           storage.setAttributeRecordId(recordId, 13);
           storage.setFlags(recordId, PersistentFS.Flags.MUST_RELOAD_LENGTH);
@@ -770,7 +770,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     @Override
     public void updateInStorage(FSRecord record, PersistentFSRecordsStorage storage) throws IOException {
       storage.setParent(record.id, record.parentRef);
-      storage.setNameId(record.id, record.nameRef);
+      storage.updateNameId(record.id, record.nameRef);
       storage.setFlags(record.id, record.flags);
       storage.setAttributeRecordId(record.id, record.attributeRef);
       storage.setContentRecordId(record.id, record.contentRef);

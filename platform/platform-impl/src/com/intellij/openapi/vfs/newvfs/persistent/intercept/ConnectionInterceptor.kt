@@ -27,7 +27,7 @@ interface RecordsInterceptor : ConnectionInterceptor {
   fun onSetAttributeRecordId(underlying: (fileId: Int, recordId: Int) -> Unit): (fileId: Int, recordId: Int) -> Unit = underlying
   fun onSetContentRecordId(underlying: (fileId: Int, recordId: Int) -> Boolean): (fileId: Int, recordId: Int) -> Boolean = underlying
   fun onSetParent(underlying: (fileId: Int, parentId: Int) -> Unit): (fileId: Int, parentId: Int) -> Unit = underlying
-  fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Int): (fileId: Int, nameId: Int) -> Int = underlying
+  fun onUpdateNameId(underlying: (fileId: Int, nameId: Int) -> Int): (fileId: Int, nameId: Int) -> Int = underlying
   fun onSetFlags(underlying: (fileId: Int, flags: Int) -> Boolean): (fileId: Int, flags: Int) -> Boolean = underlying
   fun onSetLength(underlying: (fileId: Int, length: Long) -> Boolean): (fileId: Int, length: Long) -> Boolean = underlying
   fun onSetTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean): (fileId: Int, timestamp: Long) -> Boolean = underlying

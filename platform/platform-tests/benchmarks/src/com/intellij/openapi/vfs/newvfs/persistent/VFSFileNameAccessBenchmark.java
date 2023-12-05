@@ -62,7 +62,7 @@ public class VFSFileNameAccessBenchmark {
         //avg(fileName.length in monorepo) = 27 bytes:
         String name = "name." + "%s$22".formatted(fileId % FILE_NAMES_COUNT);
         int nameId = vfs.getNameId(name);
-        records.setNameId(fileId, nameId);
+        records.updateNameId(fileId, nameId);
       }
       maxFileId = records.maxAllocatedID();
 

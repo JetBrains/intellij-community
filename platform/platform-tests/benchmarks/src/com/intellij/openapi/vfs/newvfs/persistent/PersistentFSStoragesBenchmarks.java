@@ -586,7 +586,7 @@ public class PersistentFSStoragesBenchmarks {
     private static void fsRecords_randomWriteByField(final IterationState it,
                                                      final PersistentFSRecordsStorage storage) throws IOException {
       final int recordId = it.nextRandom();
-      storage.setNameId(recordId, 1);
+      storage.updateNameId(recordId, 1);
       storage.setParent(recordId, 2);
       storage.setContentRecordId(recordId, 3);
       storage.setAttributeRecordId(recordId, 4);

@@ -422,8 +422,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public int setNameId(final int recordId,
-                       final int nameId) throws IOException {
+  public int updateNameId(final int recordId,
+                          final int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
     return setIntField(recordId, NAME_REF_OFFSET, nameId);
   }

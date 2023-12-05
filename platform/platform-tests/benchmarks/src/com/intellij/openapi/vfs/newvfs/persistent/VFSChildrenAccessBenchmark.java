@@ -88,7 +88,7 @@ public class VFSChildrenAccessBenchmark {
           nameId = vfs.getNameId(childName);
         }
 
-        records.setNameId(childId, nameId);
+        records.updateNameId(childId, nameId);
 
         childrenInfos.add(new ChildInfoImpl(
           childId,

@@ -161,8 +161,8 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
   }
 
   @Override
-  public int setNameId(final int recordId,
-                       final int nameId) throws IOException {
+  public int updateNameId(final int recordId,
+                          final int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
     return setIntField(recordId, NAME_REF_OFFSET, nameId);
   }
@@ -246,7 +246,7 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
                          final int parentId,
                          final boolean overwriteAttrRef) throws IOException {
     setParent(recordId, parentId);
-    setNameId(recordId, nameId);
+    updateNameId(recordId, nameId);
     setFlags(recordId, flags);
     if (overwriteAttrRef) {
       setAttributeRecordId(recordId, 0);

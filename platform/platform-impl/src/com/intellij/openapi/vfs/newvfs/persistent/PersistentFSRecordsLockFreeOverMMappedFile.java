@@ -372,8 +372,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public int setNameId(final int recordId,
-                       final int nameId) throws IOException {
+  public int updateNameId(final int recordId,
+                          final int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
     return getAndSetIntField(recordId, RecordLayout.NAME_REF_OFFSET, nameId);
   }

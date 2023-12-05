@@ -81,7 +81,7 @@ object InterceptorInjection {
     val allocateRecord = intercept(storage::allocateRecord, RecordsInterceptor::onAllocateRecord)
     val setAttributeRecordId = intercept(storage::setAttributeRecordId, RecordsInterceptor::onSetAttributeRecordId)
     val setParent = intercept(storage::setParent, RecordsInterceptor::onSetParent)
-    val setNameId = intercept(storage::setNameId, RecordsInterceptor::onSetNameId)
+    val updateNameId = intercept(storage::updateNameId, RecordsInterceptor::onUpdateNameId)
     val setFlags = intercept(storage::setFlags, RecordsInterceptor::onSetFlags)
     val setLength = intercept(storage::setLength, RecordsInterceptor::onSetLength)
     val setTimestamp = intercept(storage::setTimestamp, RecordsInterceptor::onSetTimestamp)
@@ -98,7 +98,7 @@ object InterceptorInjection {
 
       override fun setParent(fileId: Int, parentId: Int) = setParent(fileId, parentId)
 
-      override fun setNameId(fileId: Int, nameId: Int): Int = setNameId(fileId, nameId)
+      override fun updateNameId(fileId: Int, nameId: Int): Int = updateNameId(fileId, nameId)
 
       override fun setFlags(fileId: Int, flags: Int): Boolean = setFlags(fileId, flags)
 

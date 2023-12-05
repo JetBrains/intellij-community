@@ -45,7 +45,7 @@ class RecordsLogInterceptor(
       }
     }
 
-  override fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Int): (fileId: Int, nameId: Int) -> Int =
+  override fun onUpdateNameId(underlying: (fileId: Int, nameId: Int) -> Int): (fileId: Int, nameId: Int) -> Int =
     if (VfsOperationTag.REC_SET_NAME_ID !in interceptMask) underlying
     else { fileId, nameId ->
       context.trackPlainOperation(VfsOperationTag.REC_SET_NAME_ID,
