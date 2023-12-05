@@ -152,7 +152,11 @@ open class ManagedPersistentCache<K, V>(
     if (closeAppOnShutdown) {
       val added = cachesToClose.add(this)
       if (!added) {
-        logger.error("persistent map $name has already been registered: ${cachesToClose}")
+        logger.error(
+          "Probably the project was not disposed properly before reopening. " +
+          "Persistent map $name has already been registered. " +
+          "List of registered maps: $cachesToClose"
+        )
         close(map)
         return null
       }
@@ -195,6 +199,6 @@ open class ManagedPersistentCache<K, V>(
   override fun toString(): String {
     val persistentMap = persistentMap.get()
     val size = persistentMap?.keysCount() ?: -1
-    return "ManagedPersistentCache($name, size=$size)"
+    return "ManagedCache($name, size=$size)"
   }
 }
