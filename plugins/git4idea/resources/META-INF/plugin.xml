@@ -834,6 +834,7 @@
     <extensionPoint interface="git4idea.config.GitProtectedBranchProvider" name="gitProtectedBranchProvider" dynamic="true"/>
     <extensionPoint interface="git4idea.update.GitPostUpdateHandler" name="gitPostUpdateHandler" dynamic="true"/>
     <extensionPoint interface="git4idea.ui.branch.GitCurrentBranchPresenter" name="gitCurrentBranchPresenter" dynamic="true"/>
+    <extensionPoint interface="git4idea.instant.InstantGitTokenProvider" name="instantGitTokenProvider" dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>
