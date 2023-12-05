@@ -75,6 +75,7 @@ import java.awt.event.InputEvent
 import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -119,6 +120,14 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     doRegisterActions(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                       keymapToOperations = keymapToOperations,
                       actionRegistrar = actionPreInitRegistrar)
+
+    coroutineScope.launch {
+      val schema = CustomActionsSchema.getInstanceAsync()
+      for (url in schema.getActions()) {
+        schema.incrementModificationStamp()
+      }
+    }
+
     this.keymapToOperations = keymapToOperations
 
     val mutator = PreInitActionRuntimeRegistrar(idToAction = idToAction, actionRegistrar = actionPreInitRegistrar)
@@ -1630,16 +1639,6 @@ internal fun canUnloadActionGroup(element: XmlElement): Boolean {
   return true
 }
 
-private fun notifyCustomActionsSchema(registeredID: String) {
-  val schema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>() ?: return
-  for (url in schema.getActions()) {
-    if (registeredID == url.component) {
-      schema.incrementModificationStamp()
-      break
-    }
-  }
-}
-
 private fun updateHandlers(action: Any?) {
   if (action is EditorAction) {
     action.clearDynamicHandlersCache()
@@ -1768,13 +1767,17 @@ private sealed interface ActionRegistrar {
   fun unbindShortcuts(targetActionId: String)
 
   fun getActionBinding(actionId: String): String?
+
+  fun actionRegistered(actionId: String, action: AnAction)
 }
 
 private class PostInitActionRegistrar(
-  @Volatile private var idToAction: Map<String, AnAction>,
+  idToAction: Map<String, AnAction>,
   @Volatile private var boundShortcuts: Map<String, String>,
   override val state: ActionManagerState,
 ) : ActionRegistrar {
+  private val idToAction = ConcurrentHashMap(idToAction)
+
   val ids: Set<String>
     get() = idToAction.keys
 
@@ -1788,11 +1791,11 @@ private class PostInitActionRegistrar(
     get() = idToAction.values
 
   override fun putAction(actionId: String, action: AnAction) {
-    idToAction = idToAction.with(actionId, action)
+    idToAction.put(actionId, action)
   }
 
   override fun removeAction(actionId: String) {
-    idToAction = idToAction.without(actionId)
+    idToAction.remove(actionId)
   }
 
   override fun getAction(id: String) = idToAction.get(id)
@@ -1835,6 +1838,18 @@ private class PostInitActionRegistrar(
 
   override fun unbindShortcuts(targetActionId: String) {
     boundShortcuts = boundShortcuts.without(targetActionId)
+  }
+
+  override fun actionRegistered(actionId: String, action: AnAction) {
+    val schema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>() ?: return
+    for (url in schema.getActions()) {
+      if (url.component == actionId) {
+        schema.incrementModificationStamp()
+        break
+      }
+    }
+
+    updateHandlers(action)
   }
 }
 
@@ -1995,6 +2010,9 @@ private class ActionPreInitRegistrar(
   }
 
   override fun getActionBinding(actionId: String) = getActionBinding(actionId, boundShortcuts)
+
+  override fun actionRegistered(actionId: String, action: AnAction) {
+  }
 }
 
 private fun reportActionIdCollision(actionId: String,
@@ -2118,10 +2136,7 @@ private fun registerAction(actionId: String,
     state.pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
   }
 
-  notifyCustomActionsSchema(actionId)
-  if (actionRegistrar.isPostInit) {
-    updateHandlers(action)
-  }
+  actionRegistrar.actionRegistered(actionId, action)
 }
 
 private fun getAction(id: String, canReturnStub: Boolean, actionRegistrar: ActionRegistrar): AnAction? {

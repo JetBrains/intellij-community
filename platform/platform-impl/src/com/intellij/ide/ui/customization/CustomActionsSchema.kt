@@ -139,8 +139,8 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   }
 
   fun setCustomizationSchemaForCurrentProjects() {
-    // increment myModificationStamp clear children cache in CustomisedActionGroup
-    //  as a result do it *before* update all toolbars, menu bars and popups
+    // increment `modificationStamp` clear children cache in CustomisedActionGroup
+    // as a result do it *before* update all toolbars, menu bars and popups
     incrementModificationStamp()
     val windowManager = WindowManagerEx.getInstanceEx()
     for (project in ProjectManager.getInstance().openProjects) {
@@ -255,10 +255,6 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         }
       }
     }
-  }
-
-  fun clearFirstLoadState() {
-    synchronized(lock) { isFirstLoadState = false }
   }
 
   fun incrementModificationStamp() {
