@@ -555,11 +555,11 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   private static void addShortcuts(@NotNull AnAction action, @NotNull ShortcutSet newShortcuts) {
-    if (action.getShortcutSet().getShortcuts().length == 0) {
-      action.registerCustomShortcutSet(newShortcuts, null);
+    if (action.getShortcutSet().hasShortcuts()) {
+      action.registerCustomShortcutSet(new CompositeShortcutSet(action.getShortcutSet(), newShortcuts), null);
     }
     else {
-      action.registerCustomShortcutSet(new CompositeShortcutSet(action.getShortcutSet(), newShortcuts), null);
+      action.registerCustomShortcutSet(newShortcuts, null);
     }
   }
 

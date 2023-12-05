@@ -395,7 +395,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
     else {
       HtmlBuilder builder = new HtmlBuilder().append(checkBoxName);
-      if (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0) {
+      if (myCheckBoxShortcut != null && myCheckBoxShortcut.hasShortcuts()) {
         builder.append(" ")
           .append(HtmlChunk.tag("b")
                     .attr("color", ColorUtil.toHex(color)).addText(KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts())));

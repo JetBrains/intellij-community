@@ -220,7 +220,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   private void registerShortcuts() {
     for (AnAction action : buildGroup(new Ref<>()).getChildActionsOrStubs()) {
       ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet.getShortcuts().length > 0 && action instanceof ToggleFragmentAction) {
+      if (action instanceof ToggleFragmentAction && shortcutSet.hasShortcuts()) {
         new DumbAwareAction(action.getTemplateText()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {

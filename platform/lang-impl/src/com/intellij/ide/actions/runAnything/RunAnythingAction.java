@@ -21,7 +21,7 @@ import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.JavaCoroutines;
@@ -95,14 +95,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static void updateShortcut() {
-    if (getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts().length == 0) {
+    if (!getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).hasShortcuts()) {
       registerDblCtrlClick();
     }
-    else {
-      if (ourDoubleCtrlRegistered) {
-        ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID);
-        ourDoubleCtrlRegistered = false;
-      }
+    else if (ourDoubleCtrlRegistered) {
+      ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID);
+      ourDoubleCtrlRegistered = false;
     }
   }
 
@@ -142,8 +140,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       protected void updateToolTipText() {
         HelpTooltip.dispose(this);
 
+        //noinspection DialogTitleCapitalization
         new HelpTooltip()
-          .setTitle(myPresentation.getText())
+          .setTitle(myPresentation::getText)
           .setShortcut(getShortcut())
           .setDescription(IdeBundle.message("run.anything.action.tooltip.text"))
           .installOn(this);
@@ -152,7 +151,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       private static @Nullable String getShortcut() {
         if (ourDoubleCtrlRegistered) {
           return IdeBundle.message("double.ctrl.or.shift.shortcut",
-                                   SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS
+                                   SystemInfoRt.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS
         }
         //keymap shortcut is added automatically
         return null;

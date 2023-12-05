@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -30,8 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class FragmentHintManager {
   private final List<SettingsEditorFragment<?, ?>> myFragments = new ArrayList<>();
@@ -126,7 +126,7 @@ public class FragmentHintManager {
 
   private static @Nullable @NlsSafe String getShortcutText(@NotNull SettingsEditorFragment<?, ?> fragment) {
     ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(new EmptyAction(fragment.getName(), null, null));
-    if (shortcut != null && shortcut.getShortcuts().length > 0) {
+    if (shortcut != null && shortcut.hasShortcuts()) {
       return KeymapUtil.getShortcutsText(new Shortcut[]{ArrayUtil.getLastElement(shortcut.getShortcuts())});
     }
     return null;
