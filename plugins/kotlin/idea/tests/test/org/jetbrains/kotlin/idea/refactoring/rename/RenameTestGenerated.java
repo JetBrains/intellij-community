@@ -693,6 +693,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameJavaMethodToKtKeyword/renameJavaMethodToKtKeyword.test");
     }
 
+    @TestMetadata("renameJavaMethodWithDelegation/renameJavaMethodWithDelegation.test")
+    public void testRenameJavaMethodWithDelegation_RenameJavaMethodWithDelegation() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaMethodWithDelegation/renameJavaMethodWithDelegation.test");
+    }
+
     @TestMetadata("renameJavaMethod/javaBaseMethod.test")
     public void testRenameJavaMethod_JavaBaseMethod() throws Exception {
         runTest("testData/refactoring/rename/renameJavaMethod/javaBaseMethod.test");

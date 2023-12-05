@@ -16,10 +16,12 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
+import org.jetbrains.kotlin.psi.KtClass
 
 class JavaOverridingMethodsSearcherFromKotlinParameters(method: PsiMethod, scope: SearchScope, checkDeep: Boolean) 
     : OverridingMethodsSearch.SearchParameters(method, scope, checkDeep)
@@ -28,7 +30,7 @@ class JavaOverridingMethodsSearcherFromKotlinParameters(method: PsiMethod, scope
 open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectClassInheritorsSearch.SearchParameters>(true) {
     override fun processQuery(queryParameters: DirectClassInheritorsSearch.SearchParameters, consumer: Processor<in PsiClass>) {
         val originalParameters =
-            (queryParameters.originalParameters as? ClassInheritanceSearchFromJavaOverridingMethodsParameters)?.originalParameters as? JavaOverridingMethodsSearcherFromKotlinParameters
+            (queryParameters.originalParameters as? ClassInheritanceSearchFromJavaOverridingMethodsParameters)?.originalParameters
 
         val baseClass = queryParameters.classToProcess
 
@@ -66,8 +68,15 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
                 }
                 .filter { candidate ->
                     ProgressManager.checkCanceled()
-                    candidate.isInheritor(baseClass, false) &&
-                            (originalParameters == null ||  MethodSignatureUtil.findMethodBySuperMethod(candidate, originalParameters.method, false) == null)
+                    if (originalParameters != null &&
+                        MethodSignatureUtil.findMethodBySignature(candidate, originalParameters.method, false)?.unwrapped is KtClass) {
+                        //don't return classes with implementation by delegation
+                        false
+                    }
+                    else {
+                        candidate.isInheritor(baseClass, false) &&
+                                (originalParameters !is JavaOverridingMethodsSearcherFromKotlinParameters || MethodSignatureUtil.findMethodBySuperMethod(candidate, originalParameters.method, false) == null)
+                    }
                 }
                 .forEach { candidate ->
                     ProgressManager.checkCanceled()
