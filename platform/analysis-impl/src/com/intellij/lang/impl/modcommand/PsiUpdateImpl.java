@@ -10,6 +10,7 @@ import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModShowConflicts.Conflict;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -233,6 +234,7 @@ final class PsiUpdateImpl {
     private boolean myPositionUpdated = false;
     private @NlsContexts.Tooltip String myErrorMessage;
     private @NlsContexts.Tooltip String myInfoMessage;
+    private @NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> myConflictMap = new LinkedHashMap<>();
 
     private record ChangedDirectoryInfo(@NotNull ChangedVirtualDirectory directory, @NotNull PsiDirectory psiDirectory) {
       static @NotNull ModPsiUpdaterImpl.ChangedDirectoryInfo create(@NotNull PsiDirectory directory) {
@@ -485,6 +487,23 @@ final class PsiUpdateImpl {
       return myCaretOffset;
     }
 
+    @Override
+    public void showConflicts(@NotNull Map<@NotNull PsiElement, @NotNull Conflict> conflicts) {
+      conflicts.forEach((e, c) -> {
+        if (!e.isPhysical()) {
+          PsiFile file = e.getContainingFile().getOriginalFile();
+          FileTracker tracker = myChangedFiles.get(file);
+          if (tracker != null) {
+            if (!tracker.myFragments.isEmpty()) {
+              throw new IllegalArgumentException("Supplied element belongs to a changed file");
+            }
+            e = PsiTreeUtil.findSameElementInCopy(e, file);
+          }
+        }
+        myConflictMap.merge(e, c, Conflict::merge);
+      });
+    }
+
     private TextRange mapRange(@NotNull TextRange range) {
       PsiLanguageInjectionHost host = myTracker.myHostCopy;
       if (host != null) {
@@ -566,8 +585,9 @@ final class PsiUpdateImpl {
       if (myErrorMessage != null) {
         return error(myErrorMessage);
       }
-      return myChangedFiles.values().stream()
-        .map(fileTracker -> fileTracker.getUpdateCommand()).reduce(nop(), ModCommand::andThen)
+      return ModCommand.showConflicts(myConflictMap)
+        .andThen(myChangedFiles.values().stream()
+          .map(fileTracker -> fileTracker.getUpdateCommand()).reduce(nop(), ModCommand::andThen))
         .andThen(myChangedDirectories.values().stream()
                    .flatMap(info -> info.createFileCommands(myTracker.myProject))
                    .reduce(nop(), ModCommand::andThen))
