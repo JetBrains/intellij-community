@@ -393,8 +393,8 @@ class MavenProjectsTree(val project: Project) {
   suspend fun update(files: Collection<VirtualFile>,
                      force: Boolean,
                      generalSettings: MavenGeneralSettings?,
-                     process: ProgressIndicator): MavenProjectsTreeUpdateResult {
-    return update(files, false, force, explicitProfiles, MavenProjectReader(project), generalSettings, toRawProgressReporter(process))
+                     progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
+    return update(files, false, force, explicitProfiles, MavenProjectReader(project), generalSettings, progressReporter)
   }
 
   private suspend fun update(files: Collection<VirtualFile>,
@@ -489,8 +489,8 @@ class MavenProjectsTree(val project: Project) {
   }
 
   @ApiStatus.Internal
-  fun delete(files: List<VirtualFile>, generalSettings: MavenGeneralSettings?, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
-    return delete(MavenProjectReader(project), files, explicitProfiles, generalSettings, toRawProgressReporter(process))
+  fun delete(files: List<VirtualFile>, generalSettings: MavenGeneralSettings?, progressReporter: RawProgressReporter): MavenProjectsTreeUpdateResult {
+    return delete(MavenProjectReader(project), files, explicitProfiles, generalSettings, progressReporter)
   }
 
   private fun delete(projectReader: MavenProjectReader,

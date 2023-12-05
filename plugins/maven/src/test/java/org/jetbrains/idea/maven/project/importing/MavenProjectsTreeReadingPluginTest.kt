@@ -65,7 +65,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
         .add("deleted")
         .add("resolved", "parent"),
       listener.log)
-    tree.updateAll(false, mavenGeneralSettings, mavenProgressIndicator.indicator)
+    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
     assertEquals(
       log()
         .add("updated", "parent", "child")

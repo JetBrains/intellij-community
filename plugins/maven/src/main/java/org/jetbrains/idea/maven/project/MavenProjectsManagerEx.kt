@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -236,10 +235,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun readMavenProjects(spec: MavenImportSpec,
                                         filesToUpdate: List<VirtualFile>,
                                         filesToDelete: List<VirtualFile>): MavenProjectsTreeUpdateResult {
-    val indicator = ProgressManager.getGlobalProgressIndicator()
-    val deleted = projectsTree.delete(filesToDelete, generalSettings, indicator)
-    val updated = projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, indicator)
-    return deleted + updated
+    return withRawProgressReporter {
+      val progressReporter = rawProgressReporter!!
+      val deleted = projectsTree.delete(filesToDelete, generalSettings, progressReporter)
+      val updated = projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, progressReporter)
+      deleted + updated
+    }
   }
 
   @Deprecated("Use {@link #scheduleUpdateAllMavenProjects(List)}}")

@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() {
   private var myTree: MavenProjectsTree? = null
+  protected val rawProgressReporter: RawProgressReporter = object : RawProgressReporter {}
 
   val tree: MavenProjectsTree
     get() {
@@ -39,16 +40,16 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
   }
 
   protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile?) {
-    myTree!!.resetManagedFilesAndProfiles(Arrays.asList(*files), MavenExplicitProfiles(profiles))
-    myTree!!.updateAll(false, mavenGeneralSettings, mavenProgressIndicator.indicator)
+    myTree!!.resetManagedFilesAndProfiles(listOf(*files), MavenExplicitProfiles(profiles))
+    myTree!!.updateAll(false, mavenGeneralSettings, rawProgressReporter)
   }
 
   protected suspend fun update(file: VirtualFile) {
-    myTree!!.update(Arrays.asList(file), false, mavenGeneralSettings, mavenProgressIndicator.indicator)
+    myTree!!.update(listOf(file), false, mavenGeneralSettings, rawProgressReporter)
   }
 
   protected fun deleteProject(file: VirtualFile) {
-    myTree!!.delete(Arrays.asList(file), mavenGeneralSettings, mavenProgressIndicator.indicator)
+    myTree!!.delete(listOf(file), mavenGeneralSettings, rawProgressReporter)
   }
 
   @Throws(IOException::class)
