@@ -74,8 +74,10 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
                                      progressIndicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
     // We wrap the progressIndicator here to make sure we don't run standard search under the same indicator
-    ProgressManager.getInstance().executeProcessUnderProgress(
-      { fetchElementsConcurrently(pattern, SensitiveProgressWrapper(progressIndicator), consumer) }, progressIndicator)
+    ProgressManager.getInstance().runProcess(
+      { fetchElementsConcurrently(pattern, SensitiveProgressWrapper(progressIndicator), consumer) },
+      progressIndicator
+    )
   }
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
@@ -110,7 +112,9 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
           doFetchItems(this, presentationProvider, pattern) {
             val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
             val descriptor = mutex.withLock { prepareDescriptor() }
-            consumer.process(descriptor)
+            blockingContext {
+              consumer.process(descriptor)
+            }
           }
         }
 
