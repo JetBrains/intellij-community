@@ -4,7 +4,6 @@ package org.jetbrains.jps.dependency.kotlin;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.AffectionScopeMetaUsage;
 import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.*;
@@ -70,22 +69,20 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   @Override
   public boolean processAddedMethod(DifferentiateContext context, JvmClass changedClass, JvmMethod addedMethod, Utils future, Utils present) {
     // any added method may conflict with an extension method to this class, defined elsewhere
-    if (!addedMethod.isPrivate()) {
-      affectConflictingExtensionMethods(context, changedClass, addedMethod, null, future);
-    }
+    affectConflictingExtensionMethods(context, changedClass, addedMethod, null, future);
     return true;
   }
 
   private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, @Nullable TypeRepr.ClassType samType, Utils utils) {
+    if (clsMethod.isPrivate() || clsMethod.isConstructor()) {
+      return;
+    }
     // the first arg is always the class being extended
     Set<String> firstArgTypes = collect(
       map(flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), id -> id.getNodeName()), new HashSet<>()
     );
     firstArgTypes.add(cls.getName());
-    for (String clsName : firstArgTypes) {
-      context.affectUsage(new AffectionScopeMetaUsage(new JvmNodeReferenceID(clsName)));
-    }
-    context.affectUsage((n, u) -> {
+    context.affectUsage(map(firstArgTypes, JvmNodeReferenceID::new), (n, u) -> {
       if (!(u instanceof MethodUsage) || !(n instanceof JvmClass)) {
         return false;
       }

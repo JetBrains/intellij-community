@@ -116,12 +116,13 @@ public final class Utils {
   }
 
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
-    return unique(flat(map(getNodes(classId, JvmClass.class), cl -> map(cl.getSuperTypes(), st -> new JvmNodeReferenceID(st)))));
+    // return only those direct supertypes that exist in the graph as Nodes
+    return unique(flat(map(getNodes(classId, JvmClass.class), cl -> flat(map(cl.getSuperTypes(), st -> map(getNodes(new JvmNodeReferenceID(st), JvmClass.class), JvmClass::getReferenceID))))));
   }
 
   public Iterable<JvmNodeReferenceID> allSupertypes(JvmNodeReferenceID classId) {
-    //return Iterators.recurseDepth(className, s -> allDirectSupertypes(s), false);
-    return recurse(classId, s -> allDirectSupertypes(s), false);
+    //return recurseDepth(className, this::allDirectSupertypes, false);
+    return recurse(classId, this::allDirectSupertypes, false);
   }
 
   @NotNull

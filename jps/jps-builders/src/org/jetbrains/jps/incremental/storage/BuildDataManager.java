@@ -206,7 +206,7 @@ public final class BuildDataManager {
         if (deleteExisting) {
           FileUtil.delete(mappingsRoot);
         }
-        myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
+        myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
       }
       else {
         try {
@@ -216,7 +216,7 @@ public final class BuildDataManager {
           if (deleteExisting) {
             FileUtil.delete(mappingsRoot);
           }
-          myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
+          myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
         }
       }
     }
@@ -485,7 +485,7 @@ public final class BuildDataManager {
     };
   }
 
-  private static DependencyGraph asSynchronizableGraph(DependencyGraph graph) {
+  private static DependencyGraph asSynchronizedGraph(DependencyGraph graph) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     DependencyGraph delegate = new LoggingDependencyGraph(graph, msg -> LOG.info(msg));
     return new DependencyGraph() {

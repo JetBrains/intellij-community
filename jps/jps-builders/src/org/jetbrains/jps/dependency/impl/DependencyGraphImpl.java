@@ -120,7 +120,10 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       }
 
       @Override
-      public void affectUsage(@NotNull BiPredicate<Node<?, ?>, Usage> usageQuery) {
+      public void affectUsage(Iterable<? extends ReferenceID> affectionScopeNodes, @NotNull BiPredicate<Node<?, ?>, Usage> usageQuery) {
+        for (Usage u : map(affectionScopeNodes, AffectionScopeMetaUsage::new)) {
+          affectUsage(u);
+        }
         usageQueries.add(usageQuery);
       }
 
@@ -169,10 +172,10 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       return Boolean.TRUE;
     });
 
-    Iterable<ReferenceID> scopeNodes = unique(flat(map(nodesAfter, Node::getReferenceID), map(diffContext.affectedUsages.keySet(), Usage::getElementOwner)));
+    Iterable<ReferenceID> scopeNodes = unique(map(diffContext.affectedUsages.keySet(), Usage::getElementOwner));
     Set<ReferenceID> candidates = collect(filter(flat(map(scopeNodes, this::getDependingNodes)), id -> !dependingOnDeleted.contains(id)), new HashSet<>());
-    
-    for (NodeSource depSrc : unique(flat(map(candidates, dependent -> getSources(dependent))))) {
+
+    for (NodeSource depSrc : unique(flat(map(candidates, this::getSources)))) {
       if (!affectedSources.contains(depSrc) && !diffContext.affectedSources.contains(depSrc) && !allProcessedSources.contains(depSrc) && params.affectionFilter().test(depSrc)) {
         boolean affectSource = false;
         for (var depNode : filter(getNodes(depSrc), n -> candidates.contains(n.getReferenceID()))) {

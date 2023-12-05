@@ -35,8 +35,11 @@ public interface MultiMaplet<K, V> extends BaseMaplet<K> {
     boolean beforeEmpty = Iterators.isEmpty(dataBefore);
     boolean afterEmpty = Iterators.isEmpty(dataAfter);
     if (beforeEmpty || afterEmpty) {
-      if (!beforeEmpty || !afterEmpty) {
-        put(key, dataAfter);
+      if (!afterEmpty) { // => beforeEmpty
+        appendValues(key, dataAfter);
+      }
+      else if (!beforeEmpty) {
+        remove(key);
       }
     }
     else {
