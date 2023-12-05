@@ -590,7 +590,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return path != null ? getPathName(path) : null;
     }
 
-    private void updateBeforeShow(@NotNull UpdateSession session) {
+    public void updateBeforeShow(@NotNull UpdateSession session) {
       if (myBestNameComputed) return;
       myBestNameComputed = true;
 

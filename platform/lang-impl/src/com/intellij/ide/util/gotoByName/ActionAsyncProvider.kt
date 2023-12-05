@@ -311,7 +311,9 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   }
 
   private fun wrapAnAction(action: AnAction, presentation: Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
-    return ActionWrapper(action, myModel.getGroupMapping(action), matchMode, myModel, presentation)
+    val groupMapping = myModel.getGroupMapping(action)
+    groupMapping?.updateBeforeShow(myModel.updateSession)
+    return ActionWrapper(action, groupMapping, matchMode, myModel, presentation)
   }
 
   private fun buildWeightMatcher(pattern: String): MinusculeMatcher = NameUtil.buildMatcher("*$pattern")
