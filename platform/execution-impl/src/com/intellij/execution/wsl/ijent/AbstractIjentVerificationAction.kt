@@ -19,6 +19,7 @@ import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentMissingBinary
+import com.intellij.platform.ijent.executeProcess
 import com.intellij.platform.ijent.fs.nio.asNioFileSystem
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
