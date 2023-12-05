@@ -41,6 +41,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileWithOneLanguage;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -375,11 +376,15 @@ public final class TypedHandler extends TypedActionHandlerBase {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
         if (injectedFile != null) {
           Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-          // IDEA-52375/WEB-9105 fix: last quote in editable fragment should be handled by outer language quote handler
+          // IDEA-52375/WEB-9105/KTNB-470 fix: last quote in editable fragment should be handled by outer language quote handler,
+          // except injection-first editors
           TextRange hostRange = documentWindow.getHostRange(offset);
           CharSequence sequence = editor.getDocument().getCharsSequence();
           if (sequence.length() > offset && charTyped != Character.codePointAt(sequence, offset) ||
-              hostRange != null && hostRange.contains(offset)) {
+              hostRange != null && (
+                hostRange.contains(offset) ||
+                hostRange.containsOffset(offset) && !CodeFormatterFacade.shouldDelegateToTopLevel(injectedFile)
+              )) {
             return injectedEditor;
           }
         }
