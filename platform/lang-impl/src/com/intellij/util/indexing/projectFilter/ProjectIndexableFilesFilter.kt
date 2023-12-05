@@ -49,6 +49,7 @@ internal abstract class ProjectIndexableFilesFilter : IdFilter() {
     val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
 
     for ((fileId, indexable) in fileStatuses) {
+      ProgressManager.checkCanceled()
       if (shouldBeIndexable[fileId]) {
         if (!indexable) {
           errors.add(MissingFileIdInFilterError(fileId, this))
@@ -76,6 +77,7 @@ internal abstract class ProjectIndexableFilesFilter : IdFilter() {
     val filesThatShouldBeIndexable = BitSet()
     index.iterateIndexableFiles(ContentIterator {
       if (it is VirtualFileWithId) {
+        ProgressManager.checkCanceled()
         filesThatShouldBeIndexable[it.id] = true
       }
       true
