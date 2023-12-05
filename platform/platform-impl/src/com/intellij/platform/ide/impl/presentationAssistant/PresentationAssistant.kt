@@ -11,8 +11,9 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
@@ -196,10 +197,10 @@ class PresentationAssistant(private val coroutineScope: CoroutineScope) : Persis
   internal fun checkIfMacKeymapIsAvailable() {
     val alternativeKeymap = configuration.alternativeKeymapKind()
     if (warningAboutMacKeymapWasShown
-        || SystemInfo.isMac
+        || SystemInfoRt.isMac
         || alternativeKeymap == null
         || !alternativeKeymap.isMac
-        || alternativeKeymap.keymap != null) {
+        || KeymapManager.getInstance().getKeymap(alternativeKeymap.value) != null) {
       return
     }
 

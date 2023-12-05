@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -138,14 +139,19 @@ internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
     }
 
     val mainKeymap = configuration.mainKeymapKind()
-    getShortcutTextData(mainKeymap, configuration.mainKeymapLabel, actionId, actionText)?.let {
+    val keymapManager = KeymapManager.getInstance()
+    getShortcutTextData(keymap = mainKeymap,
+                        label = configuration.mainKeymapLabel,
+                        actionId = actionId,
+                        shownShortcut = actionText,
+                        keymapManager = keymapManager)?.let {
       fragments.add(it)
     }
 
     val alternativeKeymap = configuration.alternativeKeymapKind()
     if (alternativeKeymap != null) {
-      val mainShortcut = getShortcutsText(mainKeymap.keymap?.getShortcuts(actionId), mainKeymap)
-      getShortcutTextData(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut)?.let {
+      val mainShortcut = getShortcutsText(keymapManager.getKeymap(mainKeymap.value)?.getShortcuts(actionId), mainKeymap)
+      getShortcutTextData(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut, keymapManager)?.let {
         fragments.add(it)
       }
     }
@@ -176,8 +182,12 @@ internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun getShortcutTextData(keymap: KeymapKind, label: String?, actionId: String, shownShortcut: String): TextData? {
-    val shortcuts = keymap.keymap?.getShortcuts(actionId)?.let {
+  private fun getShortcutTextData(keymap: KeymapKind,
+                                  label: String?,
+                                  actionId: String,
+                                  shownShortcut: String,
+                                  keymapManager: KeymapManager): TextData? {
+    val shortcuts = keymapManager.getKeymap(keymap.value)?.getShortcuts(actionId)?.let {
       if (it.isNotEmpty()) it else getCustomShortcut(actionId, keymap)
     }
     val shortcutText = getShortcutsText(shortcuts, keymap)
