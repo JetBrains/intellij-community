@@ -109,11 +109,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
-    var schemesContextHelpLabel = createSchemesContextHelpLabel();
-    if (schemesContextHelpLabel != null) {
-      controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
-      controlsPanel.add(schemesContextHelpLabel);
-    }
     ActionToolbar toolbar = createToolbar();
     toolbar.setTargetComponent(mySchemesCombo.getComponent());
     myToolbar = toolbar.getComponent();
@@ -129,10 +124,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     int height = mySchemesCombo.getComponent().getPreferredSize().height;
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
-  }
-
-  protected @Nullable Component createSchemesContextHelpLabel() {
-    return null;
   }
 
   private @NotNull ActionToolbar createToolbar() {

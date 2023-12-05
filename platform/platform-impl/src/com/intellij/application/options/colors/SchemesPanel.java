@@ -4,18 +4,12 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
-import com.intellij.application.options.schemes.EditableSchemesCombo;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ContextHelpLabel;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
@@ -37,12 +31,6 @@ public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> i
     return myListLoaded;
   }
 
-  @Override
-  protected @Nullable Component createSchemesContextHelpLabel() {
-    return ContextHelpLabel.create(
-      ApplicationBundle.message("editor.colors.schemes.context.help", ColorUtil.toHtmlColor(EditableSchemesCombo.MODIFIED_ITEM_FOREGROUND))
-    );
-  }
 
   void resetSchemesCombo(final Object source) {
     if (this != source) {

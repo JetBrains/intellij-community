@@ -9,7 +9,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +36,7 @@ public final class EditableSchemesCombo<T extends Scheme> {
 
   private static final KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
   private static final KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
-  @ApiStatus.Internal
-  public static final Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
+  private static final Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
 
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
