@@ -65,30 +65,13 @@ public final class VfsData {
   @TestOnly
   public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
 
-  private static volatile Boolean isIsIndexedFlagDisabled = null;
+  private static volatile Boolean isIndexedFlagDisabled = null;
 
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
   private final Application app;
-
-  public static boolean isIsIndexedFlagDisabled() {
-    return isIsIndexedFlagDisabled(ApplicationManager.getApplication());
-  }
-
-  public static boolean isIsIndexedFlagDisabled(@NotNull Application app) {
-    if (isIsIndexedFlagDisabled == null) {
-      Boolean enable;
-      if (app.isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
-        isIsIndexedFlagDisabled = !enable;
-      }
-      else {
-        isIsIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", false);
-      }
-    }
-    return isIsIndexedFlagDisabled;
-  }
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
@@ -148,7 +131,7 @@ public final class VfsData {
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
       String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
-                             "; db.parent=" + FSRecords.getParent(id);
+                       "; db.parent=" + FSRecords.getParent(id);
       final AssertionError error = new AssertionError(message);
       FSRecords.invalidateCaches(message, error);
       throw error;
@@ -170,7 +153,7 @@ public final class VfsData {
   }
 
   private static int getOffset(int id) {
-    if (id <= 0) throw new IllegalArgumentException("invalid argument id: "+id);
+    if (id <= 0) throw new IllegalArgumentException("invalid argument id: " + id);
     return id & OFFSET_MASK;
   }
 
@@ -242,15 +225,36 @@ public final class VfsData {
     }
   }
 
+  public static boolean isIndexedFlagDisabled() {
+    return isIndexedFlagDisabled(ApplicationManager.getApplication());
+  }
+
+  public static boolean isIndexedFlagDisabled(@NotNull Application app) {
+    if (isIndexedFlagDisabled == null) {
+      Boolean enable;
+      if (app.isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
+        isIndexedFlagDisabled = !enable;
+      }
+      else {
+        isIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", false);
+      }
+    }
+    return isIndexedFlagDisabled;
+  }
+
+
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
   static final class Segment {
     final @NotNull VfsData ownerVfsData;
 
 
-    /** user data for files, DirectoryData for folders */
+    /** user data (KeyFMap) for files, {@link DirectoryData} for folders */
     private final AtomicReferenceArray<Object> myObjectArray;
 
-    /** [nameId, flags, indexedStamps] fields triplet per fileId */
+    /**
+     * [nameId, flags, indexedStamps] fields triplet per fileId
+     * flag's lowest 3 bytes are used as modificationCounter
+     */
     private final AtomicIntegerArray myIntArray;
 
 
@@ -270,14 +274,14 @@ public final class VfsData {
     }
 
     int getIndexedStamp(int fileId) {
-      if (isIsIndexedFlagDisabled(ownerVfsData.app)) {
+      if (isIndexedFlagDisabled(ownerVfsData.app)) {
         return 0;
       }
       return myIntArray.get(getOffset(fileId) * 3 + 2);
     }
 
     void setIndexedStamp(int fileId, int stamp) {
-      if (isIsIndexedFlagDisabled(ownerVfsData.app)) {
+      if (isIndexedFlagDisabled(ownerVfsData.app)) {
         return;
       }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
@@ -324,13 +328,14 @@ public final class VfsData {
       int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
+
     void setFlags(int id, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Set flags " + Integer.toHexString(combinedMask) + "=" + combinedValue + " for id=" + id);
       }
       assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue)+ ") set bits outside mask ("+
-                                                    Integer.toHexString(combinedMask)+")";
+      assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue) + ") set bits outside mask (" +
+                                                    Integer.toHexString(combinedMask) + ")";
       int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
@@ -341,7 +346,8 @@ public final class VfsData {
 
     void setModificationStamp(int id, long stamp) {
       int offset = getOffset(id) * 3 + 1;
-      myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) | ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
+      myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) |
+                                                ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
@@ -362,6 +368,7 @@ public final class VfsData {
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}
      * assigned under lock(this) only; never modified in-place
+     *
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
@@ -387,6 +394,7 @@ public final class VfsData {
     boolean allChildrenLoaded() {
       return myAllChildrenLoaded;
     }
+
     void setAllChildrenLoaded() {
       myAllChildrenLoaded = true;
     }
@@ -408,7 +416,7 @@ public final class VfsData {
     /**
      * must call removeAdoptedName() before adding new child with the same name
      * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
-     *
+     * <p>
      * Must be called in synchronized(VfsData)
      */
     void removeAdoptedName(@NotNull CharSequence name) {

@@ -59,7 +59,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     /** This file is not a symlink, but there's a symlink somewhere up among the parents. */
     static final int STRICT_PARENT_HAS_SYMLINK_FLAG = 0x4000_0000;
     /** This directory contains case-sensitive files. I.e. files "readme.txt" and "README.TXT" it can contain would be treated as different. */
-    static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000; // applicable only to directories
+    static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000;     // applicable only to directories
     static final int IS_SPECIAL_FLAG = CHILDREN_CASE_SENSITIVE; // applicable only to non-directory files
   }
 
@@ -212,14 +212,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public int getIndexedStamp() {
-    if (VfsData.isIsIndexedFlagDisabled()) {
+    if (VfsData.isIndexedFlagDisabled()) {
       return 0;
     }
     return getSegment().getIndexedStamp(myId);
   }
 
   public void setIndexedStamp(int stamp) {
-    if (VfsData.isIsIndexedFlagDisabled()) {
+    if (VfsData.isIndexedFlagDisabled()) {
       return;
     }
     getSegment().setIndexedStamp(myId, stamp);

@@ -65,7 +65,7 @@ public final class FileIndexesValuesApplier {
     this.removers = removers;
     this.removeDataFromIndicesForFile = removeDataFromIndicesForFile;
     this.shouldMarkFileAsIndexed = shouldMarkFileAsIndexed;
-    fileStatusLockObject = shouldMarkFileAsIndexed && !VfsData.isIsIndexedFlagDisabled()
+    fileStatusLockObject = shouldMarkFileAsIndexed && !VfsData.isIndexedFlagDisabled()
                            ? IndexingFlag.getOrCreateHash(file)
                            : IndexingFlag.getNonExistentHash();
     this._initialApplicationMode = applicationMode;

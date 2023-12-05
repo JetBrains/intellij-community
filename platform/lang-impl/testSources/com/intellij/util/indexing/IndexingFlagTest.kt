@@ -51,7 +51,7 @@ class IndexingFlagTest {
 
     // should not throw exceptions, should be marked as indexed
     val indexed = IndexingFlag.isFileIndexed(vFile, fileIndexingStamp)
-    assertEquals("Should be indexed because explicitly marked as indexed earlier", !VfsData.isIsIndexedFlagDisabled(), indexed)
+    assertEquals("Should be indexed because explicitly marked as indexed earlier", !VfsData.isIndexedFlagDisabled(), indexed)
     IndexingFlag.cleanProcessingFlag(vFile)
   }
 
@@ -76,7 +76,7 @@ class IndexingFlagTest {
     // should not throw exceptions, should be marked as indexed
     val indexed = IndexingFlag.isFileIndexed(vFileAfter, fileIndexingStamp)
     assertEquals("Should be indexed because explicitly marked as indexed earlier",
-                 !VfsData.isIsIndexedFlagDisabled(), indexed)
+                 !VfsData.isIndexedFlagDisabled(), indexed)
     IndexingFlag.cleanProcessingFlag(vFileAfter)
 
     // should not throw exceptions
