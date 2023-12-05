@@ -131,7 +131,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     if (scheme != null) {
       item.append(value.getPresentableText(), getSchemeAttributes(scheme));
       if (isDefaultScheme(scheme)) {
-        item.append(" *", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        item.append(" " + IdeBundle.message("scheme.theme.default"), SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       if (supportsProjectSchemes()) {
         if (index == -1) {
