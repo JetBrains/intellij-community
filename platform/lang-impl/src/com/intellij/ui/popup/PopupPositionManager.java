@@ -210,6 +210,10 @@ public final class PopupPositionManager {
       }
     }
 
+    public static @NotNull Dimension getPopupSize(@NotNull JBPopup popup) {
+      return PopupImplUtil.getPopupSize(popup);
+    }
+
     public @NotNull Rectangle adjustBounds(@NotNull Dimension d, @NotNull Position @NotNull [] traversalPolicy) {
       if (traversalPolicy.length == 0) traversalPolicy = DEFAULT_POSITION_ORDER;
 
