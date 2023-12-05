@@ -54,7 +54,10 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,7 +73,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
-import static com.intellij.util.SystemProperties.*;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getLongProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -323,7 +327,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  public CharSequence getNameByNameId(int nameId) {
+  public String getNameByNameId(int nameId) {
     return vfsPeer.getNameByNameId(nameId);
   }
 
@@ -1724,11 +1728,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    */
   private void cacheMissedRootFromPersistence(int rootId) {
     Ref<String> missedRootUrlRef = new Ref<>();
-    vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
-      if (rootId == rootFileId) {
-        missedRootUrlRef.set(rootUrl);
-      }
-    });
+    try {
+      vfsPeer.treeAccessor().forEachRoot((rootFileId, rootUrlId) -> {
+        if (rootId == rootFileId) {
+          missedRootUrlRef.set(getNameByNameId(rootUrlId));
+        }
+      });
+    }
+    catch (IOException e) {
+      throw vfsPeer.handleError(e);
+    }
 
     if (missedRootUrlRef.isNull()) {
       LOG.warn("Can't find root[#" + rootId + "]");
