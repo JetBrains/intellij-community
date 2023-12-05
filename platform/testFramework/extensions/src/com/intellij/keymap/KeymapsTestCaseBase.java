@@ -318,7 +318,7 @@ public abstract class KeymapsTestCaseBase {
     return result;
   }
 
-  private boolean isConflictSafeAction(String actionId) {
+  private boolean isConflictSafeAction(@NotNull String actionId) {
     Collection<String> ids = ((ActionManagerImpl)ActionManager.getInstance()).getParentGroupIds(actionId);
     for (String groupId : ids) {
       if (getConflictSafeGroups().contains(groupId) || isConflictSafeAction(groupId)) {

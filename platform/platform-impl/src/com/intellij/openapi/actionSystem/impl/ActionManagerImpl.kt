@@ -1033,8 +1033,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
    */
   fun getBaseAction(overridingAction: OverridingAction): AnAction? = actionPostInitRegistrar.getBaseAction(overridingAction)
 
-  fun getParentGroupIds(actionId: String?): Collection<String?> {
-    return actionPostInitRegistrar.state.idToGroupId.get(actionId) ?: java.util.List.of()
+  fun getParentGroupIds(actionId: String): Collection<String?> {
+    return actionPostInitRegistrar.state.getGroupIdListById(actionId)
   }
 
   @Suppress("removal", "OVERRIDE_DEPRECATION")
@@ -1748,16 +1748,18 @@ private class ActionManagerState {
   @Volatile
   @JvmField var prohibitedActionIds: MutableSet<String> = java.util.Set.of()
 
-  @JvmField val actionToId: MutableMap<Any, String> = HashMap<Any, String>(5_000, 0.5f)
-  @JvmField val idToGroupId: MutableMap<String, MutableList<String>> = HashMap<String, MutableList<String>>()
+  @JvmField val actionToId = HashMap<Any, String>(5_000, 0.5f)
+  @JvmField val idToGroupId = HashMap<String, MutableList<String>>( )
 
-  @JvmField val pluginToId: MutableMap<PluginId, MutableList<String>> = HashMap<PluginId, MutableList<String>>()
+  @JvmField val pluginToId = HashMap<PluginId, MutableList<String>>()
   @JvmField val idToIndex: Object2IntOpenHashMap<String> = Object2IntOpenHashMap<String>().also { it.defaultReturnValue(-1) }
   @JvmField var registeredActionCount: Int = 0
 
-  @JvmField val baseActions: MutableMap<String, AnAction> = HashMap<String, AnAction>()
+  @JvmField val baseActions = HashMap<String, AnAction>()
 
   @JvmField val lock = Any()
+
+  fun getGroupIdListById(groupId: String): List<String> = idToGroupId.get(groupId) ?: java.util.List.of()
 }
 
 @Internal
@@ -2193,7 +2195,7 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
 
   if (removeFromGroups) {
     val customActionSchema = serviceIfCreated<CustomActionsSchema>()
-    for (groupId in (state.idToGroupId.get(actionId) ?: java.util.List.of())) {
+    for (groupId in state.getGroupIdListById(actionId)) {
       customActionSchema?.invalidateCustomizedActionGroup(groupId)
       val group = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
       if (group == null) {
@@ -2204,7 +2206,7 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
       group.remove(actionToRemove, actionId)
       if (group !is ActionGroupStub) {
         // group can be used as a stub in other actions
-        for (parentOfGroup in (state.idToGroupId.get(groupId) ?: java.util.List.of())) {
+        for (parentOfGroup in state.getGroupIdListById(groupId)) {
           val parentOfGroupAction = getAction(id = parentOfGroup,
                                               canReturnStub = true,
                                               actionRegistrar = actionRegistrar) as DefaultActionGroup?
@@ -2252,7 +2254,7 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
       "cannot replace a group with an action and vice versa: $actionId"
     }
 
-    for (groupId in (state.idToGroupId.get(actionId) ?: java.util.List.of())) {
+    for (groupId in state.getGroupIdListById(actionId)) {
       val group = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
                   ?: throw IllegalStateException("Trying to replace action which has been added to a non-existing group $groupId")
       group.replaceAction(oldAction, newAction)
