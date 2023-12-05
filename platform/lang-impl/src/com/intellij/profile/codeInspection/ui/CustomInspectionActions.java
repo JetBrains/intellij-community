@@ -23,8 +23,8 @@ public final class CustomInspectionActions {
     InspectionProfileActionProvider.EP_NAME.getExtensionList().forEach(provider -> {
       final var groupInfo = provider.getAddActions(panel);
       if (groupInfo != null) {
-        ActionManager.getInstance().replaceAction(groupInfo.second, groupInfo.first);
-        actionGroup.add(groupInfo.first);
+        ActionManager.getInstance().replaceAction(groupInfo.actionId(), groupInfo.group());
+        actionGroup.add(groupInfo.group());
       }
     });
     if (actionGroup.getChildrenCount() == 0) return null;
