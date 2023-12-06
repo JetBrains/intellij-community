@@ -729,8 +729,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @Override
     @Nullable
     public String getTooltipText() {
-      // FIXME[inline-bp]: implement me
-      return super.getTooltipText();
+      return XDebuggerBundle.message("xbreakpoint.tooltip.multiple");
     }
 
     @Override
