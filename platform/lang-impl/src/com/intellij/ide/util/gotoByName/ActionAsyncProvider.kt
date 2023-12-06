@@ -32,6 +32,7 @@ import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ActionAsyncProvider>()
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
   private val myActionManager: ActionManager = ActionManager.getInstance()
@@ -39,9 +40,24 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
   fun processActions(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation, pattern: String,
                      ids: Set<String>, consumer: suspend (MatchedValue) -> Boolean) {
-    scope.flowCollector(matchedActionsAndStubsFlow(pattern, ids, presentationProvider))
-      .then(unmatchedStubsFlow(pattern, ids, presentationProvider))
-      .collect(consumer)
+
+    scope.launch {
+      val channel = produce {
+        flattenConcat(listOf(
+          matchedActionsAndStubsFlow(pattern, ids, presentationProvider),
+          unmatchedStubsFlow(pattern, ids, presentationProvider),
+        )).collect { send(it) }
+      }
+
+      try {
+        for (i in channel) {
+          if (!consumer(i)) return@launch
+        }
+      }
+      finally {
+        channel.cancel()
+      }
+    }
   }
 
   fun filterElements(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation,
@@ -54,13 +70,27 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
     val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
 
-    scope.flowCollector(abbreviationsFlow(pattern, presentationProvider).sorted(comparator))
-      .then(matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider))
-      .then(unmatchedStubsFlow(pattern, actionIds, presentationProvider))
-      .then(topHitsFlow(pattern, presentationProvider).sorted(comparator))
-      .then(intentionsFlow(pattern, presentationProvider).sorted(comparator))
-      .then(optionsFlow(pattern, presentationProvider).sorted(comparator))
-      .collect(consumer)
+    scope.launch {
+      val channel = produce {
+        flattenConcat(listOf(
+          abbreviationsFlow(pattern, presentationProvider).sorted(comparator),
+          matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider),
+          unmatchedStubsFlow(pattern, actionIds, presentationProvider),
+          topHitsFlow(pattern, presentationProvider).sorted(comparator),
+          intentionsFlow(pattern, presentationProvider).sorted(comparator),
+          optionsFlow(pattern, presentationProvider).sorted(comparator)
+        )).collect { send(it) }
+      }
+
+      try {
+        for (i in channel) {
+          if (!consumer(i)) return@launch
+        }
+      }
+      finally {
+        channel.cancel()
+      }
+    }
   }
 
   private fun <T> Flow<T>.sorted(comparator: Comparator<in T>): Flow<T> {
@@ -335,41 +365,24 @@ private fun abbreviationMatchedValue(wrapper: ActionWrapper, pattern: String, de
 
 private data class MatchedAction(val action: AnAction, val mode: MatchMode, val weight: Int?)
 
-private fun <I> CoroutineScope.flowCollector(flow: Flow<I>): FlowsSequenceCollector<I> = FlowsSequenceCollector<I>(this).apply { then(flow) }
-
-private class FlowsSequenceCollector<I>(private val scope: CoroutineScope) {
-
-  private val flows = mutableListOf<Flow<I>>()
-
-  fun then(flow: Flow<I>): FlowsSequenceCollector<I> {
-    flows.add(flow)
-    return this
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  fun collect(collector: suspend (I) -> Boolean) {
-    scope.launch {
-      val channel = scope.produce {
-        var prevJob: Job? = null
-        for (flow in flows) {
-          val waitForJob = prevJob
-          prevJob = launch {
-            flow.collect {
-              waitForJob?.join()
-              send(it)
-            }
-          }
-        }
-      }
-
-      try {
-        for (i in channel) {
-          if (!collector(i)) return@launch
-        }
-      }
-      finally {
-        channel.cancel()
-      }
-    }
-  }
+/**
+ * Creates a unified [Flow] by efficiently combining multiple [Flow]s in a flattened, concatenated format.
+ * The conventional {code flattenConcat} method from the standard coroutines library isn't suitable in this context for the reasons below:
+ *
+ *  - Initialization of the combined flows is resource-intensive, leading to a significant delay between the invocation of {code collect()}
+ *  and the emission of the first item.
+ *
+ *  - The standard {code flattenConcat} method generates subsequent flows only after prior data has been sequentially collected. This mechanism forces us to
+ *  wait for completion of each flow's initialization process during the transition between flows.
+ *
+ *  - Contrastingly, this function initiates collection of all the flows concurrently using parallel coroutines, thereby accomplishing flow initialization in parallel,
+ *  significantly enhancing the process's efficiency.
+ * @param flows The list of [Flow]s to flatten and concatenate.
+ * @return The flattened and concatenated [Flow].
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun <T> flattenConcat(flows: List<Flow<T>>): Flow<T> = channelFlow {
+  flows.map { flow -> produce { flow.collect { send(it) } } }
+    .forEach { ch -> for (i in ch) send(i) }
 }
+
