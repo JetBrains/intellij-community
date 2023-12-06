@@ -134,11 +134,11 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Bar", "239")
   }
 
-  void testTransitiveJavaDependencyThroughGroovy() {
-    doTestTransitiveJavaDependencyThroughGroovy(false)
+  protected boolean isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy() {
+    return false
   }
-
-  protected final void doTestTransitiveJavaDependencyThroughGroovy(boolean expectRebuild) {
+  
+  void testTransitiveJavaDependencyThroughGroovy() {
     def iFoo = myFixture.addClass "public class IFoo { void foo() {} }" containingFile
     myFixture.addFileToProject "Foo.groovy", '''\
 class Foo {
@@ -157,7 +157,19 @@ class Bar extends Foo {
 
     touch(iFoo.virtualFile)
     touch(bar.virtualFile)
-    if (expectRebuild) {
+    
+    // in 2.4:
+    // - the Foo is not well-formed (IFoo doesn't exist), so we throw NCDFE;
+    // - NCDFE forces loading Foo class node from Foo.groovy file;
+    // - Foo.groovy is added to the current compile session;
+    // => no chunk rebuild
+    //
+    // in 2.5:
+    // - the Foo is loaded as decompiled node;
+    // - when the Bar stub is being written on the disk, it throws NCDFE when trying to resolve IFoo;
+    // => chunk rebuild
+    //see also org.codehaus.groovy.control.ClassNodeResolver#tryAsLoaderClassOrScript
+    if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
       assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
     }
     else {
@@ -288,10 +300,6 @@ class Bar extends Foo {
   }
 
   void testStubForGroovyExtendingJava() throws Exception {
-    doTestStubForGroovyExtendingJava(false)
-  }
-
-  protected final void doTestStubForGroovyExtendingJava(boolean expectRebuild) {
     def foo = myFixture.addFileToProject("Foo.groovy", "class Foo extends Goo { }")
     myFixture.addFileToProject("Goo.groovy", "class Goo extends Main { void bar() { println 'hello' } }")
     def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }")
@@ -299,7 +307,7 @@ class Bar extends Foo {
 
     touch(foo.virtualFile)
     touch(main.containingFile.virtualFile)
-    if (expectRebuild) {
+    if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
       assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
     }
     else {
@@ -575,10 +583,6 @@ class Indirect {
   }
 
   void 'test changed groovy refers to java which refers to changed groovy and fails in stub generator'() {
-    'do test changed groovy refers to java which refers to changed groovy and fails in stub generator'(true)
-  }
-
-  protected final void 'do test changed groovy refers to java which refers to changed groovy and fails in stub generator'(boolean expectRebuild) {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
@@ -586,7 +590,7 @@ class Indirect {
 
     touch(used.virtualFile)
     touch(main)
-    if (expectRebuild) {
+    if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
       assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
     }
     else {
@@ -607,10 +611,6 @@ class Indirect {
   protected abstract List<String> chunkRebuildMessage(String builder)
 
   void 'test changed groovy refers to java which refers to changed groovy and fails in compiler'() {
-    'do test changed groovy refers to java which refers to changed groovy and fails in compiler'(true)
-  }
-
-  protected final void 'do test changed groovy refers to java which refers to changed groovy and fails in compiler'(boolean expectRebuild) {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     myFixture.addFileToProject('Java.java', '''
 abstract class Java {
@@ -629,7 +629,7 @@ class Main {
     touch(used.virtualFile)
     touch(main)
     def messages = make()
-    if (expectRebuild) {
+    if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
       assert messages.collect { it.message } == chunkRebuildMessage("Groovy compiler")
     }
     else {
@@ -638,10 +638,6 @@ class Main {
   }
 
   void testMakeInDependentModuleAfterChunkRebuild() {
-    doTestMakeInDependentModuleAfterChunkRebuild(true)
-  }
-
-  protected final void doTestMakeInDependentModuleAfterChunkRebuild(boolean expectRebuild) {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
@@ -656,7 +652,7 @@ class Main {
     touch(main)
     setFileText(dep, 'class Dep { String prop = new Used().getProp(); }')
 
-    if (expectRebuild) {
+    if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
       assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
     }
     else {
@@ -844,11 +840,11 @@ string
     assertEmpty make()
   }
 
-  void "test inner java class references with incremental recompilation"() {
-    'do test inner java class references with incremental recompilation'(true)
+  protected boolean isRebuildExpectedAfterChangesInGroovyWhichUseJava() {
+    return true;
   }
 
-  protected final void 'do test inner java class references with incremental recompilation'(boolean expectRebuild) {
+  void "test inner java class references with incremental recompilation"() {
     def bar1 = myFixture.addFileToProject('bar/Bar1.groovy', 'package bar; class Bar1 extends Bar2 { } ')
     myFixture.addFileToProject('bar/Bar2.java', 'package bar; class Bar2 extends Bar3 { } ')
     def bar3 = myFixture.addFileToProject('bar/Bar3.groovy', 'package bar; class Bar3 { Bar1 property } ')
@@ -863,7 +859,7 @@ string
     touch bar3.virtualFile
     touch using.virtualFile
 
-    if (expectRebuild) {
+    if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
       assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
     }
     else {
