@@ -1,4 +1,4 @@
-PsiJavaFile:UnnamedClass5.java
+PsiJavaFile:ImplicitClass5.java
   PsiErrorElement:'class' or 'interface' expected
     PsiKeyword:package('package')
   PsiWhiteSpace(' ')
@@ -6,7 +6,7 @@ PsiJavaFile:UnnamedClass5.java
     <empty list>
   PsiJavaToken:SEMICOLON(';')
   PsiWhiteSpace('\n\n')
-  PsiUnnamedClass
+  PsiImplicitClass
     PsiModifierList:native
       PsiKeyword:native('native')
     PsiErrorElement:Identifier or type expected

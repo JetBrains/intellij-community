@@ -4117,7 +4117,7 @@ public enum LevelCode {
     )
   }
 
-  fun testFormattingUnnamedClassMembers() {
+  fun testFormattingImplicitClassMembers() {
     doTextTest(
       """
       void before() {

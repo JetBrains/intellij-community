@@ -1,7 +1,7 @@
-PsiJavaFile:UnnamedClass1.java
+PsiJavaFile:ImplicitClass1.java
   PsiImportList
     <empty list>
-  PsiUnnamedClass
+  PsiImplicitClass
     PsiField:x
       PsiModifierList:
         <empty list>

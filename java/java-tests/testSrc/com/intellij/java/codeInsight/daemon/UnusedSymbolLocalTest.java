@@ -41,7 +41,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
   public void testPrivateConstructor() throws Exception { doTest(); }
-  public void testUnnamedClassInstanceMainWithoutParams() {
+  public void testImplicitClassInstanceMainWithoutParams() {
     IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_21_PREVIEW, () -> {
       try {
         doTest();

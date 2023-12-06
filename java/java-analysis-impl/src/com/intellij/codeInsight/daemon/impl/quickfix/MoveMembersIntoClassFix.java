@@ -13,10 +13,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MoveMembersIntoClassFix implements ModCommandAction {
-  private final SmartPsiElementPointer<PsiUnnamedClass> myUnnamedClass;
+  private final SmartPsiElementPointer<PsiImplicitClass> myImplicitClass;
 
-  public MoveMembersIntoClassFix(PsiUnnamedClass unnamedClass) {
-    myUnnamedClass = SmartPointerManager.createPointer(unnamedClass);
+  public MoveMembersIntoClassFix(PsiImplicitClass implicitClass) {
+    myImplicitClass = SmartPointerManager.createPointer(implicitClass);
   }
 
   @Override
@@ -31,9 +31,9 @@ public class MoveMembersIntoClassFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    PsiUnnamedClass unnamedClass = myUnnamedClass.getElement();
-    if (unnamedClass == null) return ModCommand.nop();
-    PsiClass[] innerClasses = unnamedClass.getInnerClasses();
+    PsiImplicitClass implicitClass = myImplicitClass.getElement();
+    if (implicitClass == null) return ModCommand.nop();
+    PsiClass[] innerClasses = implicitClass.getInnerClasses();
 
     List<? extends ModCommandAction> actionsPerClass = Arrays.stream(innerClasses).map(MoveAllMembersToParticularClassAction::new).toList();
 
@@ -50,7 +50,7 @@ public class MoveMembersIntoClassFix implements ModCommandAction {
 
     @Override
     protected void invoke(@NotNull ActionContext context, @NotNull PsiClass element, @NotNull ModPsiUpdater updater) {
-      if (!(element.getContainingClass() instanceof PsiUnnamedClass unn)) return;
+      if (!(element.getContainingClass() instanceof PsiImplicitClass unn)) return;
       PsiMember[] members = PsiTreeUtil.getChildrenOfType(unn, PsiMember.class);
       if (members == null) return;
       List<PsiMember> membersWithoutClasses = Arrays.stream(members).filter(member -> !(member instanceof PsiClass)).toList();

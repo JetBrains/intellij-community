@@ -47,7 +47,7 @@ public class JavaElementTypeFactory extends AbstractBasicJavaElementTypeFactory 
       JavaElementType.RECORD_HEADER,
       JavaElementType.PERMITS_LIST,
       JavaElementType.CLASS,
-      JavaElementType.UNNAMED_CLASS,
+      JavaElementType.IMPLICIT_CLASS,
       JavaElementType.ANONYMOUS_CLASS,
       JavaElementType.ENUM_CONSTANT_INITIALIZER,
       JavaElementType.TYPE_PARAMETER_LIST,

@@ -289,8 +289,8 @@ public final class IntroduceVariableUtil {
           }
         }
       }
-      if (topLevelExpression.getParent() instanceof PsiField f && f.getParent() instanceof PsiUnnamedClass) {
-        return JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.unnamed.class");
+      if (topLevelExpression.getParent() instanceof PsiField f && f.getParent() instanceof PsiImplicitClass) {
+        return JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.implicit.class");
       }
     }
     return null;

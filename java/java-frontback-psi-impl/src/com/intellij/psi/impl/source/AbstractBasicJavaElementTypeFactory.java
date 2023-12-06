@@ -59,7 +59,7 @@ public abstract class AbstractBasicJavaElementTypeFactory {
     public final IElementType PERMITS_LIST;
 
     public final IElementType CLASS;
-    public final IElementType UNNAMED_CLASS;
+    public final IElementType IMPLICIT_CLASS;
 
     public final IElementType ANONYMOUS_CLASS;
 
@@ -258,7 +258,7 @@ public abstract class AbstractBasicJavaElementTypeFactory {
                                     IElementType RECORD_HEADER,
                                     IElementType PERMITS_LIST,
                                     IElementType CLASS,
-                                    IElementType UNNAMED_CLASS,
+                                    IElementType IMPLICIT_CLASS,
                                     IElementType ANONYMOUS_CLASS,
                                     IElementType ENUM_CONSTANT_INITIALIZER,
                                     IElementType TYPE_PARAMETER_LIST,
@@ -371,7 +371,7 @@ public abstract class AbstractBasicJavaElementTypeFactory {
       this.RECORD_HEADER = RECORD_HEADER;
       this.PERMITS_LIST = PERMITS_LIST;
       this.CLASS = CLASS;
-      this.UNNAMED_CLASS = UNNAMED_CLASS;
+      this.IMPLICIT_CLASS = IMPLICIT_CLASS;
       this.ANONYMOUS_CLASS = ANONYMOUS_CLASS;
       this.ENUM_CONSTANT_INITIALIZER = ENUM_CONSTANT_INITIALIZER;
       this.TYPE_PARAMETER_LIST = TYPE_PARAMETER_LIST;

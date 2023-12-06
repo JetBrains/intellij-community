@@ -1225,7 +1225,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createAddMainMethodFix(@NotNull PsiUnnamedClass unnamedClass) {
-    return new AddMainMethodFix(unnamedClass).asIntention();
+  public @NotNull IntentionAction createAddMainMethodFix(@NotNull PsiImplicitClass implicitClass) {
+    return new AddMainMethodFix(implicitClass).asIntention();
   }
 }

@@ -34,7 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.java.stubs.index.JavaUnnamedClassIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
@@ -191,10 +191,10 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final String mainClass = getMainClassName();
-    if (getOptions().isUnnamedClassConfiguration()) {
+    if (getOptions().isImplicitClassConfiguration()) {
       if (mainClass != null && !DumbService.isDumb(getProject())) {
         try {
-          final boolean matchingClass = !JavaUnnamedClassIndex.getInstance()
+          final boolean matchingClass = !JavaImplicitClassIndex.getInstance()
             .getElements(mainClass, getProject(), configurationModule.getSearchScope())
             .isEmpty();
           if (!matchingClass) {
@@ -367,9 +367,9 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     getOptions().setIncludeProvidedScope(value);
   }
 
-  public boolean isUnnamedClassConfiguration() { return getOptions().isUnnamedClassConfiguration(); }
+  public boolean isImplicitClassConfiguration() { return getOptions().isImplicitClassConfiguration(); }
 
-  public void setUnnamedClassConfiguration(boolean value) { getOptions().setUnnamedClassConfiguration(value); }
+  public void setImplicitClassConfiguration(boolean value) { getOptions().setImplicitClassConfiguration(value); }
 
   @Override
   public Collection<Module> getValidModules() {

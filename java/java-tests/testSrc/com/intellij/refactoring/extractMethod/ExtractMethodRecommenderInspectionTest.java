@@ -15,7 +15,7 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.checkHighlighting();
   }
   
-  public void testUnnamedClass() {
+  public void testImplicitClass() {
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
     myFixture.enableInspections(inspection);
     myFixture.configureByFile(getTestName(false) + ".java");

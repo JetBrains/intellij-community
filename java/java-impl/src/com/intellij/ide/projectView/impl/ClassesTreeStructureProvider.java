@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.JavaUnnamedClassUtil;
+import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,10 +170,9 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       PsiFile value = getValue();
       if (value instanceof PsiClassOwner) {
         ViewSettings settings = getSettings();
-
-        PsiUnnamedClass unnamedClass = JavaUnnamedClassUtil.getUnnamedClassFor(value);
-        if (unnamedClass != null) {
-          result.addAll(ClassTreeNode.computeChildren(unnamedClass, settings, myProject, true));
+        PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(value);
+        if (implicitClass != null) {
+          result.addAll(ClassTreeNode.computeChildren(implicitClass, settings, myProject, true));
         } else {
           for (PsiClass aClass : ((PsiClassOwner)value).getClasses()) {
             if (!(aClass instanceof SyntheticElement)) {

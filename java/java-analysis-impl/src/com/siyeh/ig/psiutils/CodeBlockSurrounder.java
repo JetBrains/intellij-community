@@ -325,7 +325,7 @@ public abstract class CodeBlockSurrounder {
       return null;
     }
     if (parent instanceof PsiField) {
-      if (parent.getParent() instanceof PsiUnnamedClass) {
+      if (parent.getParent() instanceof PsiImplicitClass) {
         return null;
       }
       return new ExtractFieldInitializerSurrounder(expression, (PsiField)parent);

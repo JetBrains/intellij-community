@@ -277,7 +277,7 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
 
   public void testJunitMethodSource() {doTest();}
 
-  public void testUnnamedClass() {
+  public void testImplicitClass() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
       doTest();
     });

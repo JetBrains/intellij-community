@@ -37,7 +37,7 @@ public interface JavaElementType {
   }
 
   IElementType CLASS = JavaStubElementTypes.CLASS;
-  IElementType UNNAMED_CLASS = JavaStubElementTypes.UNNAMED_CLASS;
+  IElementType IMPLICIT_CLASS = JavaStubElementTypes.IMPLICIT_CLASS;
   IElementType ANONYMOUS_CLASS = JavaStubElementTypes.ANONYMOUS_CLASS;
   IElementType ENUM_CONSTANT_INITIALIZER = JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER;
   IElementType TYPE_PARAMETER_LIST = JavaStubElementTypes.TYPE_PARAMETER_LIST;

@@ -10,7 +10,7 @@ import java.util.List;
 
 public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase {
 
-  public void testUnnamedAllowsNonStatic() {
+  public void testImplicitAllowsNonStatic() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
       void main<caret>() {
@@ -59,7 +59,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
-  public void testMainInsideInnerClassInUnnamedClassHasNoGutter() {
+  public void testMainInsideInnerClassInImplicitClassHasNoGutter() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
       void foo() {

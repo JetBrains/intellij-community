@@ -14,7 +14,7 @@ PsiJavaFile:NoClass.java
           <empty list>
       PsiJavaToken:SEMICOLON(';')
   PsiWhiteSpace('\n\n')
-  PsiUnnamedClass
+  PsiImplicitClass
     PsiMethod:ClassName
       PsiModifierList:public
         PsiKeyword:public('public')

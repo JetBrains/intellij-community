@@ -17,12 +17,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiUnnamedClass
+import com.intellij.psi.*
 import com.intellij.refactoring.suggested.range
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
@@ -247,12 +242,12 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         // OK, there are some errors
         if (hasErrors) return false
 
-        val isJavaFileWithUnnamedClass = psiFile is PsiJavaFile && psiFile.classes.any { it is PsiUnnamedClass }
+        val isJavaFileWithImplicitClass = psiFile is PsiJavaFile && psiFile.classes.any { it is PsiImplicitClass }
 
-        // Java 21 allows to use unnamed classes
+        // Java 21 allows to use implicitly declared classes
         // before that java file like `class { void foo(){} }` is considered as error
         // after java 21 it is a valid java file
-        return !isJavaFileWithUnnamedClass
+        return !isJavaFileWithImplicitClass
     }
 
     private fun parseAsFile(text: String, fileType: LanguageFileType, project: Project): PsiFile {

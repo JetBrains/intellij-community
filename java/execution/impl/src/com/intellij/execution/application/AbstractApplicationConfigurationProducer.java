@@ -59,8 +59,8 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
-    if (aClass instanceof PsiUnnamedClass) {
-      configuration.setUnnamedClassConfiguration(true);
+    if (aClass instanceof PsiImplicitClass) {
+      configuration.setImplicitClassConfiguration(true);
     }
     configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
     configuration.setGeneratedName();

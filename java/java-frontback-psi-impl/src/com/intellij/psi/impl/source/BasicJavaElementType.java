@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 public interface BasicJavaElementType {
 
   IElementType BASIC_CLASS = new IJavaElementType("CLASS");
-  IElementType BASIC_UNNAMED_CLASS = new IJavaElementType("UNNAMED_CLASS");
+  IElementType BASIC_IMPLICIT_CLASS = new IJavaElementType("IMPLICIT_CLASS");
   IElementType BASIC_ANONYMOUS_CLASS = new IJavaElementType("ANONYMOUS_CLASS");
   IElementType BASIC_ENUM_CONSTANT_INITIALIZER = new IJavaElementType("ENUM_CONSTANT_INITIALIZER");
   IElementType BASIC_TYPE_PARAMETER_LIST = new IJavaElementType("TYPE_PARAMETER_LIST", true);

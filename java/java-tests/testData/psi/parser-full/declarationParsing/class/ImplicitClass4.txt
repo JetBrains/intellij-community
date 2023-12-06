@@ -1,4 +1,4 @@
-PsiJavaFile:UnnamedClass3.java
+PsiJavaFile:ImplicitClass4.java
   PsiPackageStatement:pack1.pack2
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
@@ -28,23 +28,29 @@ PsiJavaFile:UnnamedClass3.java
           <empty list>
       PsiJavaToken:SEMICOLON(';')
   PsiWhiteSpace('\n\n')
-  PsiUnnamedClass
-    PsiMethod:foo
+  PsiImplicitClass
+    PsiClass:A
       PsiModifierList:
         <empty list>
+      PsiKeyword:class('class')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:A('A')
       PsiTypeParameterList
         <empty list>
-      PsiTypeElement:void
-        PsiKeyword:void('void')
-      PsiWhiteSpace(' ')
-      PsiIdentifier:foo('foo')
-      PsiParameterList:()
-        PsiJavaToken:LPARENTH('(')
-        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
       PsiReferenceList
         <empty list>
       PsiWhiteSpace(' ')
-      PsiCodeBlock
-        PsiJavaToken:LBRACE('{')
-        PsiWhiteSpace('\n\n')
-        PsiJavaToken:RBRACE('}')
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace('\n\n')
+      PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n\n')
+    PsiField:field
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:int
+        PsiKeyword:int('int')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:field('field')
+      PsiJavaToken:SEMICOLON(';')

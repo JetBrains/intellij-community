@@ -354,7 +354,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
-  public void testUnnamedClass() {
+  public void testImplicitClass() {
     doTest(
       """
         void foo() {

@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   private final static Comparator<PsiMethod> mainCandidateComparator = (o1, o2) -> {
     boolean isO1Static = o1.hasModifierProperty(PsiModifier.STATIC);
@@ -59,7 +58,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     else if (parent instanceof PsiMethod method) {
       if (!"main".equals(method.getName()) || !PsiMethodUtil.isMainMethod(method)) return null;
       PsiClass containingClass = method.getContainingClass();
-      if (!(containingClass instanceof PsiUnnamedClass) && PsiTreeUtil.getParentOfType(containingClass, PsiUnnamedClass.class) != null) return null;
+      if (!(containingClass instanceof PsiImplicitClass) && PsiTreeUtil.getParentOfType(containingClass, PsiImplicitClass.class) != null) return null;
       if (containingClass == null || PsiUtil.isLocalOrAnonymousClass(containingClass)) return null;
       if (containingClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) return null;
       Optional<PsiMethod> mainMethod =

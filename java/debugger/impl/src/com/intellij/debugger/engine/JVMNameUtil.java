@@ -281,7 +281,7 @@ public final class JVMNameUtil {
     if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
       return null;
     }
-    if (aClass instanceof PsiUnnamedClass a) {
+    if (aClass instanceof PsiImplicitClass a) {
       return ClassUtil.getJVMClassName(a);
     }
     String name = aClass.getName();

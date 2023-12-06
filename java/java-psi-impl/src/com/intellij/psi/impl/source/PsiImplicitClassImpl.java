@@ -17,7 +17,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.JavaUnnamedClassUtil;
+import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,14 +28,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiUnnamedClass, PsiExtensibleClass {
+public class PsiImplicitClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiImplicitClass, PsiExtensibleClass {
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
 
-  public PsiUnnamedClassImpl(@NotNull PsiClassStub<?> stub) {
-    super(stub, JavaStubElementTypes.UNNAMED_CLASS);
+  public PsiImplicitClassImpl(@NotNull PsiClassStub<?> stub) {
+    super(stub, JavaStubElementTypes.IMPLICIT_CLASS);
   }
 
-  public PsiUnnamedClassImpl(@NotNull ASTNode node) {
+  public PsiImplicitClassImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -43,7 +43,7 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
   public @Nullable String getQualifiedName() {
     PsiElement parent = getParent();
     if (parent instanceof PsiJavaFile) {
-      return JavaUnnamedClassUtil.getJvmName(((PsiJavaFile)parent).getName());
+      return JavaImplicitClassUtil.getJvmName(((PsiJavaFile)parent).getName());
     }
     return null;
   }
@@ -223,7 +223,7 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Unnamed class may have no name");
+    throw new IncorrectOperationException("Implicitly declared class may have no name");
   }
 
   @Override
@@ -284,7 +284,7 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitUnnamedClass(this);
+      ((JavaElementVisitor)visitor).visitImplicitClass(this);
     }
     else {
       visitor.visitElement(this);
@@ -307,6 +307,6 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public String toString() {
-    return "PsiUnnamedClass";
+    return "PsiImplicitClass";
   }
 }

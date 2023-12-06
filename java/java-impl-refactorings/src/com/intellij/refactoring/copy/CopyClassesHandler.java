@@ -603,7 +603,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase implements DumbA
           element.getParent() != null &&
           ((PsiClass)element).getContainingClass() == null &&
           !(element instanceof PsiAnonymousClass) &&
-          !(element instanceof PsiUnnamedClass)) {
+          !(element instanceof PsiImplicitClass)) {
         break;
       }
       element = element.getParent();
@@ -615,7 +615,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase implements DumbA
         if (isSynthetic(aClass)) {
           return null;
         }
-        if (aClass instanceof PsiUnnamedClass) {
+        if (aClass instanceof PsiImplicitClass) {
           return null;
         }
         buffer.add(aClass);

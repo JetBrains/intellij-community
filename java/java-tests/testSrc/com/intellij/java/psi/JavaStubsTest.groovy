@@ -387,7 +387,7 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
     def file = myFixture.addFileToProject("a.java", "class A extends B. { int a; }")
     WriteCommandAction.runWriteCommandAction(project) {
       def javaFile = file as PsiJavaFile
-      def clazz = (javaFile.classes[0] as PsiUnnamedClass).innerClasses[0]
+      def clazz = (javaFile.classes[0] as PsiImplicitClass).innerClasses[0]
       clazz.extendsList.referenceElements[0].delete()
     }
     PsiTestUtil.checkStubsMatchText(file)
@@ -418,7 +418,7 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
     def file = myFixture.addFileToProject("a.java", "class A extends.ends Foo { int a; }")
     WriteCommandAction.runWriteCommandAction(project) {
       def javaFile = file as PsiJavaFile
-      def clazz = (javaFile.classes[0] as PsiUnnamedClass).innerClasses[0]
+      def clazz = (javaFile.classes[0] as PsiImplicitClass).innerClasses[0]
       clazz.extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
     }
     PsiTestUtil.checkStubsMatchText(file)
@@ -463,7 +463,8 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
     assert !(file as PsiFileImpl).contentsLoaded
   }
 
-  void "test unnamed class"() {
+  void "test implicit class"() {
+
     def psiFile = myFixture.addFileToProject("a.java", """\
       void test() {
       }

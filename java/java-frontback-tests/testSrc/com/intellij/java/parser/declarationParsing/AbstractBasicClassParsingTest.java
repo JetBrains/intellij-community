@@ -119,22 +119,22 @@ public abstract class AbstractBasicClassParsingTest extends AbstractBasicJavaPar
     doTest(true);
   }
 
-  public void testUnnamedClass0() {
+  public void testImplicitClass0() {
     doTest(true);
   }
-  public void testUnnamedClass1() {
+  public void testImplicitClass1() {
     doTest(true);
   }
-  public void testUnnamedClass2() {
+  public void testImplicitClass2() {
     doTest(true);
   }
-  public void testUnnamedClass3() {
+  public void testImplicitClass3() {
     doTest(true);
   }
-  public void testUnnamedClass4() {
+  public void testImplicitClass4() {
     doTest(true);
   }
-  public void testUnnamedClass5() {
+  public void testImplicitClass5() {
     doTest(true);
   }
 }

@@ -48,7 +48,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex"/>
-    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaUnnamedClassIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex"/>
     <java.shortNamesCache implementation="com.intellij.psi.impl.PsiShortNamesCacheImpl"/>
     <java.staticMethodNamesCache implementation="com.intellij.psi.impl.JavaStaticMethodNameCacheImpl" order="first"/>
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"

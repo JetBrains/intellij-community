@@ -6,9 +6,9 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class UnnamedClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
+class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_21
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/unnamedClass"
+  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/implicitClass"
 
   fun testHighlightInsufficientLevel() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20, Runnable {
@@ -28,7 +28,7 @@ class UnnamedClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
-  fun `testIncorrect unnamed class name with spaces`() {
+  fun `testIncorrect implicit class name with spaces`() {
     doTest()
   }
 

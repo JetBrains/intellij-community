@@ -186,7 +186,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new PartialWhitespaceBlock(child, range, wrap, alignment, actualIndent, settings, javaSettings, myFormattingMode);
     }
 
-    if (childPsi instanceof PsiUnnamedClass) {
+    if (childPsi instanceof PsiImplicitClass) {
       return new SimpleJavaBlock(child, wrap, alignmentStrategy, Indent.getNoneIndent(), settings, javaSettings, formattingMode);
     }
     if (childPsi instanceof PsiClass || childPsi instanceof PsiJavaModule) {
@@ -370,7 +370,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parentType == JavaElementType.IMPORT_LIST) return Indent.getNoneIndent();
     if (parentType == JavaElementType.FIELD) return Indent.getContinuationWithoutFirstIndent(indentOptions.USE_RELATIVE_INDENTS);
     if (parentType == JavaElementType.EXPRESSION_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == JavaElementType.UNNAMED_CLASS) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.IMPLICIT_CLASS) return Indent.getNoneIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }

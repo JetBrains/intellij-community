@@ -1,34 +1,47 @@
 java.FILE
-  PACKAGE_STATEMENT
+  ERROR_ELEMENT
     PACKAGE_KEYWORD
+  WHITE_SPACE
+  IMPORT_LIST
+    <empty list>
+  SEMICOLON
+  WHITE_SPACE
+  IMPLICIT_CLASS
+    MODIFIER_LIST
+      NATIVE_KEYWORD
+    ERROR_ELEMENT
+      <empty list>
     WHITE_SPACE
-    JAVA_CODE_REFERENCE
+    ERROR_ELEMENT
+      IMPORT_KEYWORD
+    WHITE_SPACE
+    MODIFIER_LIST
+      <empty list>
+    TYPE
       JAVA_CODE_REFERENCE
         IDENTIFIER
         REFERENCE_PARAMETER_LIST
           <empty list>
-      DOT
-      IDENTIFIER
-      REFERENCE_PARAMETER_LIST
-        <empty list>
+    ERROR_ELEMENT
+      <empty list>
     SEMICOLON
-  WHITE_SPACE
-  IMPORT_LIST
-    IMPORT_STATEMENT
-      IMPORT_KEYWORD
+    WHITE_SPACE
+    FIELD
+      MODIFIER_LIST
+        PUBLIC_KEYWORD
       WHITE_SPACE
-      JAVA_CODE_REFERENCE
+      TYPE
         JAVA_CODE_REFERENCE
           IDENTIFIER
           REFERENCE_PARAMETER_LIST
             <empty list>
-        DOT
-        IDENTIFIER
-        REFERENCE_PARAMETER_LIST
-          <empty list>
+      WHITE_SPACE
+      IDENTIFIER
       SEMICOLON
-  WHITE_SPACE
-  UNNAMED_CLASS
+    WHITE_SPACE
+    ERROR_ELEMENT
+      LBRACE
+    WHITE_SPACE
     METHOD
       MODIFIER_LIST
         <empty list>
@@ -46,5 +59,7 @@ java.FILE
       WHITE_SPACE
       CODE_BLOCK
         LBRACE
-        WHITE_SPACE
         RBRACE
+    WHITE_SPACE
+    ERROR_ELEMENT
+      RBRACE

@@ -28,7 +28,7 @@ java.FILE
           <empty list>
       SEMICOLON
   WHITE_SPACE
-  UNNAMED_CLASS
+  IMPLICIT_CLASS
     CLASS
       MODIFIER_LIST
         <empty list>
