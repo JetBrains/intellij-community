@@ -3,8 +3,8 @@ package com.jetbrains.env.python
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remote.RemoteSdkException
 import com.jetbrains.env.PyEnvTestSettings
@@ -57,10 +57,10 @@ class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfig
       Pair(PYTHON_PATH_ON_TARGET, targetData) //No ability to look for remote pythons for now
     }
 
-    sdk = ProjectJdkImpl(pythonPath, PythonSdkType.getInstance(), pythonPath, "").apply {
-      homePath = pythonPath
-      sdkAdditionalData = additionalData
-    }
-
+    sdk = ProjectJdkTable.getInstance().createSdk(pythonPath, PythonSdkType.getInstance())
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.homePath = pythonPath
+    sdkModificator.sdkAdditionalData = additionalData
+    sdkModificator.commitChanges()
   }
 }
