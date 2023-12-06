@@ -394,7 +394,10 @@ object RwLockHolder: ThreadingSupport {
   }
 
   override fun isWriteActionPending(): Boolean {
-    return myWriteActionPending
+    val l = lock ?: notReady()
+    // writeSuspendWhilePumpingIdeEventQueueHopingForTheBest() could have WriteRequested but
+    // not myWriteActionPending set, and it could confuse runActionAndCancelBeforeWrite()
+    return myWriteActionPending || l.isWriteRequested
   }
 
   override fun isWriteAccessAllowed(): Boolean {
