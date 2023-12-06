@@ -1265,7 +1265,7 @@
       "type": "object",
       "allOf": [
         {
-          "$ref": "#/definitions/base-contribution"
+          "$ref": "#/definitions/generic-contribution"
         },
         {
           "$ref": "#/definitions/js-contributions-host"
@@ -1282,7 +1282,7 @@
       "type": "object",
       "allOf": [
         {
-          "$ref": "#/definitions/base-contribution"
+          "$ref": "#/definitions/typed-contribution"
         },
         {
           "$ref": "#/definitions/js-contributions-host"

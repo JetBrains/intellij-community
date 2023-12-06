@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
     "symbols"
 })
 public class JsSymbol
-    extends BaseContribution
+    extends TypedContribution
     implements JsContributionsHost
 {
 
