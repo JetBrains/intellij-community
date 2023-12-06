@@ -72,7 +72,6 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
                 kind,
                 applicableTargets,
                 actualTargetList,
-                annotationFqName,
                 annotationClassId,
                 isOverrideError
             )
