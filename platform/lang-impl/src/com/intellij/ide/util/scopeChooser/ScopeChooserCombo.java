@@ -22,16 +22,17 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.EnumSet;
+import java.util.*;
 import java.util.List;
 
 /**
- * Instances of {@code ScopeChooserCombo} <b>must be disposed</b> when the corresponding dialog or settings page is closed. Otherwise
+ * Instances of {@code ScopeChooserCombo} <b>must be disposed</b> when the corresponding dialog or settings page is closed. Otherwise,
  * listeners registered in {@code init()} cause memory leak.<br/><br/>
  * Example: if {@code ScopeChooserCombo} is used in a
  * {@code DialogWrapper} subclass, call {@code Disposer.register(getDisposable(), myScopeChooserCombo)}, where
@@ -42,7 +43,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private Project myProject;
   private @Nullable Condition<? super ScopeDescriptor> myScopeFilter;
   private BrowseListener myBrowseListener;
-  private final ScopeModel scopeModel = new ScopeModel(EnumSet.of(ScopeOption.FROM_SELECTION, ScopeOption.USAGE_VIEW));
+  private @Nullable AbstractScopeModel scopeModel = null;
+  private final @NotNull HashMap<ScopeOption, Boolean> postponedOptions = new HashMap<>();
+  private @Nullable ScopesSnapshot scopes = null;
+  private @Nullable AsyncPromise<?> initPromise = null;
+  private @Nullable Object selection;
 
   private @Nullable SearchScope preselectedScope;
 
@@ -76,9 +81,19 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       throw new IllegalStateException("scope chooser combo already initialized");
     }
 
-    scopeModel.init(project);
-    scopeModel.setOption(ScopeOption.LIBRARIES, suggestSearchInLibs);
-    scopeModel.setOption(ScopeOption.SEARCH_RESULTS, prevSearchWholeFiles);
+    scopeModel = project.getService(ScopeService.class)
+      .createModel(EnumSet.of(
+        ScopeOption.FROM_SELECTION,
+        ScopeOption.USAGE_VIEW,
+        ScopeOption.LIBRARIES,
+        ScopeOption.SEARCH_RESULTS
+      ));
+    for (Map.Entry<ScopeOption, Boolean> entry : postponedOptions.entrySet()) {
+      scopeModel.setOption(entry.getKey(), entry.getValue());
+    }
+    postponedOptions.clear();
+    scopeModel.setFilter(descriptor -> myScopeFilter == null || myScopeFilter.value(descriptor));
+    scopeModel.addScopeModelListener(new MyScopeModelListener());
     myProject = project;
 
     NamedScopesHolder.ScopeListener scopeListener = () -> {
@@ -112,7 +127,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       }
     }
 
-    return rebuildModelAndSelectScopeOnSuccess(selection);
+    initPromise = new AsyncPromise<>();
+    rebuildModelAndSelectScopeOnSuccess(selection);
+    return initPromise;
   }
 
   @NotNull
@@ -134,8 +151,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       @Nullable
       @Override
       public ListSeparator separatorFor(ScopeDescriptor value) {
-        String firstElementDisplayName = value.getDisplayName();
-        if (firstElementDisplayName != null) return scopeModel.getSeparatorName(value.getDisplayName());
+        if (scopes != null) return scopes.getSeparatorFor(value);
         return null;
       }
 
@@ -167,11 +183,21 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   public void setCurrentSelection(boolean currentSelection) {
-    scopeModel.setOption(ScopeOption.FROM_SELECTION, currentSelection);
+    setModelOption(ScopeOption.FROM_SELECTION, currentSelection);
   }
 
   public void setUsageView(boolean usageView) {
-    scopeModel.setOption(ScopeOption.USAGE_VIEW, usageView);
+    setModelOption(ScopeOption.USAGE_VIEW, usageView);
+  }
+
+  private void setModelOption(ScopeOption option, boolean value) {
+    var model = scopeModel;
+    if (model == null) {
+      postponedOptions.put(option, value);
+    }
+    else {
+      model.setOption(option, value);
+    }
   }
 
   public void selectItem(@Nullable Object selection) {
@@ -199,15 +225,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
   }
 
-  private @NotNull Promise<?> rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
-    return scopeModel.getScopeDescriptors(descriptor -> myScopeFilter == null || myScopeFilter.value(descriptor))
-      .onSuccess(descriptors -> {
-        DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
-        updateModel(model, descriptors);
-        getComboBox().setModel(model);
-        selectItem(selection);
-        preselectedScope = null;
-      });
+  private void rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
+    this.selection = selection;
+    var model = scopeModel;
+    if (model != null) {
+      scopeModel.refreshScopes(null);
+    }
   }
 
   @RequiresEdt
@@ -239,7 +262,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   public void setShowEmptyScopes(boolean showEmptyScopes) {
-    scopeModel.setOption(ScopeOption.EMPTY_SCOPES, showEmptyScopes);
+    setModelOption(ScopeOption.EMPTY_SCOPES, showEmptyScopes);
   }
 
   @Nullable
@@ -301,5 +324,24 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     void onBeforeBrowseStarted();
 
     void onAfterBrowseFinished();
+  }
+
+  private class MyScopeModelListener implements ScopeModelListener {
+    @Override
+    public void scopesUpdated(@NotNull ScopesSnapshot scopes) {
+      SwingUtilities.invokeLater(() -> {
+        ScopeChooserCombo.this.scopes = scopes;
+        DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
+        updateModel(model, scopes.getScopeDescriptors());
+        getComboBox().setModel(model);
+        selectItem(selection);
+        preselectedScope = null;
+        var promise = initPromise;
+        if (promise != null) {
+          promise.setResult(null);
+          initPromise = null;
+        }
+      });
+    }
   }
 }

@@ -19,10 +19,9 @@ import org.jetbrains.concurrency.Promise
 import java.util.function.Predicate
 
 
-class ScopeModel(options: Set<ScopeOption>) {
+internal class ScopeModel(options: Set<ScopeOption>) {
 
-  private val separators: HashMap<String, ListSeparator> = HashMap()
-  private val options = mutableSetOf<ScopeOption>().apply { addAll(options) }
+  val options = mutableSetOf<ScopeOption>().apply { addAll(options) }
   private lateinit var project: Project
 
   fun init(project: Project) {
@@ -32,8 +31,6 @@ class ScopeModel(options: Set<ScopeOption>) {
 
     this.project = project
   }
-
-  fun getSeparatorName(firstElementName: String): ListSeparator? = separators[firstElementName]
 
   fun setOption(option: ScopeOption, set: Boolean) {
     if (set) {
@@ -48,32 +45,44 @@ class ScopeModel(options: Set<ScopeOption>) {
     return options.contains(option)
   }
 
-  fun getScopeDescriptors(filter: Predicate<in ScopeDescriptor>): Promise<List<ScopeDescriptor>> {
+  fun getScopeDescriptors(filter: Predicate<in ScopeDescriptor>): Promise<ScopesSnapshot> {
     return DataManager.getInstance()
       .dataContextFromFocusAsync
       .thenAsync { dataContext ->
-        PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
-          project, dataContext,
-          options.contains(ScopeOption.LIBRARIES),
-          options.contains(ScopeOption.SEARCH_RESULTS),
-          options.contains(ScopeOption.FROM_SELECTION),
-          options.contains(ScopeOption.USAGE_VIEW),
-          options.contains(ScopeOption.EMPTY_SCOPES)
-        ).then { predefinedScopes ->
-          separators.clear()
-          doProcessScopes(project, dataContext, predefinedScopes,
-                          { firstScopeName, separatorName -> separators[firstScopeName] = ListSeparator(separatorName) }, filter)
-        }
+        getScopeDescriptors(dataContext, filter)
       }
+  }
+
+  fun getScopeDescriptors(
+    dataContext: DataContext,
+    filter: Predicate<in ScopeDescriptor>,
+  ): Promise<ScopesSnapshot> {
+    val separators: HashMap<String, ListSeparator> = HashMap()
+    return PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
+      project, dataContext,
+      options.contains(ScopeOption.LIBRARIES),
+      options.contains(ScopeOption.SEARCH_RESULTS),
+      options.contains(ScopeOption.FROM_SELECTION),
+      options.contains(ScopeOption.USAGE_VIEW),
+      options.contains(ScopeOption.EMPTY_SCOPES)
+    ).then { predefinedScopes ->
+      separators.clear()
+      ScopesSnapshotImpl(
+        doProcessScopes(project, dataContext, predefinedScopes,
+                        { firstScopeName, separatorName -> separators[firstScopeName] = ListSeparator(separatorName) }, filter),
+        separators
+      )
+    }
   }
 
   companion object {
 
     @JvmStatic
     @Deprecated("Use ScopeModel.getScopeDescriptors method instead, this method may block UI")
-    fun getScopeDescriptors(project: Project, dataContext: DataContext, options: Set<ScopeOption>): List<ScopeDescriptor> {
+    fun getScopeDescriptors(project: Project, dataContext: DataContext, options: Set<ScopeOption>, filter: Predicate<in ScopeDescriptor>): ScopesSnapshot {
       val model = ScopeModel(options)
       model.init(project)
+      val separators: HashMap<String, ListSeparator> = HashMap()
       val predefinedScopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
         project, dataContext,
         options.contains(ScopeOption.LIBRARIES),
@@ -82,7 +91,14 @@ class ScopeModel(options: Set<ScopeOption>) {
         options.contains(ScopeOption.USAGE_VIEW),
         options.contains(ScopeOption.EMPTY_SCOPES)
       )
-      return doProcessScopes(project, dataContext, predefinedScopes, null) { true }
+      return ScopesSnapshotImpl(
+        doProcessScopes(
+          project, dataContext, predefinedScopes,
+          { firstScopeName, separatorName -> separators[firstScopeName] = ListSeparator(separatorName) },
+          filter
+        ),
+        separators
+      )
     }
 
     @RequiresEdt
