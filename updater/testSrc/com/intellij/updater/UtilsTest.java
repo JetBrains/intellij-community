@@ -1,153 +1,93 @@
-/*
- * Copyright (C) 2013 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class UtilsTest {
-  static {
-    setRequiredDiskSpace();
+@UpdaterTest
+class UtilsTest {
+  @TempDir Path tempDir;
+
+  @Test void delete() throws Exception {
+    var file = Files.createFile(tempDir.resolve("temp_file"));
+    Utils.delete(file);
+    assertThat(file).doesNotExist();
   }
 
-  static void setRequiredDiskSpace() {
-    System.setProperty("idea.required.space", Long.toString(20_000_000));
+  @Test void deleteReadonlyFile() throws Exception {
+    var dir = Files.createDirectory(tempDir.resolve("temp_dir"));
+    var file = Files.createFile(dir.resolve("temp_file"));
+    UpdaterTestCase.setReadOnly(file);
+
+    Utils.delete(dir);
+    assertThat(dir).doesNotExist();
   }
 
-  @Rule public TempDirectory tempDir = new TempDirectory();
-
-  @Test
-  public void testDelete() throws Exception {
-    File f = tempDir.newFile("temp_file");
-    assertTrue(f.exists());
-
-    Utils.delete(f);
-    assertFalse(f.exists());
+  @Test @EnabledOnOs(OS.WINDOWS) void deleteLockedFileOnWindows() throws Exception {
+    var file = Files.createFile(tempDir.resolve("temp_file"));
+    var timing = new AtomicLong(0L);
+    assertThatThrownBy(() -> {
+      try (var os = Files.newOutputStream(file)) {
+        // This locks the file on Windows, preventing it from being deleted. Utils.delete() will retry for about 100 ms.
+        os.write("test".getBytes(StandardCharsets.UTF_8));
+        var t = System.nanoTime();
+        try {
+          Utils.delete(file);
+        }
+        finally {
+          timing.set(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t));
+        }
+      }
+    }).hasMessage("Cannot delete: " + file.toAbsolutePath());
+    assertThat(timing.get()).as("Utils.delete took " + timing + " ms, which is less than expected").isGreaterThanOrEqualTo(95);
   }
 
-  @Test
-  public void testDeleteReadonlyFile() throws Exception {
-    File f = tempDir.newFile("temp_dir/temp_file");
-    assertTrue(f.setWritable(false, false));
-    File d = f.getParentFile();
-    assertTrue(d.exists());
-
-    Utils.delete(d);
-    assertFalse(d.exists());
-  }
-
-  @Test
-  public void testDeleteLockedFileOnWindows() {
-    IoTestUtil.assumeWindows();
-
-    File f = tempDir.newFile("temp_file");
-    assertTrue(f.exists());
-
-    long ts = 0;
-    try (OutputStream os = new FileOutputStream(f)) {
-      // This locks the file on Windows, preventing it from being deleted.
-      // Utils.delete() will retry for about 100 ms.
+  @Test @DisabledOnOs(OS.WINDOWS) void deleteLockedFileOnUnix() throws Exception {
+    var file = Files.createFile(tempDir.resolve("temp_file"));
+    try (var os = Files.newOutputStream(file)) {
       os.write("test".getBytes(StandardCharsets.UTF_8));
-      ts = System.nanoTime();
-
-      Utils.delete(f);
-      fail("Utils.delete did not fail with the expected IOException on Windows");
-    }
-    catch (IOException e) {
-      ts = (System.nanoTime() - ts) / 1_000_000;
-      assertEquals("Cannot delete: " + f.getAbsolutePath(), e.getMessage());
-      assertThat(ts).as("Utils.delete took " + ts + " ms, which is less than expected").isGreaterThanOrEqualTo(95);
+      Utils.delete(file);
     }
   }
 
-  @Test
-  public void testDeleteLockedFileOnUnix() throws Exception {
-    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
-
-    File f = tempDir.newFile("temp_file");
-    assertTrue(f.exists());
-
-    try (OutputStream os = new FileOutputStream(f)) {
-      os.write("test".getBytes(StandardCharsets.UTF_8));
-      Utils.delete(f);
-    }
-  }
-
-  @Test
-  public void testRecursiveDelete() throws Exception {
-    File topDir = tempDir.newDirectory("temp_dir");
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        File file = new File(topDir, "dir" + i + "/file" + j);
-        FileUtil.writeToFile(file, "test");
-        assertTrue(file.exists());
+  @Test void recursiveDelete() throws Exception {
+    var topDir = Files.createDirectory(tempDir.resolve("temp_dir"));
+    for (var i = 0; i < 3; i++) {
+      var subDir = Files.createDirectory(topDir.resolve("dir" + i));
+      for (var j = 0; j < 3; j++) {
+        Files.writeString(subDir.resolve("file" + j), "test");
       }
     }
 
     Utils.delete(topDir);
-    assertFalse(topDir.exists());
+    assertThat(topDir).doesNotExist();
   }
 
-  @Test
-  public void testNonRecursiveSymlinkDelete() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
-
-    File dir = tempDir.newDirectory("temp_dir");
-    File file = new File(dir, "file");
-    FileUtil.writeToFile(file, "test");
-    assertThat(dir.listFiles()).containsExactly(file);
-
-    File link = new File(tempDir.getRoot(), "link");
-    Path link1 = link.toPath();
-    Files.createSymbolicLink(link1, dir.toPath().getFileName());
-    assertTrue(Utils.isLink(link));
-    assertThat(link.listFiles()).hasSize(1);
-
+  @Test void nonRecursiveSymlinkDelete() throws Exception {
+    var dir = Files.createDirectory(tempDir.resolve("temp_dir"));
+    var file = Files.createFile(dir.resolve("file"));
+    var link = Files.createSymbolicLink(tempDir.resolve("link"), dir.getFileName());
     Utils.delete(link);
-    assertFalse(link.exists());
-    assertThat(dir.listFiles()).containsExactly(file);
+    assertThat(link).doesNotExist();
+    assertThat(file).exists();
   }
 
-  @Test
-  public void testDeleteDanglingSymlink() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
-
-    File dir = tempDir.newDirectory("temp_dir");
-    File link = new File(dir, "link");
-    Path link1 = link.toPath();
-    Path target = Path.of("dangling");
-    Files.createSymbolicLink(link1, target);
-    assertThat(dir.listFiles()).containsExactly(link);
-
+  @Test void deleteDanglingSymlink() throws Exception {
+    var dir = Files.createDirectory(tempDir.resolve("temp_dir"));
+    var link = Files.createSymbolicLink(dir.resolve("link"), Path.of("dangling"));
     Utils.delete(link);
-    assertThat(dir.listFiles()).isEmpty();
+    assertThat(dir).isEmptyDirectory();
   }
 }

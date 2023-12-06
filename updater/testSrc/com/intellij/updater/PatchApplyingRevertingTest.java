@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.util.containers.ContainerUtil;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -15,119 +15,118 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.intellij.updater.UpdaterTestCase.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
-@SuppressWarnings({"JUnit3StyleTestMethodInJUnit4Class", "DuplicateExpressions"})
-public abstract class PatchApplyingRevertingTest extends PatchTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNoTests")
-  public static final class StandardModeTest extends PatchApplyingRevertingTest { }
+@UpdaterTest
+abstract class PatchApplyingRevertingTest {
+  static final class StandardModeTest extends PatchApplyingRevertingTest { }
+  static final class NoBackupTest extends PatchApplyingRevertingTest { }
 
-  @SuppressWarnings("JUnitTestCaseWithNoTests")
-  public static final class NoBackupTest extends PatchApplyingRevertingTest { }
+  private static final class CancellableUI extends ConsoleUpdaterUI {
+    private boolean cancelled = false;
 
-  private File myFile;
-  private PatchSpec myPatchSpec;
-  private boolean myDoBackup;
+    private CancellableUI() {
+      super(false);
+    }
 
-  private PatchApplyingRevertingTest() { }
-
-  @Before
-  @Override
-  public void before() throws Exception {
-    super.before();
-    myFile = getTempFile("patch.zip");
-    myPatchSpec = new PatchSpec()
-      .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath());
-    myDoBackup = !(this instanceof NoBackupTest);
-  }
-
-  @Test
-  public void testCreatingAndApplying() throws Exception {
-    assertAppliedAndReverted();
-  }
-
-  @Test
-  public void testCreatingAndApplyingStrict() throws Exception {
-    myPatchSpec.setStrict(true);
-    assertAppliedAndReverted();
-  }
-
-  @Test
-  public void testCreatingAndApplyingOnADifferentRoot() throws Exception {
-    myPatchSpec.setRoot("bin/");
-    myPatchSpec.setStrict(true);
-    createPatch();
-
-    assertAppliedAndReverted(PatchFileCreator.prepareAndValidate(myFile, new File(myOlderDir, "bin"), TEST_UI));
-  }
-
-  @Test
-  public void testCreatingAndFailingOnADifferentRoot() throws Exception {
-    myPatchSpec.setRoot("bin/");
-    myPatchSpec.setStrict(true);
-    createPatch();
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, new File(myOlderDir, "bin"), TEST_UI);
-    preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(preparationResult.patch));
-    assertNotApplied(preparationResult);
-  }
-
-  @Test
-  public void testReverting() throws Exception {
-    createPatch();
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(preparationResult.patch));
-    assertNotApplied(preparationResult);
-  }
-
-  @Test
-  public void testRevertedWhenFileToDeleteIsLocked() throws Exception {
-    IoTestUtil.assumeWindows();
-    doLockedFileTest();
-  }
-
-  @Test
-  public void testRevertedWhenFileToUpdateIsLocked() throws Exception {
-    IoTestUtil.assumeWindows();
-    FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
-    doLockedFileTest();
-  }
-
-  private void doLockedFileTest() throws Exception {
-    createPatch();
-
-    try (RandomAccessFile raf = new RandomAccessFile(new File(myOlderDir, "bin/idea.bat"), "rw")) {
-      int b = raf.read();
-      raf.seek(0);
-      raf.write(b);
-
-      PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-      assertNotApplied(preparationResult);
+    @Override
+    public void checkCancelled() throws OperationCancelledException {
+      if (cancelled) throw new OperationCancelledException();
     }
   }
 
-  @Test
-  public void testRevertedWhenDeleteFailed() throws Exception {
-    createPatch();
+  @TempDir Path tempDir;
+  @UpdaterTestData Path dataDir;
 
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    PatchAction original = findAction(preparationResult.patch, "bin/idea.bat");
+  private final CancellableUI testUI = new CancellableUI();
+  private final boolean doBackup = this instanceof StandardModeTest;
+
+  private PatchApplyingRevertingTest() { }
+
+  @BeforeEach void clearUIState() {
+    testUI.cancelled = false;
+  }
+
+  @Test void creatingAndApplying() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+
+    assertAppliedAndReverted(dirs);
+  }
+
+  @Test void creatingAndApplyingStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
+
+    assertAppliedAndReverted(dirs, patchFile);
+  }
+
+  @Test void creatingAndApplyingOnADifferentRoot() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setRoot("bin/"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.resolve("bin").toFile(), testUI);
+
+    assertAppliedAndReverted(dirs, preparationResult);
+  }
+
+  @Test void creatingAndFailingOnADifferentRoot() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setRoot("bin/"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.resolve("bin").toFile(), testUI);
+    preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(preparationResult.patch));
+
+    assertNotApplied(dirs, preparationResult);
+  }
+
+  @Test void reverting() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+    preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(preparationResult.patch));
+
+    assertNotApplied(dirs, preparationResult);
+  }
+
+  @Test @EnabledOnOs(OS.WINDOWS) void revertedWhenFileToDeleteIsLocked() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    doLockedFileTest(dirs);
+  }
+
+  @Test @EnabledOnOs(OS.WINDOWS) void revertedWhenFileToUpdateIsLocked() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.writeString(dirs.newDir.resolve("bin/idea.bat"), "new text");
+    doLockedFileTest(dirs);
+  }
+
+  private void doLockedFileTest(UpdaterTestCase.Directories dirs) throws Exception {
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    try (var raf = new RandomAccessFile(dirs.oldDir.resolve("bin/idea.bat").toFile(), "rw")) {
+      var b = raf.read();
+      raf.seek(0);
+      raf.write(b);
+
+      var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+      assertNotApplied(dirs, preparationResult);
+    }
+  }
+
+  @Test void revertedWhenDeleteFailed() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+
+    var original = findAction(preparationResult.patch, "bin/idea.bat");
     assertThat(original).isInstanceOf(DeleteAction.class);
-    List<PatchAction> actions = preparationResult.patch.getActions();
+
+    var actions = preparationResult.patch.getActions();
     actions.set(actions.indexOf(original), new DeleteAction(preparationResult.patch, original.getPath(), original.getChecksum()) {
       @Override
       protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
@@ -135,18 +134,19 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       }
     });
 
-    assertNotApplied(preparationResult);
+    assertNotApplied(dirs, preparationResult);
   }
 
-  @Test
-  public void testRevertedWhenUpdateFailed() throws Exception {
-    FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
-    createPatch();
+  @Test void revertedWhenUpdateFailed() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.writeString(dirs.newDir.resolve("bin/idea.bat"), "new text");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    PatchAction original = findAction(preparationResult.patch, "bin/idea.bat");
+    var original = findAction(preparationResult.patch, "bin/idea.bat");
     assertThat(original).isInstanceOf(UpdateAction.class);
-    List<PatchAction> actions = preparationResult.patch.getActions();
+
+    var actions = preparationResult.patch.getActions();
     actions.set(actions.indexOf(original), new UpdateAction(preparationResult.patch, original.getPath(), original.getChecksum()) {
       @Override
       protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
@@ -154,570 +154,492 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       }
     });
 
-    assertNotApplied(preparationResult);
+    assertNotApplied(dirs, preparationResult);
   }
 
-  @Test
-  public void testCancelledAtBackingUp() throws Exception {
-    createPatch();
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    List<PatchAction> actions = preparationResult.patch.getActions();
+  @Test void cancelledAtBackingUp() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+    var actions = preparationResult.patch.getActions();
     actions.add(new MyFailOnApplyPatchAction(preparationResult.patch) {
       @Override
       protected void doBackup(File toFile, File backupFile) {
-        TEST_UI.cancelled = true;
+        testUI.cancelled = true;
       }
     });
 
-    assertNotApplied(preparationResult);
+    assertNotApplied(dirs, preparationResult);
   }
 
-  @Test
-  public void testCancelledAtApplying() throws Exception {
-    createPatch();
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    List<PatchAction> actions = preparationResult.patch.getActions();
+  @Test void cancelledAtApplying() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+    var actions = preparationResult.patch.getActions();
     actions.add(new MyFailOnApplyPatchAction(preparationResult.patch) {
       @Override
       protected void doApply(ZipFile patchFile, File backupDir, File toFile) {
-        TEST_UI.cancelled = true;
+        testUI.cancelled = true;
       }
     });
 
-    assertNotApplied(preparationResult);
+    assertNotApplied(dirs, preparationResult);
   }
 
-  @Test
-  public void testApplyingWithAbsentFileToDelete() throws Exception {
-    createPatch();
-
-    FileUtil.delete(new File(myOlderDir, "bin/idea.bat"));
-
-    assertAppliedAndReverted();
+  @Test void applyingWithAbsentFileToDelete() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.delete(dirs.oldDir.resolve("bin/idea.bat"));
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testApplyingWithAbsentFileToUpdateStrict() throws Exception {
-    myPatchSpec.setStrict(true);
-    createPatch();
+  @Test void applyingWithAbsentFileToUpdateStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
+    Files.delete(dirs.oldDir.resolve("lib/annotations.jar"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
-                           "lib/annotations.jar",
-                           ValidationResult.Action.UPDATE,
-                           "Absent",
-                           ValidationResult.Option.NONE));
+        "lib/annotations.jar",
+        ValidationResult.Action.UPDATE,
+        "Absent",
+        ValidationResult.Option.NONE));
   }
 
-  @Test
-  public void testApplyingWithAbsentOptionalFile() throws Exception {
-    FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new content".getBytes(StandardCharsets.UTF_8));
+  @Test void applyingWithAbsentOptionalFile() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.writeString(dirs.newDir.resolve("bin/idea.bat"), "new content");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(List.of("bin/idea.bat")));
+    Files.delete(dirs.oldDir.resolve("bin/idea.bat"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    myPatchSpec.setOptionalFiles(List.of("bin/idea.bat"));
-    createPatch();
-
-    FileUtil.delete(new File(myOlderDir, "bin/idea.bat"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, (original, target) -> target.remove("bin/idea.bat"));
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> target.remove("bin/idea.bat"));
   }
 
-  @Test
-  public void testApplyingWithAbsentOptionalDirectory() throws Exception {
-    Files.createDirectory(myOlderDir.toPath().resolve("opt"));
-    Files.write(myOlderDir.toPath().resolve("opt/file.txt"), "previous content".getBytes(StandardCharsets.UTF_8));
-    Files.createDirectory(myNewerDir.toPath().resolve("opt"));
-    Files.write(myNewerDir.toPath().resolve("opt/file.txt"), "new content".getBytes(StandardCharsets.UTF_8));
-    Files.write(myNewerDir.toPath().resolve("opt/another.txt"), "content".getBytes(StandardCharsets.UTF_8));
+  @Test void applyingWithAbsentOptionalDirectory() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.createDirectory(dirs.oldDir.resolve("opt"));
+    Files.writeString(dirs.oldDir.resolve("opt/file.txt"), "previous content");
+    Files.createDirectory(dirs.newDir.resolve("opt"));
+    Files.writeString(dirs.newDir.resolve("opt/file.txt"), "new content");
+    Files.writeString(dirs.newDir.resolve("opt/another.txt"), "content");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(List.of("opt/file.txt")));
+    Utils.delete(dirs.oldDir.resolve("opt"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    myPatchSpec.setOptionalFiles(List.of("opt/file.txt"));
-    createPatch();
-
-    FileUtil.delete(myOlderDir.toPath().resolve("opt"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, (original, target) -> {
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> {
       target.remove("opt/");
       target.remove("opt/file.txt");
       target.remove("opt/another.txt");
     });
   }
 
-  @Test
-  public void testRevertingWithAbsentFileToDelete() throws Exception {
-    createPatch();
-
-    FileUtil.delete(new File(myOlderDir, "bin/idea.bat"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+  @Test void revertingWithAbsentFileToDelete() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    Files.delete(dirs.oldDir.resolve("bin/idea.bat"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
     preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(preparationResult.patch));
-    assertNotApplied(preparationResult);
+
+    assertNotApplied(dirs, preparationResult);
   }
 
-  @Test
-  public void testApplyingWithCriticalFiles() throws Exception {
-    myPatchSpec.setCriticalFiles(List.of("lib/annotations.jar"));
-    assertAppliedAndReverted();
+  @Test void applyingWithCriticalFiles() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setCriticalFiles(List.of("lib/annotations.jar")));
+
+    assertAppliedAndReverted(dirs, patchFile);
   }
 
-  @Test
-  public void testApplyingWithModifiedCriticalFiles() throws Exception {
-    myPatchSpec.setStrict(true);
-    myPatchSpec.setCriticalFiles(List.of("lib/annotations.jar"));
-    createPatch();
+  @Test void applyingWithModifiedCriticalFiles() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setCriticalFiles(List.of("lib/annotations.jar")));
+    modifyFile(dirs.oldDir.resolve("lib/annotations.jar"));
 
-    modifyFile(new File(myOlderDir, "lib/annotations.jar"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs, patchFile);
   }
 
-  @Test
-  public void testApplyingWithRemovedCriticalFiles() throws Exception {
-    myPatchSpec.setStrict(true);
-    myPatchSpec.setCriticalFiles(List.of("lib/annotations.jar"));
-    createPatch();
+  @Test void applyingWithRemovedCriticalFiles() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setCriticalFiles(List.of("lib/annotations.jar")));
+    Files.delete(dirs.oldDir.resolve("lib/annotations.jar"));
 
-    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs, patchFile);
   }
 
-  @Test
-  public void testApplyingWithRemovedNonCriticalFilesWithStrict() throws Exception {
-    myPatchSpec.setStrict(true);
-    createPatch();
+  @Test void applyingWithRemovedNonCriticalFilesWithStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
+    Files.delete(dirs.oldDir.resolve("lib/annotations.jar"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
-                           "lib/annotations.jar",
-                           ValidationResult.Action.UPDATE,
-                           "Absent",
-                           ValidationResult.Option.NONE));
+        "lib/annotations.jar",
+        ValidationResult.Action.UPDATE,
+        "Absent",
+        ValidationResult.Option.NONE));
   }
 
-  @Test
-  public void testApplyingWithRemovedNonCriticalFilesWithoutStrict() throws Exception {
-    createPatch();
+  @Test void applyingWithRemovedNonCriticalFilesWithoutStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    Files.delete(dirs.oldDir.resolve("lib/annotations.jar"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
-                           "lib/annotations.jar",
-                           ValidationResult.Action.UPDATE,
-                           "Absent",
-                           ValidationResult.Option.IGNORE));
+        "lib/annotations.jar",
+        ValidationResult.Action.UPDATE,
+        "Absent",
+        ValidationResult.Option.IGNORE));
   }
 
-  @Test
-  public void testApplyingWithModifiedCriticalFilesAndDifferentRoot() throws Exception {
-    myPatchSpec.setStrict(true);
-    myPatchSpec.setRoot("lib/");
-    myPatchSpec.setCriticalFiles(List.of("lib/annotations.jar"));
-    createPatch();
+  @Test void applyingWithModifiedCriticalFilesAndDifferentRoot() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var spec = createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setRoot("lib/").setCriticalFiles(List.of("lib/annotations.jar"));
+    var patchFile = createPatch(spec);
+    modifyFile(dirs.oldDir.resolve("lib/annotations.jar"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.resolve("lib/").toFile(), testUI);
 
-    modifyFile(new File(myOlderDir, "lib/annotations.jar"));
-
-    assertAppliedAndReverted(PatchFileCreator.prepareAndValidate(myFile, new File(myOlderDir, "lib/"), TEST_UI));
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testApplyingWithCaseChangedNames() throws Exception {
-    FileUtil.rename(new File(myOlderDir, "Readme.txt"), new File(myOlderDir, "README.txt"));
-    assertAppliedAndReverted();
+  @Test void applyingWithCaseChangedNames() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.move(dirs.oldDir.resolve("Readme.txt"), dirs.oldDir.resolve("README.txt"));
+
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testCreatingAndApplyingWhenDirectoryBecomesFile() throws Exception {
-    File file = new File(myOlderDir, "Readme.txt");
-    FileUtil.delete(file);
-    FileUtil.createDirectory(file);
+  @Test void creatingAndApplyingWhenDirectoryBecomesFile() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var file = dirs.oldDir.resolve("Readme.txt");
+    Files.delete(file);
+    Files.createDirectory(file);
+    Files.createFile(file.resolve("subFile.txt"));
+    Files.createFile(Files.createDirectory(file.resolve("subDir")).resolve("subFile.txt"));
+    Files.copy(dirs.oldDir.resolve("lib/boot.jar"), dirs.oldDir.resolve("lib/boot_with_directory_becomes_file.jar"), StandardCopyOption.REPLACE_EXISTING);
 
-    FileUtil.writeToFile(new File(file, "subFile.txt"), "");
-    FileUtil.writeToFile(new File(file, "subDir/subFile.txt"), "");
-
-    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "lib/boot_with_directory_becomes_file.jar"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testCreatingAndApplyingWhenFileBecomesDirectory() throws Exception {
-    File file = new File(myOlderDir, "bin");
-    FileUtil.delete(file);
-    FileUtil.writeToFile(file, "");
+  @Test void creatingAndApplyingWhenFileBecomesDirectory() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var file = dirs.oldDir.resolve("bin");
+    Utils.delete(file);
+    Files.createFile(file);
+    Files.copy(dirs.oldDir.resolve("lib/boot_with_directory_becomes_file.jar"), dirs.oldDir.resolve("lib/boot.jar"), StandardCopyOption.REPLACE_EXISTING);
 
-    FileUtil.copy(new File(myOlderDir, "lib/boot_with_directory_becomes_file.jar"), new File(myOlderDir, "lib/boot.jar"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testConsideringOptions() throws Exception {
-    createPatch();
+  @Test void consideringOptions() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+    var options = preparationResult.patch.getActions().stream().collect(Collectors.toMap(PatchAction::getPath, a -> ValidationResult.Option.IGNORE));
 
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    Map<String, ValidationResult.Option> options =
-      preparationResult.patch.getActions().stream().collect(Collectors.toMap(PatchAction::getPath, a -> ValidationResult.Option.IGNORE));
-    assertNotApplied(preparationResult, options);
+    assertNotApplied(dirs, preparationResult, options);
   }
 
-  @Test
-  public void testApplyWhenCommonFileChanges() throws Exception {
-    createPatch();
+  @Test void applyWhenCommonFileChanges() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    Files.copy(dirs.oldDir.resolve("lib/bootstrap.jar"), dirs.oldDir.resolve("lib/boot.jar"), StandardCopyOption.REPLACE_EXISTING);
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/boot.jar"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, (original, target) -> target.put("lib/boot.jar", CHECKSUMS.BOOTSTRAP_JAR));
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> target.put("lib/boot.jar", UpdaterTestCase.BOOTSTRAP_JAR));
   }
 
-  @Test
-  public void testApplyWhenCommonFileChangesStrict() throws Exception {
-    myPatchSpec.setStrict(true);
-    createPatch();
+  @Test void applyWhenCommonFileChangesStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
+    Files.copy(dirs.oldDir.resolve("lib/bootstrap.jar"), dirs.oldDir.resolve("lib/boot.jar"), StandardCopyOption.REPLACE_EXISTING);
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/boot.jar"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
-                           "lib/boot.jar",
-                           ValidationResult.Action.VALIDATE,
-                           "Modified",
-                           ValidationResult.Option.NONE));
+        "lib/boot.jar",
+        ValidationResult.Action.VALIDATE,
+        "Modified",
+        ValidationResult.Option.NONE));
   }
 
-  @Test
-  public void testApplyWhenCommonFileChangesStrictFile() throws Exception {
-    myPatchSpec.setStrictFiles(List.of("lib/annotations.jar"));
-    createPatch();
+  @Test void applyWhenCommonFileChangesStrictFile() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrictFiles(List.of("lib/annotations.jar")));
+    Files.copy(dirs.oldDir.resolve("lib/bootstrap.jar"), dirs.oldDir.resolve("lib/annotations.jar"), StandardCopyOption.REPLACE_EXISTING);
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/annotations.jar"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
-                           "lib/annotations.jar",
-                           ValidationResult.Action.UPDATE,
-                           "Modified",
-                           ValidationResult.Option.NONE));
+        "lib/annotations.jar",
+        ValidationResult.Action.UPDATE,
+        "Modified",
+        ValidationResult.Option.NONE));
   }
 
-  @Test
-  public void testApplyWhenNewFileExists() throws Exception {
-    createPatch();
+  @Test void applyWhenNewFileExists() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    Files.copy(dirs.oldDir.resolve("Readme.txt"), dirs.oldDir.resolve("new_file.txt"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    FileUtil.copy(new File(myOlderDir, "Readme.txt"), new File(myOlderDir, "new_file.txt"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, (original, target) -> target.put("new_file.txt", CHECKSUMS.README_TXT));
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> target.put("new_file.txt", UpdaterTestCase.README_TXT));
   }
 
-  @Test
-  public void testApplyWhenNewFileExistsStrict() throws Exception {
-    myPatchSpec.setStrict(true);
-    myPatchSpec.setDeleteFiles(List.of("lib/java_pid.*\\.hprof"));
+  @Test void applyWhenNewFileExistsStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setDeleteFiles(List.of("lib/java_pid.*\\.hprof")));
+    Files.writeString(dirs.oldDir.resolve("new_file.txt"), "hello");
+    Files.writeString(dirs.oldDir.resolve("lib/java_pid1234.hprof"), "bye!");
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    createPatch();
-
-    FileUtil.writeToFile(new File(myOlderDir, "new_file.txt"), "hello");
-    FileUtil.writeToFile(new File(myOlderDir, "lib/java_pid1234.hprof"), "bye!");
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
-                           "new_file.txt",
-                           ValidationResult.Action.VALIDATE,
-                           "Unexpected file",
-                           ValidationResult.Option.DELETE));
-    assertAppliedAndReverted(preparationResult);
+        "new_file.txt",
+        ValidationResult.Action.VALIDATE,
+        "Unexpected file",
+        ValidationResult.Option.DELETE));
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testApplyWhenNewDeletableFileExistsStrict() throws Exception {
-    myPatchSpec.setStrict(true);
-    myPatchSpec.setDeleteFiles(List.of("lib/java_pid.*\\.hprof"));
+  @Test void applyWhenNewDeletableFileExistsStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setDeleteFiles(List.of("lib/java_pid.*\\.hprof")));
+    Files.writeString(dirs.oldDir.resolve("lib/java_pid1234.hprof"), "bye!");
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    createPatch();
-
-    FileUtil.writeToFile(new File(myOlderDir, "lib/java_pid1234.hprof"), "bye!");
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult);
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testApplyWhenNewDirectoryExistsStrict() throws Exception {
-    myPatchSpec.setStrict(true);
-    FileUtil.writeToFile(new File(myOlderDir, "delete/delete_me.txt"), "bye!");
+  @Test void applyWhenNewDirectoryExistsStrict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Utils.writeString(dirs.oldDir.resolve("delete/delete_me.txt"), "bye!");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
+    Utils.writeString(dirs.oldDir.resolve("unexpected_new_dir/unexpected.txt"), "bye!");
+    Files.createDirectory(dirs.oldDir.resolve("newDir"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    createPatch();
-
-    FileUtil.writeToFile(new File(myOlderDir, "unexpected_new_dir/unexpected.txt"), "bye!");
-
-    FileUtil.createDirectory(new File(myOlderDir, "newDir"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
-                           "unexpected_new_dir/unexpected.txt",
-                           ValidationResult.Action.VALIDATE,
-                           "Unexpected file",
-                           ValidationResult.Option.DELETE),
+        "unexpected_new_dir/unexpected.txt",
+        ValidationResult.Action.VALIDATE,
+        "Unexpected file",
+        ValidationResult.Option.DELETE),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
-                           "unexpected_new_dir/",
-                           ValidationResult.Action.VALIDATE,
-                           "Unexpected file",
-                           ValidationResult.Option.DELETE),
+        "unexpected_new_dir/",
+        ValidationResult.Action.VALIDATE,
+        "Unexpected file",
+        ValidationResult.Option.DELETE),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
-                           "newDir/",
-                           ValidationResult.Action.CREATE,
-                           "Already exists",
-                           ValidationResult.Option.REPLACE));
-    FileUtil.delete(new File(myOlderDir, "newDir"));
-    assertAppliedAndReverted(preparationResult);
+        "newDir/",
+        ValidationResult.Action.CREATE,
+        "Already exists",
+        ValidationResult.Option.REPLACE));
+
+    Utils.delete(dirs.oldDir.resolve("newDir"));
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testMoveFileByContent() throws Exception {
-    myPatchSpec.setStrict(true);
-    FileUtil.writeToFile(new File(myOlderDir, "move/from/this/directory/move.me"), "old_content");
-    FileUtil.writeToFile(new File(myOlderDir, "a/deleted/file/that/is/a/copy/move.me"), "new_content");
-    FileUtil.writeToFile(new File(myNewerDir, "move/to/this/directory/move.me"), "new_content");
-    createPatch();
+  @Test void moveFileByContent() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Utils.writeString(dirs.oldDir.resolve("move/from/this/directory/move.me"), "old_content");
+    Utils.writeString(dirs.oldDir.resolve("a/deleted/file/that/is/a/copy/move.me"), "new_content");
+    Utils.writeString(dirs.newDir.resolve("move/to/this/directory/move.me"), "new_content");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
+    var hash = Digester.digestStream(new ByteArrayInputStream("new_content".getBytes(StandardCharsets.UTF_8)));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    long hash = Digester.digestStream(new ByteArrayInputStream("new_content".getBytes(StandardCharsets.UTF_8)));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me"))
       .isEqualTo(new UpdateAction(preparationResult.patch, "move/to/this/directory/move.me", "a/deleted/file/that/is/a/copy/move.me", hash, true));
-
-    assertAppliedAndReverted(preparationResult);
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testMoveCriticalFileByContent() throws Exception {
-    myPatchSpec.setStrict(true);
-    myPatchSpec.setCriticalFiles(List.of("a/deleted/file/that/is/a/copy/move.me"));
-    FileUtil.writeToFile(new File(myOlderDir, "move/from/this/directory/move.me"), "old_content");
-    FileUtil.writeToFile(new File(myOlderDir, "a/deleted/file/that/is/a/copy/move.me"), "new_content");
-    FileUtil.writeToFile(new File(myNewerDir, "move/to/this/directory/move.me"), "new_content");
-    createPatch();
+  @Test void moveCriticalFileByContent() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Utils.writeString(dirs.oldDir.resolve("move/from/this/directory/move.me"), "old_content");
+    Utils.writeString(dirs.oldDir.resolve("a/deleted/file/that/is/a/copy/move.me"), "new_content");
+    Utils.writeString(dirs.newDir.resolve("move/to/this/directory/move.me"), "new_content");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true).setCriticalFiles(List.of("a/deleted/file/that/is/a/copy/move.me")));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me"))
-      .isInstanceOf(CreateAction.class);
-
-    assertAppliedAndReverted(preparationResult);
+    assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me")).isInstanceOf(CreateAction.class);
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testDontMoveFromDirectoryToFile() throws Exception {
-    myPatchSpec.setStrict(true);
-    FileUtil.createDirectory(new File(myOlderDir, "from/move.me"));
-    FileUtil.writeToFile(new File(myNewerDir, "move/to/move.me"), "different");
-    createPatch();
-
+  @Test void noMoveFromDirectoryToFile() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.createDirectories(dirs.oldDir.resolve("from/move.me"));
+    Utils.writeString(dirs.newDir.resolve("move/to/move.me"), "different");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
     // creating a patch would have crashed if the directory had been chosen
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+
     assertThat(preparationResult.validationResults).isEmpty();
     assertThat(findAction(preparationResult.patch, "move/to/move.me")).isInstanceOf(CreateAction.class);
     assertThat(findAction(preparationResult.patch, "from/move.me/")).isInstanceOf(DeleteAction.class);
-
-    assertAppliedAndReverted(preparationResult);
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testMoveFileByLocation() throws Exception {
-    myPatchSpec.setStrict(true);
-    FileUtil.writeToFile(new File(myOlderDir, "move/from/this/directory/move.me"), "they");
-    FileUtil.writeToFile(new File(myOlderDir, "not/from/this/one/move.me"), "are");
-    FileUtil.writeToFile(new File(myNewerDir, "move/to/this/directory/move.me"), "different");
-    createPatch();
+  @Test void moveFileByLocation() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Utils.writeString(dirs.oldDir.resolve("move/from/this/directory/move.me"), "they");
+    Utils.writeString(dirs.oldDir.resolve("not/from/this/one/move.me"), "are");
+    Utils.writeString(dirs.newDir.resolve("move/to/this/directory/move.me"), "different");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setStrict(true));
+    var hash = Digester.digestStream(new ByteArrayInputStream("they".getBytes(StandardCharsets.UTF_8)));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    long hash = Digester.digestStream(new ByteArrayInputStream("they".getBytes(StandardCharsets.UTF_8)));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me"))
       .isEqualTo(new UpdateAction(preparationResult.patch, "move/to/this/directory/move.me", "move/from/this/directory/move.me", hash, false));
-
-    assertAppliedAndReverted(preparationResult);
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testSymlinkAdded() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+  @Test void symlinkAdded() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.link"), Path.of("Readme.txt"));
 
-    Files.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Path.of("Readme.txt"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testSymlinkRemoved() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+  @Test void symlinkRemoved() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.link"), Path.of("Readme.txt"));
 
-    Files.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Path.of("Readme.txt"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testSymlinkRenamed() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+  @SuppressWarnings("DuplicateExpressions")
+  @Test void symlinkRenamed() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.lnk"), Path.of("Readme.txt"));
 
-    Files.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Path.of("Readme.txt"));
-    Files.createSymbolicLink(new File(myNewerDir, "Readme.lnk").toPath(), Path.of("Readme.txt"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testSymlinkRetargeted() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+  @Test void symlinkRetargeted() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.link"), Path.of("./Readme.txt"));
 
-    Files.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Path.of("Readme.txt"));
-    Files.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Path.of("./Readme.txt"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testZipFileMove() throws Exception {
-    resetNewerDir();
-    FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+  @Test void zipFileMove() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Utils.move(dirs.newDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib/redist/annotations.jar"), false);
 
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testZipFileMoveWithUpdate() throws Exception {
-    resetNewerDir();
-    FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
-    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+  @Test void zipFileMoveWithUpdate() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.delete(dirs.newDir.resolve("lib/annotations.jar"));
+    Utils.copy(dataDir.resolve("lib/annotations_changed.jar"), dirs.newDir.resolve("lib/redist/annotations.jar"), false);
 
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void testReadOnlyFilesAreDeletable() throws Exception {
-    File file = new File(myOlderDir, "bin/read_only_to_delete");
-    FileUtil.writeToFile(file, "bye");
-    assertTrue(file.setWritable(false, false));
+  @Test void readOnlyFilesAreDeletable() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var file = dirs.oldDir.resolve("bin/read_only_to_delete");
+    Files.writeString(file, "bye");
+    UpdaterTestCase.setReadOnly(file);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    createPatch();
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult);
+    assertAppliedAndReverted(dirs, preparationResult);
   }
 
-  @Test
-  public void testExecutableFlagChange() throws Exception {
-    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
+  @Test @DisabledOnOs(OS.WINDOWS) void executableFlagChange() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.writeString(dirs.oldDir.resolve("bin/to_become_executable"), "to_become_executable");
+    Files.writeString(dirs.oldDir.resolve("bin/to_become_plain"), "to_become_plain");
+    Utils.setExecutable(dirs.oldDir.resolve("bin/to_become_plain"));
+    Files.writeString(dirs.newDir.resolve("bin/to_become_executable"), "to_become_executable");
+    Files.writeString(dirs.newDir.resolve("bin/to_become_plain"), "to_become_plain");
+    Utils.setExecutable(dirs.newDir.resolve("bin/to_become_executable"));
 
-    FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_executable"), "to_become_executable");
-    FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_plain"), "to_become_plain");
-    Utils.setExecutable(new File(myOlderDir, "bin/to_become_plain"), true);
-    resetNewerDir();
-    Utils.setExecutable(new File(myNewerDir, "bin/to_become_plain"), false);
-    Utils.setExecutable(new File(myNewerDir, "bin/to_become_executable"), true);
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void fileToSymlinks() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+  @Test void fileToSymlinks() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.move(dirs.newDir.resolve("Readme.txt"), dirs.newDir.resolve("Readme.md"));
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.txt"), Path.of("Readme.md"));
 
-    resetNewerDir();
-    Files.move(new File(myNewerDir, "Readme.txt").toPath(), new File(myNewerDir, "Readme.md").toPath());
-    Files.createSymbolicLink(new File(myNewerDir, "Readme.txt").toPath(), Path.of("Readme.md"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void multipleDirectorySymlinks() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+  @SuppressWarnings("DuplicateExpressions")
+  @Test void multipleDirectorySymlinks() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
 
-    resetNewerDir();
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Resources/r1.bin"));
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Resources/r2.bin"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Versions/Current"), Path.of("A"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
+    Files.createDirectories(dirs.oldDir.resolve("Home/Frameworks"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("Home/Frameworks/A.framework"), Path.of("../../A.framework"));
 
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Path.of("A"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
-    Files.createDirectories(myOlderDir.toPath().resolve("Home/Frameworks"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("Home/Frameworks/A.framework"), Path.of("../../A.framework"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Resources/r1.bin"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Resources/r2.bin"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Libraries/lib1.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Libraries/lib2.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Resources/r1.bin"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Resources/r2.bin"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Versions/Previous"), Path.of("A"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Versions/Current"), Path.of("B"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
 
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib1.dylib"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib2.dylib"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r1.bin"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r2.bin"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Previous"), Path.of("A"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), Path.of("B"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void symlinksToFilesAndDirectories() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+  @Test void symlinksToFilesAndDirectories() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
 
-    resetNewerDir();
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Resources/r1/res.bin"));
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Resources/r2/res.bin"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Versions/Current"), Path.of("A"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
 
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r1/res.bin"));
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r2/res.bin"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Path.of("A"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
+    randomFile(dirs.newDir.resolve("A.framework/Libraries/lib1.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Libraries/lib2.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Resources/r1/res.bin"));
+    randomFile(dirs.newDir.resolve("A.framework/Resources/r2/res.bin"));
 
-    randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib1.dylib"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib2.dylib"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Resources/r1/res.bin"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Resources/r2/res.bin"));
-
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs);
   }
 
-  @Test
-  public void creatingParentDirectoriesForMissingCriticalFiles() throws Exception {
-    randomFile(myOlderDir.toPath().resolve("plugins/some/lib/plugin.jar"));
-    randomFile(myOlderDir.toPath().resolve("plugins/other/lib/plugin.jar"));
-    resetNewerDir();
-    randomFile(myNewerDir.toPath().resolve("plugins/some/lib/plugin.jar"));
+  @Test void creatingParentDirectoriesForMissingCriticalFiles() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    randomFile(dirs.oldDir.resolve("plugins/some/lib/plugin.jar"));
+    randomFile(dirs.oldDir.resolve("plugins/other/lib/plugin.jar"));
+    randomFile(dirs.newDir.resolve("plugins/some/lib/plugin.jar"));
+    Utils.copy(dirs.oldDir.resolve("plugins/other/lib/plugin.jar"), dirs.newDir.resolve("plugins/other/lib/plugin.jar"), false);
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setCriticalFiles(List.of("plugins/some/lib/plugin.jar")));
+    Utils.delete(dirs.oldDir.resolve("plugins/some"));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
-    myPatchSpec.setCriticalFiles(List.of("plugins/some/lib/plugin.jar"));
-    createPatch();
-
-    NioFiles.deleteRecursively(myOlderDir.toPath().resolve("plugins/some"));
-
-    var preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "plugins/some/lib/plugin.jar",
@@ -725,69 +647,77 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
                            "Absent",
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP)
     );
-    assertAppliedAndReverted(preparationResult, (original, target) -> {
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> {
       original.put("plugins/some/", Digester.DIRECTORY);
       original.put("plugins/some/lib/", Digester.DIRECTORY);
     });
   }
 
-  @Override
-  protected Patch createPatch() throws IOException {
-    assertFalse(myFile.exists());
-    var patch = PatchFileCreator.create(myPatchSpec, myFile, null);
-    assertTrue(myFile.exists());
-    return patch;
-  }
-
-  private static PatchAction findAction(Patch patch, String path) {
-    return ContainerUtil.find(patch.getActions(), a -> a.getPath().equals(path));
-  }
-
-  private static void modifyFile(File file) throws IOException {
-    try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+  private static void modifyFile(Path file) throws IOException {
+    try (RandomAccessFile raf = new RandomAccessFile(file.toFile(), "rw")) {
       raf.seek(20);
       raf.write(42);
     }
   }
 
-  private void assertNotApplied(PatchFileCreator.PreparationResult preparationResult) throws Exception {
-    assertNotApplied(preparationResult, Collections.emptyMap());
+  private Path createPatch(PatchSpec spec) throws IOException {
+    var patchFile = tempDir.resolve("patch.zip");
+    PatchFileCreator.create(spec, patchFile.toFile(), null);
+    assertThat(patchFile).isRegularFile();
+    return patchFile;
   }
 
-  private void assertNotApplied(PatchFileCreator.PreparationResult preparationResult,
-                                Map<String, ValidationResult.Option> options) throws Exception {
-    Patch patch = preparationResult.patch;
-    File backupDir = myDoBackup ? getTempFile("backup") : null;
-    Map<String, Long> original = digest(patch, myOlderDir);
-
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
-    assertFalse(applicationResult.applied);
-
-    if (myDoBackup) {
-      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
-      assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(original);
-    }
+  @SuppressWarnings({"SSBasedInspection", "RedundantSuppression"})
+  private static PatchAction findAction(Patch patch, String path) {
+    return patch.getActions().stream().filter(a -> a.getPath().equals(path)).findFirst().orElse(null);
   }
 
-  private void assertAppliedAndReverted() throws Exception {
-    if (!myFile.exists()) {
-      createPatch();
-    }
-    var preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertAppliedAndReverted(preparationResult, (original, target) -> {});
+  private void assertNotApplied(UpdaterTestCase.Directories dirs, PatchFileCreator.PreparationResult preparationResult) throws Exception {
+    assertNotApplied(dirs, preparationResult, Map.of());
   }
 
-  private void assertAppliedAndReverted(PatchFileCreator.PreparationResult preparationResult) throws Exception {
-    assertAppliedAndReverted(preparationResult, (original, target) -> {});
-  }
-
-  private void assertAppliedAndReverted(PatchFileCreator.PreparationResult preparationResult,
-                                        BiConsumer<Map<String, Long>, Map<String, Long>> adjuster) throws Exception {
+  private void assertNotApplied(
+    UpdaterTestCase.Directories dirs,
+    PatchFileCreator.PreparationResult preparationResult,
+    Map<String, ValidationResult.Option> options
+  ) throws Exception {
     var patch = preparationResult.patch;
-    var original = digest(patch, myOlderDir);
-    var target = digest(patch, myNewerDir);
+    var backupDir = doBackup ? tempDir.resolve("backup").toFile() : null;
+    var original = digest(patch, dirs.oldDir);
+
+    var applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, testUI);
+    assertThat(applicationResult.applied).isFalse();
+
+    if (doBackup) {
+      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, testUI);
+      assertThat(digest(patch, dirs.oldDir)).containsExactlyEntriesOf(original);
+    }
+  }
+
+  private void assertAppliedAndReverted(UpdaterTestCase.Directories dirs) throws Exception {
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    assertAppliedAndReverted(dirs, patchFile);
+  }
+
+  private void assertAppliedAndReverted(UpdaterTestCase.Directories dirs, Path patchFile) throws IOException, OperationCancelledException {
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+    assertAppliedAndReverted(dirs, preparationResult);
+  }
+
+  private void assertAppliedAndReverted(UpdaterTestCase.Directories dirs, PatchFileCreator.PreparationResult preparationResult) throws IOException {
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> {});
+  }
+
+  private void assertAppliedAndReverted(
+    UpdaterTestCase.Directories dirs,
+    PatchFileCreator.PreparationResult preparationResult,
+    BiConsumer<Map<String, Long>, Map<String, Long>> adjuster
+  ) throws IOException {
+    var patch = preparationResult.patch;
+    var original = digest(patch, dirs.oldDir);
+    var target = digest(patch, dirs.newDir);
     adjuster.accept(original, target);
-    var backupDir = myDoBackup ? getTempFile("backup") : null;
+    var backupDir = doBackup ? tempDir.resolve("backup").toFile() : null;
 
     var options = new HashMap<String, ValidationResult.Option>();
     for (var each : preparationResult.validationResults) {
@@ -800,17 +730,21 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       }
     }
 
-    var applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
+    var applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, testUI);
     if (applicationResult.error != null) {
       throw new AssertionError("patch failed", applicationResult.error);
     }
     assertThat(applicationResult.applied).isTrue();
-    assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(target);
+    assertThat(digest(patch, dirs.oldDir)).containsExactlyEntriesOf(target);
 
-    if (myDoBackup) {
-      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
-      assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(original);
+    if (doBackup) {
+      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, testUI);
+      assertThat(digest(patch, dirs.oldDir)).containsExactlyEntriesOf(original);
     }
+  }
+
+  private static Map<String, Long> digest(Patch patch, Path dir) throws IOException {
+    return new TreeMap<>(patch.digestFiles(dir, Set.of()));
   }
 
   private static class MyFailOnApplyPatchAction extends PatchAction {

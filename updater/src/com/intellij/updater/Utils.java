@@ -22,6 +22,8 @@ public final class Utils {
 
   private static final CopyOption[] COPY_STANDARD = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
   private static final CopyOption[] COPY_REPLACE = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING};
+  private static final CopyOption[] MOVE_STANDARD = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.ATOMIC_MOVE};
+  private static final CopyOption[] MOVE_REPLACE = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING};
 
   private static final boolean WIN_UNPRIVILEGED = IS_WINDOWS && Boolean.getBoolean("idea.unprivileged.process");
 
@@ -63,9 +65,12 @@ public final class Utils {
   }
 
   public static void delete(File file) throws IOException {
-    Path start = file.toPath();
-    if (Files.exists(start, LinkOption.NOFOLLOW_LINKS)) {
-      Files.walkFileTree(start, new SimpleFileVisitor<>() {
+    delete(file.toPath());
+  }
+
+  public static void delete(Path file) throws IOException {
+    if (Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
+      Files.walkFileTree(file, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
           tryDelete(file);
@@ -119,13 +124,13 @@ public final class Utils {
     return file.canExecute();
   }
 
-  public static void setExecutable(File file) throws IOException {
-    setExecutable(file, true);
+  public static void setExecutable(Path file) throws IOException {
+    setExecutable(file.toFile());
   }
 
-  public static void setExecutable(File file, boolean executable) throws IOException {
+  public static void setExecutable(File file) throws IOException {
     LOG.info("Setting executable permissions for: " + file);
-    if (!file.setExecutable(executable, false)) {
+    if (!file.setExecutable(true, false)) {
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
@@ -145,11 +150,13 @@ public final class Utils {
   }
 
   public static void copy(File from, File to, boolean overwrite) throws IOException {
-    String message = from + (overwrite ? " over " : " into ") + to;
-    LOG.info(message);
+    copy(from.toPath(), to.toPath(), overwrite);
+  }
 
-    Path src = from.toPath(), dst = to.toPath();
-    BasicFileAttributes attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+  public static void copy(Path src, Path dst, boolean overwrite) throws IOException {
+    LOG.info(src + (overwrite ? " over " : " into ") + dst);
+
+    var attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
     if (attrs.isDirectory()) {
       Files.createDirectories(dst);
     }
@@ -191,6 +198,16 @@ public final class Utils {
         return FileVisitResult.CONTINUE;
       }
     });
+  }
+
+  public static void move(Path src, Path dst, boolean overwrite) throws IOException {
+    Files.createDirectories(dst.getParent());
+    Files.move(src, dst, overwrite ? MOVE_REPLACE : MOVE_STANDARD);
+  }
+
+  public static void writeString(Path file, String data) throws IOException {
+    Files.createDirectories(file.getParent());
+    Files.writeString(file, data);
   }
 
   public static void copyFileToStream(File from, OutputStream out) throws IOException {

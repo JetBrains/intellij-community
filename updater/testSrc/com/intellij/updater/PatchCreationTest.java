@@ -1,78 +1,70 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
-import java.nio.channels.FileLock;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
+import static com.intellij.updater.UpdaterTestCase.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PatchCreationTest extends PatchTestCase {
-  @Test
-  public void testDigestFiles() throws Exception {
-    Patch patch = createPatch();
-    Map<String, Long> checkSums = digest(patch, myOlderDir);
-    assertThat(checkSums).hasSize(10);
+@UpdaterTest
+class PatchCreationTest {
+  @TempDir Path tempDir;
+  @UpdaterTestData Path dataDir;
+
+  private final ConsoleUpdaterUI testUI = new ConsoleUpdaterUI(false);
+
+  @Test void digestFiles() throws Exception {
+    var patch = new Patch(createPatchSpec(dataDir, dataDir));
+    assertThat(patch.digestFiles(dataDir, Set.of())).hasSize(11);
   }
 
-  @Test
-  public void testBasics() throws Exception {
-    Patch patch = createPatch();
-    assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "bin/idea.bat", CHECKSUMS.IDEA_BAT),
-      new CreateAction(patch, "newDir/"),
-      new CreateAction(patch, "newDir/newFile.txt"),
-      new UpdateAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
-      new UpdateAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
-      new UpdateAction(patch, "lib/bootstrap.jar", CHECKSUMS.BOOTSTRAP_JAR));
-  }
-
-  @Test
-  public void testCreatingWithIgnoredFiles() throws Exception {
-    PatchSpec spec = new PatchSpec()
-      .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath())
-      .setIgnoredFiles(List.of("Readme.txt", "bin/idea.bat"));
-    Patch patch = new Patch(spec);
+  @Test void basics() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
     assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "bin/idea.bat", UpdaterTestCase.IDEA_BAT),
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
-      new UpdateAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
-      new UpdateAction(patch, "lib/bootstrap.jar", CHECKSUMS.BOOTSTRAP_JAR));
+      new UpdateAction(patch, "Readme.txt", UpdaterTestCase.README_TXT),
+      new UpdateAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", UpdaterTestCase.BOOTSTRAP_JAR));
   }
 
-  @Test
-  public void testValidation() throws Exception {
-    FileUtil.delete(new File(myNewerDir, "bin/focuskiller.dll"));
-    FileUtil.copy(new File(myOlderDir, "bin/focuskiller.dll"), new File(myNewerDir, "newDir/focuskiller.dll"));
-    Patch patch = createPatch();
+  @Test void creatingWithIgnoredFiles() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir).setIgnoredFiles(List.of("Readme.txt", "bin/idea.bat")));
 
-    FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed");
-    FileUtil.writeToFile(new File(myOlderDir, "bin/focuskiller.dll"), "changed");
-    FileUtil.createDirectory(new File(myOlderDir, "extraDir"));
-    FileUtil.writeToFile(new File(myOlderDir, "extraDir/extraFile.txt"), "");
-    FileUtil.createDirectory(new File(myOlderDir, "newDir"));
-    FileUtil.writeToFile(new File(myOlderDir, "newDir/newFile.txt"), "");
-    FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "changed");
-    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
-    FileUtil.delete(new File(myOlderDir, "lib/bootstrap.jar"));
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new CreateAction(patch, "newDir/"),
+      new CreateAction(patch, "newDir/newFile.txt"),
+      new UpdateAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", UpdaterTestCase.BOOTSTRAP_JAR));
+  }
 
-    assertThat(sortResults(patch.validate(myOlderDir, TEST_UI))).containsExactly(
-      new ValidationResult(ValidationResult.Kind.CONFLICT,
-                           "bin/focuskiller.dll",
-                           ValidationResult.Action.DELETE,
-                           "Modified",
-                           ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
+  @Test void validation() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    Files.writeString(dirs.oldDir.resolve("bin/idea.bat"), "changed");
+    Files.createDirectory(dirs.oldDir.resolve("extraDir"));
+    Files.writeString(dirs.oldDir.resolve("extraDir/extraFile.txt"), "");
+    Files.createDirectory(dirs.oldDir.resolve("newDir"));
+    Files.writeString(dirs.oldDir.resolve("newDir/newFile.txt"), "");
+    Files.writeString(dirs.oldDir.resolve("Readme.txt"), "changed");
+    Files.writeString(dirs.oldDir.resolve("lib/annotations.jar"), "changed");
+    Files.delete(dirs.oldDir.resolve("lib/bootstrap.jar"));
+
+    assertThat(sortResults(patch.validate(dirs.oldDir.toFile(), testUI))).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/idea.bat",
                            ValidationResult.Action.DELETE,
@@ -94,11 +86,6 @@ public class PatchCreationTest extends PatchTestCase {
                            "Modified",
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
-                           "bin/focuskiller.dll",
-                           ValidationResult.Action.UPDATE,
-                           "Modified",
-                           ValidationResult.Option.IGNORE),
-      new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
                            "Modified",
@@ -110,61 +97,67 @@ public class PatchCreationTest extends PatchTestCase {
                            ValidationResult.Option.IGNORE));
   }
 
-  @Test
-  public void testValidatingCaseOnlyRename() throws Exception {
-    Patch patch = createCaseOnlyRenamePatch();
-    assertThat(patch.validate(myOlderDir, TEST_UI)).isEmpty();
+  @Test void validatingCaseOnlyRename() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    simulateCaseOnlyRename(patch);
+
+    assertThat(patch.validate(dirs.oldDir.toFile(), testUI)).isEmpty();
   }
 
-  @Test
-  public void testValidatingCaseOnlyRenameWithConflict() throws Exception {
-    assertThat(Runner.isCaseSensitiveFs()).isEqualTo(SystemInfo.isFileSystemCaseSensitive);
+  @Test void validatingCaseOnlyRenameWithConflict() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    simulateCaseOnlyRename(patch);
+    Files.writeString(dirs.oldDir.resolve("bin/IDEA.bat"), Files.readString(dirs.oldDir.resolve("bin/idea.bat")));
 
-    Patch patch = createCaseOnlyRenamePatch();
-    FileUtil.writeToFile(new File(myOlderDir, "bin/IDEA.bat"), FileUtil.loadFileBytes(new File(myOlderDir, "bin/idea.bat")));
-
-    List<ValidationResult> results = patch.validate(myOlderDir, TEST_UI);
-    if (SystemInfo.isFileSystemCaseSensitive) {
+    var results = patch.validate(dirs.oldDir.toFile(), testUI);
+    if (Runner.isCaseSensitiveFs()) {
       assertThat(results).containsExactly(
         new ValidationResult(ValidationResult.Kind.CONFLICT,
-                             "bin/IDEA.bat",
-                             ValidationResult.Action.CREATE,
-                             "Already exists",
-                             ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
+          "bin/IDEA.bat",
+          ValidationResult.Action.CREATE,
+          "Already exists",
+          ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
     }
     else {
       assertThat(results).isEmpty();
     }
   }
 
-  @Test
-  public void testValidationWithOptionalFiles() throws Exception {
-    Patch patch1 = createPatch();
-    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "lib/annotations.jar"));
-    assertThat(patch1.validate(myOlderDir, TEST_UI)).containsExactly(
+  private static void simulateCaseOnlyRename(Patch patch) {
+    assertThat(patch.getActions().get(0))
+      .isInstanceOf(DeleteAction.class)
+      .hasFieldOrPropertyWithValue("path", "bin/idea.bat");
+    patch.getActions().add(1, new CreateAction(patch, "bin/IDEA.bat")); // simulates rename "idea.bat" -> "IDEA.bat"
+  }
+
+  @Test void validationWithOptionalFiles() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+
+    var patch1 = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    Files.copy(dirs.oldDir.resolve("lib/boot.jar"), dirs.oldDir.resolve("lib/annotations.jar"), StandardCopyOption.REPLACE_EXISTING);
+    assertThat(patch1.validate(dirs.oldDir.toFile(), testUI)).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
                            "Modified",
                            ValidationResult.Option.IGNORE));
 
-    PatchSpec spec = new PatchSpec()
-      .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath())
-      .setOptionalFiles(List.of("lib/annotations.jar"));
-    Patch patch2 = new Patch(spec);
-    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
-    assertThat(patch2.validate(myOlderDir, TEST_UI)).isEmpty();
+    var patch2 = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(List.of("lib/annotations.jar")));
+    Files.delete(dirs.oldDir.resolve("lib/annotations.jar"));
+    assertThat(patch2.validate(dirs.oldDir.toFile(), testUI)).isEmpty();
   }
 
-  @Test
-  public void testValidatingNonAccessibleFiles() throws Exception {
-    Patch patch = createPatch();
-    File f = new File(myOlderDir, "Readme.txt");
-    try (FileOutputStream s = new FileOutputStream(f, true); FileLock ignored = s.getChannel().lock()) {
-      String message = Utils.IS_WINDOWS ? "Locked by: [" + ProcessHandle.current().pid() + "] OpenJDK Platform binary" : "Access denied";
-      ValidationResult.Option option = Utils.IS_WINDOWS ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
-      assertThat(patch.validate(myOlderDir, TEST_UI)).containsExactly(
+  @Test void validatingNonAccessibleFiles() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    var file = dirs.oldDir.resolve("Readme.txt");
+    try (var channel = FileChannel.open(file, StandardOpenOption.APPEND); var ignored = channel.lock()) {
+      var message = Utils.IS_WINDOWS ? "Locked by: [" + ProcessHandle.current().pid() + "] OpenJDK Platform binary" : "Access denied";
+      var option = Utils.IS_WINDOWS ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
+      assertThat(patch.validate(dirs.oldDir.toFile(), testUI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,
                              "Readme.txt",
                              ValidationResult.Action.UPDATE,
@@ -173,122 +166,112 @@ public class PatchCreationTest extends PatchTestCase {
     }
   }
 
-  @Test
-  public void testZipFileMove() throws Exception {
-    resetNewerDir();
-    FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+  @Test void zipFileMove() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Utils.move(dirs.newDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib/redist/annotations.jar"), false);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
-    Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, true));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, true));
   }
 
-  @Test
-  public void testZipFileMoveWithUpdate() throws Exception {
-    resetNewerDir();
-    FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
-    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+  @Test void zipFileMoveWithUpdate() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.delete(dirs.newDir.resolve("lib/annotations.jar"));
+    Utils.copy(dataDir.resolve("lib/annotations_changed.jar"), dirs.newDir.resolve("lib/redist/annotations.jar"), false);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
-    Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, false));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, false));
   }
 
-  @Test
-  public void testZipFileMoveWithAlternatives() throws Exception {
-    FileUtil.copy(new File(myOlderDir, "lib/annotations.jar"), new File(myOlderDir, "lib64/annotations.jar"));
-    resetNewerDir();
-    FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
-    FileUtil.rename(new File(myNewerDir, "lib64/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.jar"));
+  @Test void zipFileMoveWithAlternatives() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Utils.copy(dirs.oldDir.resolve("lib/annotations.jar"), dirs.oldDir.resolve("lib64/annotations.jar"), false);
+    Utils.copy(dirs.newDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib64/redist/annotations.jar"), false);
+    Utils.move(dirs.newDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib/redist/annotations.jar"), false);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
-    Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
-      new DeleteAction(patch, "lib64/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib64/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, true),
-      new UpdateAction(patch, "lib64/redist/annotations.jar", "lib64/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, true));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.jar", "lib64/annotations.jar", UpdaterTestCase.ANNOTATIONS_JAR, true));
   }
 
-  @Test
-  public void testNoOptionalFileMove1() throws Exception {
-    resetNewerDir();
-    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myOlderDir, "lib/annotations.bin"));
-    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myOlderDir, "lib64/annotations.bin"));
-    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
-    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
+  @Test void noOptionalFileMove1() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Utils.copy(dataDir.resolve("lib/annotations.jar"), dirs.oldDir.resolve("lib/annotations.bin"), false);
+    Utils.copy(dataDir.resolve("lib/annotations_changed.jar"), dirs.oldDir.resolve("lib64/annotations.bin"), false);
+    Utils.copy(dataDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib/redist/annotations.bin"), false);
+    Utils.copy(dataDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib64/redist/annotations.bin"), false);
 
-    Patch patch = createPatch(spec -> spec.setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
-      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
+      new DeleteAction(patch, "lib/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_CHANGED_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR, false));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_CHANGED_JAR, false));
   }
 
-  @Test
-  public void testNoOptionalFileMove2() throws Exception {
-    resetNewerDir();
-    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myOlderDir, "lib/annotations.bin"));
-    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myOlderDir, "lib64/annotations.bin"));
-    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
-    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
+  @Test void noOptionalFileMove2() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Utils.copy(dataDir.resolve("lib/annotations_changed.jar"), dirs.oldDir.resolve("lib/annotations.bin"), false);
+    Utils.copy(dataDir.resolve("lib/annotations.jar"), dirs.oldDir.resolve("lib64/annotations.bin"), false);
+    Utils.copy(dataDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib/redist/annotations.bin"), false);
+    Utils.copy(dataDir.resolve("lib/annotations.jar"), dirs.newDir.resolve("lib64/redist/annotations.bin"), false);
 
-    Patch patch = createPatch(spec -> spec.setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
-      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib/annotations.bin", UpdaterTestCase.ANNOTATIONS_CHANGED_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", UpdaterTestCase.ANNOTATIONS_JAR, true));
   }
 
-  @Test
-  public void testSaveLoad() throws Exception {
-    Patch original = createPatch();
-    File f = getTempFile("file");
-    try (FileOutputStream out = new FileOutputStream(f)) {
+  @Test void testSaveLoad() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    var original = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+    var f = tempDir.resolve("file");
+    try (var out = Files.newOutputStream(f)) {
       original.write(out);
     }
     Patch recreated;
-    try (FileInputStream in = new FileInputStream(f)) {
+    try (var in = Files.newInputStream(f)) {
       recreated = new Patch(in);
     }
     assertThat(recreated.getActions()).isEqualTo(original.getActions());
   }
 
-  @Test
-  public void testNoSymlinkNoise() throws IOException {
-    assumeSymLinkCreationIsSupported();
+  @SuppressWarnings("DuplicateExpressions")
+  @Test void noSymlinkNoise() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.writeString(dirs.oldDir.resolve("bin/_target"), "test");
+    Files.createSymbolicLink(dirs.oldDir.resolve("bin/_link"), Path.of("_target"));
+    Files.writeString(dirs.newDir.resolve("bin/_target"), "test");
+    Files.createSymbolicLink(dirs.newDir.resolve("bin/_link"), Path.of("_target"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
-    Files.write(new File(myOlderDir, "bin/_target").toPath(), "test".getBytes(StandardCharsets.UTF_8));
-    Files.createSymbolicLink(new File(myOlderDir, "bin/_link").toPath(), Path.of("_target"));
-    resetNewerDir();
-
-    Patch patch = createPatch();
     assertThat(patch.getActions()).isEmpty();
   }
 
-  @Test
-  public void testSymlinkDereferenceAndMove() throws IOException {
-    assumeSymLinkCreationIsSupported();
+  @Test void testSymlinkDereferenceAndMove() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    var checksum = randomFile(dirs.oldDir.resolve("bin/mac_lib.jnilib"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("bin/mac_lib.dylib"), Path.of("mac_lib.jnilib"));
+    Utils.copy(dirs.oldDir.resolve("bin/mac_lib.jnilib"), dirs.newDir.resolve("plugins/whatever/bin/mac_lib.dylib"), false);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
-    long checksum = randomFile(myOlderDir.toPath().resolve("bin/mac_lib.jnilib"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("bin/mac_lib.dylib"), Path.of("mac_lib.jnilib"));
-    resetNewerDir();
-    Utils.delete(new File(myNewerDir, "bin/mac_lib.dylib"));
-    Files.createDirectories(new File(myNewerDir, "plugins/whatever/bin").toPath());
-    Files.move(new File(myNewerDir, "bin/mac_lib.jnilib").toPath(), new File(myNewerDir, "plugins/whatever/bin/mac_lib.dylib").toPath());
-
-    Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "bin/mac_lib.dylib", linkHash("mac_lib.jnilib")),
       new DeleteAction(patch, "bin/mac_lib.jnilib", checksum),
@@ -298,57 +281,151 @@ public class PatchCreationTest extends PatchTestCase {
       new CreateAction(patch, "plugins/whatever/bin/mac_lib.dylib"));
   }
 
-  @Test
-  public void testValidatingSymlinkToDirectory() throws Exception {
-    assumeSymLinkCreationIsSupported();
+  @Test void validatingSymlinkToDirectory() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.createDirectories(dirs.oldDir.resolve("other_dir"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("dir"), Path.of("other_dir"));
+    Files.createDirectories(dirs.newDir.resolve("dir"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
-    resetNewerDir();
-    Files.createDirectories(myOlderDir.toPath().resolve("other_dir"));
-    Path target = Path.of("other_dir");
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("dir"), target);
-    Files.createDirectories(myNewerDir.toPath().resolve("dir"));
-
-    Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "dir", linkHash("other_dir")),
       new DeleteAction(patch, "other_dir/", Digester.DIRECTORY),
       new CreateAction(patch, "dir/"));
 
-    assertThat(patch.validate(myOlderDir, TEST_UI)).isEmpty();
+    assertThat(patch.validate(dirs.oldDir.toFile(), testUI)).isEmpty();
   }
 
-  @Test
-  public void testValidatingMultipleSymlinkConversion() throws Exception {
-    assumeSymLinkCreationIsSupported();
-
-    resetNewerDir();
-
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib.dylib"));
-    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r/res.bin"));
+  @Test void validatingMultipleSymlinkConversion() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Libraries/lib.dylib"));
+    randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Resources/r/res.bin"));
     Path target2 = Path.of("A");
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), target2);
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Versions/Current"), target2);
     Path target1 = Path.of("Versions/Current/Libraries");
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), target1);
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Libraries"), target1);
     Path target = Path.of("Versions/Current/Resources");
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), target);
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Resources"), target);
+    randomFile(dirs.newDir.resolve("A.framework/Libraries/lib.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Resources/r/res.bin"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
 
-    randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib.dylib"));
-    randomFile(myNewerDir.toPath().resolve("A.framework/Resources/r/res.bin"));
-
-    Patch patch = createPatch();
-    assertThat(patch.validate(myOlderDir, TEST_UI)).isEmpty();
+    assertThat(patch.validate(dirs.oldDir.toFile(), testUI)).isEmpty();
   }
 
-  private Patch createCaseOnlyRenamePatch() throws IOException {
-    Patch patch = createPatch();
-    assertThat(patch.getActions().get(0))
-      .isInstanceOf(DeleteAction.class)
-      .hasFieldOrPropertyWithValue("path", "bin/idea.bat");
-    patch.getActions().add(1, new CreateAction(patch, "bin/IDEA.bat")); // simulates rename "idea.bat" -> "IDEA.bat"
-    return patch;
+  @SuppressWarnings("DuplicateExpressions")
+  @Test void same() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(patch.getActions()).containsExactly();
   }
 
-  private static long linkHash(String target) throws IOException {
-    return Digester.digestStream(new ByteArrayInputStream(target.getBytes(StandardCharsets.UTF_8))) | Digester.SYM_LINK;
+  @Test void create() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new CreateAction(patch, "Readme.link"));
+  }
+
+  @Test void delete() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "Readme.link", UpdaterTestCase.LINK_TO_README_TXT));
+  }
+
+  @Test void rename() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    var target = Path.of("Readme.txt");
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.lnk"), target);
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.link"), target);
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "Readme.lnk", UpdaterTestCase.LINK_TO_README_TXT),
+      new CreateAction(patch, "Readme.link"));
+  }
+
+  @Test void retarget() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.link"), Path.of("./Readme.txt"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "Readme.link", UpdaterTestCase.LINK_TO_README_TXT),
+      new CreateAction(patch, "Readme.link"));
+  }
+
+  @Test void renameAndRetarget() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.createSymbolicLink(dirs.oldDir.resolve("Readme.lnk"), Path.of("./Readme.txt"));
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.link"), Path.of("Readme.txt"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "Readme.lnk",
+        File.separatorChar == '\\' ? UpdaterTestCase.LINK_TO_DOT_README_TXT_DOS : UpdaterTestCase.LINK_TO_DOT_README_TXT_UNIX),
+      new CreateAction(patch, "Readme.link"));
+  }
+
+  @Test void fileToLink() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    Files.move(dirs.newDir.resolve("Readme.txt"), dirs.newDir.resolve("Readme.md"));
+    Files.createSymbolicLink(dirs.newDir.resolve("Readme.txt"), Path.of("Readme.md"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "Readme.txt", UpdaterTestCase.README_TXT),
+      new CreateAction(patch, "Readme.md"),
+      new CreateAction(patch, "Readme.txt"));
+  }
+
+  @SuppressWarnings("DuplicateExpressions")
+  @Test void multipleDirectorySymlinks() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, false);
+    var l1 = randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    var l2 = randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    var r1 = randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Resources/r1.bin"));
+    var r2 = randomFile(dirs.oldDir.resolve("A.framework/Versions/A/Resources/r2.bin"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Versions/Current"), Path.of("A"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
+    Files.createSymbolicLink(dirs.oldDir.resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Resources/r1.bin"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/A/Resources/r2.bin"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Libraries/lib1.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Libraries/lib2.dylib"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Resources/r1.bin"));
+    randomFile(dirs.newDir.resolve("A.framework/Versions/B/Resources/r2.bin"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Versions/Previous"), Path.of("A"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Versions/Current"), Path.of("B"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Libraries"), Path.of("Versions/Current/Libraries"));
+    Files.createSymbolicLink(dirs.newDir.resolve("A.framework/Resources"), Path.of("Versions/Current/Resources"));
+    var patch = new Patch(createPatchSpec(dirs.oldDir, dirs.newDir));
+
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "A.framework/Versions/Current", linkHash("A")),
+      new CreateAction(patch, "A.framework/Versions/B/"),
+      new CreateAction(patch, "A.framework/Versions/B/Libraries/"),
+      new CreateAction(patch, "A.framework/Versions/B/Libraries/lib1.dylib"),
+      new CreateAction(patch, "A.framework/Versions/B/Libraries/lib2.dylib"),
+      new CreateAction(patch, "A.framework/Versions/B/Resources/"),
+      new CreateAction(patch, "A.framework/Versions/B/Resources/r1.bin"),
+      new CreateAction(patch, "A.framework/Versions/B/Resources/r2.bin"),
+      new CreateAction(patch, "A.framework/Versions/Current"),
+      new CreateAction(patch, "A.framework/Versions/Previous"),
+      new UpdateAction(patch, "A.framework/Versions/A/Libraries/lib1.dylib", l1),
+      new UpdateAction(patch, "A.framework/Versions/A/Libraries/lib2.dylib", l2),
+      new UpdateAction(patch, "A.framework/Versions/A/Resources/r1.bin", r1),
+      new UpdateAction(patch, "A.framework/Versions/A/Resources/r2.bin", r2));
   }
 }
