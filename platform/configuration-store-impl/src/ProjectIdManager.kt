@@ -19,8 +19,12 @@ internal interface ProjectIdManager {
   var id: @NonNls String?
 }
 
-@State(name = "ProjectId", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))], reportStatistic = false)
-private class ProjectIdManagerImpl : SimplePersistentStateComponent<ProjectIdState>(ProjectIdState()),
+@State(
+  name = "ProjectId",
+  storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))],
+  reportStatistic = false,
+)
+private class ProjectIdManagerImpl : SimplePersistentStateComponent<ProjectIdManagerImpl.State>(State()),
                                      ProjectIdManager {
 
   override var id: @NonNls String?
@@ -28,11 +32,11 @@ private class ProjectIdManagerImpl : SimplePersistentStateComponent<ProjectIdSta
     set(value) {
       state.id = value
     }
-}
 
-internal class ProjectIdState : BaseState() {
-  @get:Attribute
-  var id by string()
+  class State : BaseState() {
+    @get:Attribute
+    var id by string()
+  }
 }
 
 @TestOnly
