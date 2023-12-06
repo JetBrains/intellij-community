@@ -21,5 +21,6 @@
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.instanceContainer" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

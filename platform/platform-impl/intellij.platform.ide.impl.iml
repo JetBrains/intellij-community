@@ -156,5 +156,6 @@
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.settings" />
     <orderEntry type="module" module-name="intellij.platform.settings.local" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

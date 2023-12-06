@@ -144,5 +144,6 @@
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

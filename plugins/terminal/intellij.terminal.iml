@@ -69,5 +69,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

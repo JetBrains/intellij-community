@@ -36,5 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.ijent" />
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

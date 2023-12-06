@@ -93,5 +93,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.compose" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

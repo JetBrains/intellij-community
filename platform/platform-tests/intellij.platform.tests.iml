@@ -87,5 +87,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
   </component>
 </module>

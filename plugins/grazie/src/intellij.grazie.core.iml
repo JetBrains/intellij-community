@@ -500,5 +500,6 @@
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="commons-lang3" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

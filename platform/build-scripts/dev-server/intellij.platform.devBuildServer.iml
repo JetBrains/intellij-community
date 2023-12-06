@@ -49,5 +49,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>
