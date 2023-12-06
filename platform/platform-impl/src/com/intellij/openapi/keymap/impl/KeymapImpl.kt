@@ -232,7 +232,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
           else -> result + shortcut
         }
       }
-      if (result.areShortcutsEqualToParent(id, actionBinding)) null else result
+      if (areShortcutsEqualToParent(result, id, actionBinding)) null else result
     }
 
     cleanShortcutsCache()
@@ -324,7 +324,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
         parent == null -> if (list.size == 1) null else java.util.List.copyOf(list - toDelete)
         else -> {
           val result = list - toDelete
-          if (result.areShortcutsEqualToParent(id, actionBinding)) null else java.util.List.copyOf(result)
+          if (areShortcutsEqualToParent(result, id, actionBinding)) null else java.util.List.copyOf(result)
         }
       }
     }
@@ -333,13 +333,13 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
     fireShortcutChanged(actionId = actionId, fromSettings = fromSettings)
   }
 
-  private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String, actionBinding: (String) -> String?): Boolean {
+  private fun areShortcutsEqualToParent(shortcuts: List<Shortcut>, actionId: String, actionBinding: (String) -> String?): Boolean {
     if (parent == null) {
       return false
     }
 
     val shortcuts2 = getParentShortcuts(actionId, actionBinding)
-    return areShortcutsEqual(shortcuts1 = this, shortcuts2 = shortcuts2)
+    return areShortcutsEqual(shortcuts1 = shortcuts, shortcuts2 = shortcuts2)
   }
 
   private fun getOwnOrBoundShortcuts(actionId: String, actionManager: ActionManagerEx): List<Shortcut> {
