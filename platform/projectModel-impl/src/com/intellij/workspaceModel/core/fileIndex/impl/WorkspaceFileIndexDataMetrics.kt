@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.fromNanosecToMillis
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 
@@ -56,10 +57,10 @@ object WorkspaceFileIndexDataMetrics {
         markDirtyGauge.record(markDirtyTimeMs.get())
         updateDirtyEntitiesGauge.record(updateDirtyEntitiesTimeMs.get())
         onEntitiesChangedGauge.record(onEntitiesChangedTimeMs.get())
-        getPackageNameGauge.record(getPackageNameTimeNanosec.get() / 1000)
+        getPackageNameGauge.record(getPackageNameTimeNanosec.fromNanosecToMillis())
         getDirectoriesByPackageNameGauge.record(getDirectoriesByPackageNameTimeMs.get())
 
-        registerFileSetsMsGauge.record(registerFileSetsTimeNanosec.get() / 1000)
+        registerFileSetsMsGauge.record(registerFileSetsTimeNanosec.fromNanosecToMillis())
       },
       instancesCountGauge, initTimeGauge, getFileInfoTimeGauge, visitFileSetsGauge,
       processFileSetsGauge, markDirtyGauge, updateDirtyEntitiesGauge, onEntitiesChangedGauge,

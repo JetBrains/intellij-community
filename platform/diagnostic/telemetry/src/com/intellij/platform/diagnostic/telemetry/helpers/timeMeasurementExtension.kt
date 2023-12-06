@@ -32,3 +32,5 @@ inline fun <T> AtomicLong.addMeasuredTimeNanosec(block: () -> T): T {
   this.addAndGet(measureNanoTime { value = block() })
   return value
 }
+
+fun AtomicLong.fromNanosecToMillis(): Long = this.get() / 1_000_000
