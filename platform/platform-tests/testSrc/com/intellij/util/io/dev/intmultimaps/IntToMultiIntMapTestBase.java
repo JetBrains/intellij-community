@@ -19,11 +19,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
 
   protected M multimap;
 
-  public IntToMultiIntMapTestBase() {
-    this(500_000);
-  }
-
-  public IntToMultiIntMapTestBase(int entriesCountToTest) { this.entriesCountToTest = entriesCountToTest; }
+  protected IntToMultiIntMapTestBase(int entriesCountToTest) { this.entriesCountToTest = entriesCountToTest; }
 
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
@@ -130,22 +126,22 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
 
 
   @Test
-  public void withManyKeyValuesPut_SizeIsCountOfTruthReturned() throws IOException {
+  public void withManyKeyValuesPut_SizeIsEqualToNumberOfTruthReturned() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
-    int entriesPut = 0;
+    int truthsReturnedFromPut = 0;
     for (long packedKeyValue : packedKeysValues) {
       int key = key(packedKeyValue);
       int value = value(packedKeyValue);
 
       if (multimap.put(key, value)) {
-        entriesPut++;
+        truthsReturnedFromPut++;
       }
 
       assertEquals(
-        entriesPut,
+        truthsReturnedFromPut,
         multimap.size(),
-        entriesPut + " entries were really put to multimap"
+        truthsReturnedFromPut + " entries were really put to multimap"
       );
     }
   }

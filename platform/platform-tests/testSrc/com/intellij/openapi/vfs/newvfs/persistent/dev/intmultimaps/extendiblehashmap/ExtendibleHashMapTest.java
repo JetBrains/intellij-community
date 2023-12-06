@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHashMap> {
 
   public ExtendibleHashMapTest() {
-    super(/*entriesToTest: */1_000_000);
+    super(/*entriesToTest: */4_000_000);
   }
 
   @Test
@@ -119,6 +119,8 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
       "File [" + storagePath + "] must NOT exist after .closeAndClean()"
     );
   }
+
+  //===================== infrastructure ===============================================================
 
   private Path storagePath;
   private final List<ExtendibleHashMap> multimapsToCloseAndClean = new ArrayList<>();
