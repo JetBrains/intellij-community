@@ -76,11 +76,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   private static final Key<SpinningProgressIcon> spinningIconKey = Key.create("spinning-icon-key");
 
-  private final Set<String> myContextActionIdSet = new HashSet<>();
-  private final Map<String, AnAction> myIdToAction = new HashMap<>();
-  private final Map<String, AnAction> myContextActionIdToAction = new HashMap<>();
+  private final Set<String> contextActionIdSet = new HashSet<>();
+  private final Map<String, AnAction> idToAction = new HashMap<>();
+  private final Map<String, AnAction> contextActionIdToAction = new HashMap<>();
 
-  private final Map<String, AnAction> myRunWidgetIdToAction = new HashMap<>();
+  private final Map<String, AnAction> runWidgetIdToAction = new HashMap<>();
 
   public ExecutorRegistryImpl() {
     Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
@@ -112,7 +112,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   @TestOnly
   public synchronized void initExecutorActions(@NotNull Executor executor, @NotNull ActionRuntimeRegistrar actionRegistrar) {
-    if (myContextActionIdSet.contains(executor.getContextActionId())) {
+    if (contextActionIdSet.contains(executor.getContextActionId())) {
       LOG.error("Executor with context action id: \"" + executor.getContextActionId() + "\" was already registered!");
     }
 
@@ -136,9 +136,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
-    registerActionInGroup(actionRegistrar, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
+    registerActionInGroup(actionRegistrar, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP,
+                          idToAction);
 
-    AnAction action = registerAction(actionRegistrar, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
+    AnAction action = registerAction(actionRegistrar, executor.getContextActionId(), runContextAction, contextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
       DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP));
       actionRegistrar.addToGroup(group, action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE));
@@ -148,13 +149,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       actionRegistrar.addToGroup(group, action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"));
     }
 
-    AnAction nonExistingAction = registerAction(actionRegistrar, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
+    AnAction nonExistingAction = registerAction(actionRegistrar, newConfigurationContextActionId(executor), runNonExistingContextAction,
+                                                contextActionIdToAction);
     DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
     actionRegistrar.addToGroup(group, nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"));
 
     initRunToolbarExecutorActions(executor, actionRegistrar);
 
-    myContextActionIdSet.add(executor.getContextActionId());
+    contextActionIdSet.add(executor.getContextActionId());
   }
 
   private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionRuntimeRegistrar actionRegistrar) {
@@ -171,17 +173,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             presentation.setDescription(executor.getDescription());
 
             registerActionInGroup(actionRegistrar, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
-                                  myRunWidgetIdToAction);
+                                  runWidgetIdToAction);
           }
           else {
             RunToolbarAdditionActionsHolder holder = new RunToolbarAdditionActionsHolder(executorGroup, process);
 
             registerActionInGroup(actionRegistrar, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(),
                                   process.getMoreActionSubGroupName(),
-                                  myRunWidgetIdToAction);
+                                  runWidgetIdToAction);
             registerActionInGroup(actionRegistrar, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process),
                                   holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
-                                  myRunWidgetIdToAction);
+                                  runWidgetIdToAction);
           }
         }
         else {
@@ -190,10 +192,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             ExecutorAction wrappedMainAction = new RunToolbarProcessMainAction(process, executor);
 
             registerActionInGroup(actionRegistrar, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
-                                  myRunWidgetIdToAction);
+                                  runWidgetIdToAction);
 
             registerActionInGroup(actionRegistrar, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
-                                  myRunWidgetIdToAction);
+                                  runWidgetIdToAction);
           }
         }
       });
@@ -235,26 +237,26 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   synchronized void deinitExecutor(@NotNull Executor executor) {
-    myContextActionIdSet.remove(executor.getContextActionId());
+    contextActionIdSet.remove(executor.getContextActionId());
 
-    unregisterAction(executor.getId(), RUNNERS_GROUP, myIdToAction);
+    unregisterAction(executor.getId(), RUNNERS_GROUP, idToAction);
     if (isExecutorInMainGroup(executor)) {
-      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionIdToAction);
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, contextActionIdToAction);
     }
     else {
-      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, contextActionIdToAction);
     }
-    unregisterAction(newConfigurationContextActionId(executor), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
+    unregisterAction(newConfigurationContextActionId(executor), RUN_CONTEXT_GROUP_MORE, contextActionIdToAction);
 
     RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
-      unregisterAction(process.getActionId(), RunToolbarProcess.RUN_WIDGET_GROUP, myRunWidgetIdToAction);
-      unregisterAction(process.getMainActionId(), RunToolbarProcess.RUN_WIDGET_MAIN_GROUP, myRunWidgetIdToAction);
+      unregisterAction(process.getActionId(), RunToolbarProcess.RUN_WIDGET_GROUP, runWidgetIdToAction);
+      unregisterAction(process.getMainActionId(), RunToolbarProcess.RUN_WIDGET_MAIN_GROUP, runWidgetIdToAction);
 
       if (executor instanceof ExecutorGroup) {
         unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionId(process), process.getMoreActionSubGroupName(),
-                         myRunWidgetIdToAction);
+                         runWidgetIdToAction);
         unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process), process.getMoreActionSubGroupName(),
-                         myRunWidgetIdToAction);
+                         runWidgetIdToAction);
       }
     });
   }
@@ -526,15 +528,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         // The 'Run current file' feature doesn't reuse existing run configurations (by design).
         List<ConfigurationFromContext> configurationsFromContext = configurationContext.createConfigurationsFromContext();
 
-        List<RunnerAndConfigurationSettings> runConfigs =
-          configurationsFromContext != null
-          ? ContainerUtil.map(configurationsFromContext, ConfigurationFromContext::getConfigurationSettings)
-          : emptyList();
+        List<RunnerAndConfigurationSettings> runConfigs = configurationsFromContext == null
+                                                          ? List.of()
+                                                          : ContainerUtil.map(configurationsFromContext,
+                                                                              ConfigurationFromContext::getConfigurationSettings);
 
         VirtualFile vFile = psiFile.getVirtualFile();
-        String filePath = vFile != null ? vFile.getPath() : null;
-        for (RunnerAndConfigurationSettings config : runConfigs) {
-          ((RunnerAndConfigurationSettingsImpl)config).setFilePathIfRunningCurrentFile(filePath);
+        if (!runConfigs.isEmpty()) {
+          String filePath = vFile == null ? null : vFile.getPath();
+          for (RunnerAndConfigurationSettings config : runConfigs) {
+            ((RunnerAndConfigurationSettingsImpl)config).setFilePathIfRunningCurrentFile(filePath);
+          }
         }
 
         cache = new RunCurrentFileInfo(psiModCount, runConfigs);
