@@ -24,7 +24,7 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
   }
 
-  public void addPreferences(Preferences preferences) {
+  public synchronized void addPreferences(Preferences preferences) {
     fillHighlightingBraces(preferences.getHighlightingPairs());
     fillSmartTypingBraces(preferences.getSmartTypingPairs());
     myPreferences.add(preferences);
@@ -36,7 +36,7 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
    * @deprecated use {@link this#addPreferences(Preferences)} instead
    */
   @Deprecated(forRemoval = true)
-  public void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
+  public synchronized void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final Set<TextMateBracePair> highlightingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY));
     Set<TextMateBracePair> rawSmartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
     final Set<TextMateAutoClosingPair> smartTypingPairs = rawSmartTypingPairs != null ? rawSmartTypingPairs.stream().map(p -> {
@@ -50,7 +50,7 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     }
   }
 
-  private void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
+  private synchronized void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
     if (highlightingPairs != null) {
       for (TextMateBracePair pair : highlightingPairs) {
         if (!pair.getLeft().isEmpty()) {
@@ -77,24 +77,24 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
   }
 
   @Override
-  public boolean isPossibleLeftHighlightingBrace(char firstLeftBraceChar) {
+  public synchronized boolean isPossibleLeftHighlightingBrace(char firstLeftBraceChar) {
     return myLeftHighlightingBraces.contains(firstLeftBraceChar) || (firstLeftBraceChar != ' ' && myLeftSmartTypingBraces.contains(
       firstLeftBraceChar));
   }
 
   @Override
-  public boolean isPossibleRightHighlightingBrace(char lastRightBraceChar) {
+  public synchronized boolean isPossibleRightHighlightingBrace(char lastRightBraceChar) {
     return myRightHighlightingBraces.contains(lastRightBraceChar) || (lastRightBraceChar != ' ' && myRightSmartTypingBraces.contains(
       lastRightBraceChar));
   }
 
   @Override
-  public boolean isPossibleLeftSmartTypingBrace(char lastLeftBraceChar) {
+  public synchronized boolean isPossibleLeftSmartTypingBrace(char lastLeftBraceChar) {
     return myLeftSmartTypingBraces.contains(lastLeftBraceChar);
   }
 
   @Override
-  public boolean isPossibleRightSmartTypingBrace(char lastRightBraceChar) {
+  public synchronized boolean isPossibleRightSmartTypingBrace(char lastRightBraceChar) {
     return myRightSmartTypingBraces.contains(lastRightBraceChar);
   }
 
@@ -106,11 +106,11 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
    * of rule selector relative to scope selector.
    */
   @Override @NotNull
-  public List<Preferences> getPreferences(@NotNull TextMateScope scope) {
+  public synchronized List<Preferences> getPreferences(@NotNull TextMateScope scope) {
     return new TextMateScopeComparator<>(scope, Preferences::getScopeSelector).sortAndFilter(myPreferences);
   }
 
-  public void clear() {
+  public synchronized void clear() {
     myPreferences.clear();
 
     myLeftHighlightingBraces.clear();
