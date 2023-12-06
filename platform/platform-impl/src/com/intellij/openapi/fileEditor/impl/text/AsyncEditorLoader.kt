@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.event.ChangeEvent
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -54,7 +53,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     internal suspend fun waitForLoaded(editor: Editor) {
       if (editor.getUserData(ASYNC_LOADER) != null) {
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          suspendCoroutine {
+          suspendCancellableCoroutine {
             performWhenLoaded(editor) { it.resume(Unit) }
           }
         }
