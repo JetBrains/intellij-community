@@ -122,7 +122,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
             }
           }
 
-        FileBasedIndexImpl.LOG.error("${filter.javaClass.simpleName} health check found ${errors!!.size} errors in project ${project.name}:\n$summary")
+        FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errors!!.size} errors in project ${project.name}:\n$summary")
       }
     }
     catch (_: ProcessCanceledException) {
