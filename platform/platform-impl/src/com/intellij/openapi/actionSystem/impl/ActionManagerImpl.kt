@@ -1950,7 +1950,9 @@ private fun addToGroup(group: AnAction,
                        state: ActionManagerState,
                        secondary: Boolean) {
   try {
-    val actionId = if (action is ActionStub) action.id else state.actionToId.get(action)
+    val actionToId: (t: AnAction) -> String? = { if (it is ActionStub) it.id else state.actionToId.get(it) }
+
+    val actionId = actionToId(action)
     val actionGroup = group as DefaultActionGroup
     if (module != null && actionGroup.containsAction(action)) {
       reportActionError(module, "Cannot add an action twice: $actionId " +
@@ -1958,7 +1960,6 @@ private fun addToGroup(group: AnAction,
       return
     }
 
-    val actionToId: (t: AnAction) -> String? = { if (it is ActionStub) it.id else state.actionToId.get(it) }
     actionGroup
       .addAction(action, constraints, actionToId)
       .setAsSecondary(secondary)
