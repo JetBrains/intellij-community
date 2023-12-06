@@ -456,22 +456,19 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
     }
   }
 
-  private class InvokeMacroAction(private val macro: ActionMacro) : AnAction() {
-    init {
-      getTemplatePresentation().setText(macro.name, false)
-    }
+  private class InvokeMacroAction(private val macro: ActionMacro)
+    : AnAction(IdeBundle.message("action.invoke.macro.text")) {
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       IdeEventQueue.getInstance().doWhenReady(Runnable { getInstance().playMacro(macro) })
     }
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
     override fun update(e: AnActionEvent) {
+      e.presentation.setText(macro.name, false)
       e.presentation.setEnabled(!getInstance().isPlaying)
     }
-
-    override fun getTemplateText() = IdeBundle.message("action.invoke.macro.text")
   }
 
   private inner class KeyPostProcessor : IdeEventQueue.EventDispatcher {

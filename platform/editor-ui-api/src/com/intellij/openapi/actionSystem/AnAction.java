@@ -495,13 +495,14 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Returns the default action text.
+   * A synonym for {@code getTemplatePresentation().getText()}.
    * <p>
-   * This method must be overridden if the template presentation contains user data
-   * like the name of the project, of a run configuration, etc.
-   *
-   * @return action presentable text without private user data
+   * <b>Migration note</b>: The method will become `final` soon.
+   * The overriders must move their texts to the template presentation, or to a resource bundle <b>(preferred!)</b>.
+   * If the template presentation is already populated its values must be fed
+   * to a regular event presentation in the {@link #update} method.
    */
+  @ApiStatus.NonExtendable // TODO make final
   public @Nullable @ActionText String getTemplateText() {
     return getTemplatePresentation().getText();
   }
