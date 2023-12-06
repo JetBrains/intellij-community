@@ -34,8 +34,8 @@ public class ProjectJdkTest extends HeavyPlatformTestCase {
     Assume.assumeFalse("Test has to be run only for old SDK implementation", GlobalSdkTableBridge.Companion.isEnabled());
     VirtualFile nDir = getTempDir().createVirtualDir();
     String nUrl = nDir.getUrl();
-    ProjectJdkImpl jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<ProjectJdkImpl, Exception>)()->{
-      ProjectJdkImpl myJdk = (ProjectJdkImpl)ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance());
+    Sdk jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Sdk, Exception>)()->{
+      SdkBridge myJdk = (SdkBridge)ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance());
       @Language("XML")
       String s = "<jdk version=\"2\">\n" +
                  "  <name value=\"1.8\" />\n" +
@@ -57,13 +57,13 @@ public class ProjectJdkTest extends HeavyPlatformTestCase {
     });
 
     try {
-      List<String> urls = Arrays.stream(jdk.getRoots(OrderRootType.CLASSES)).peek(v -> assertTrue(v.isValid())).map(VirtualFile::getUrl).collect(Collectors.toList());
+      List<String> urls = Arrays.stream(jdk.getRootProvider().getFiles(OrderRootType.CLASSES)).peek(v -> assertTrue(v.isValid())).map(VirtualFile::getUrl).collect(Collectors.toList());
       assertOrderedEquals(urls, nUrl);
 
       delete(nDir);
       assertFalse(nDir.isValid());
 
-      urls = Arrays.stream(jdk.getRoots(OrderRootType.CLASSES)).peek(v -> assertTrue(v.isValid())).map(VirtualFile::getUrl).collect(Collectors.toList());
+      urls = Arrays.stream(jdk.getRootProvider().getFiles(OrderRootType.CLASSES)).peek(v -> assertTrue(v.isValid())).map(VirtualFile::getUrl).collect(Collectors.toList());
       assertEmpty(urls);
     }
     finally {
