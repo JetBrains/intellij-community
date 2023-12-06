@@ -340,10 +340,10 @@ sealed class K2MoveRenameUsageInfo(
                     val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
                         val newDeclaration = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
                         val qualifiedReference = usageInfo.retarget(newDeclaration)
-                        if (usageInfo is Qualifiable && qualifiedReference != null && qualifiedReference.isValid) { // imports can become invalid
+                        if (usageInfo is Qualifiable && qualifiedReference != null) {
                             qualifiedReference to newDeclaration
                         } else null
-                    }.toMap()
+                    }.filter { it.first.isValid }.toMap()  // imports can become invalid because they are removed when binding element
                     if (file is KtFile) {
                         shortenReferences(file, qualifiedElements)
                     }
