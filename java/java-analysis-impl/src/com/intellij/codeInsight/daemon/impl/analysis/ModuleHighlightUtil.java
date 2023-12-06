@@ -388,7 +388,7 @@ final class ModuleHighlightUtil {
           errorSink.accept(info);
         }
 
-        PsiMethod provider = JavaServiceUtil.findProvider(implClass);
+        PsiMethod provider = JavaServiceUtil.findServiceProviderMethod(implClass);
         if (provider != null) {
           PsiType type = provider.getReturnType();
           PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;

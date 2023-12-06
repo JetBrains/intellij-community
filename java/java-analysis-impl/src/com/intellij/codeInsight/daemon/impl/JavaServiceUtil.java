@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -28,6 +28,9 @@ import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 
+/**
+ * Utility for working with Java services (jigsaw)
+ */
 final public class JavaServiceUtil {
   public static final String PROVIDER = "provider";
   public static final Set<String> JAVA_UTIL_SERVICE_LOADER_METHODS = Set.of("load", "loadInstalled");
@@ -35,6 +38,12 @@ final public class JavaServiceUtil {
   static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall(JAVA_UTIL_SERVICE_LOADER,
                                                                         ArrayUtil.toStringArray(JAVA_UTIL_SERVICE_LOADER_METHODS));
 
+  /**
+   * Checks if the given method is a service provider method.
+   *
+   * @param method for checking
+   * @return true if the method is a service provider method, false otherwise
+   */
   public static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
     return PROVIDER.equals(method.getName()) &&
            method.getParameterList().isEmpty() &&
@@ -42,8 +51,14 @@ final public class JavaServiceUtil {
            method.hasModifierProperty(PsiModifier.STATIC);
   }
 
+  /**
+   * Finds a service provider method within a given PsiClass.
+   *
+   * @param psiClass to search for the service provider method
+   * @return service provider method, or null if not found
+   */
   @Nullable
-  public static PsiMethod findProvider(@NotNull PsiClass psiClass) {
+  public static PsiMethod findServiceProviderMethod(@NotNull PsiClass psiClass) {
     return ContainerUtil.find(psiClass.findMethodsByName("provider", false), JavaServiceUtil::isServiceProviderMethod);
   }
 
@@ -56,7 +71,7 @@ final public class JavaServiceUtil {
 
   @NotNull
   static List<LineMarkerInfo<PsiElement>> collectServiceImplementationClass(@NotNull PsiClass psiClass) {
-    if (findProvider(psiClass) != null) return Collections.emptyList();
+    if (findServiceProviderMethod(psiClass) != null) return Collections.emptyList();
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (!constructor.hasParameters()) return createJavaServiceLineMarkerInfo(constructor.getNameIdentifier(), psiClass, psiClass);
     }
@@ -84,7 +99,7 @@ final public class JavaServiceUtil {
 
       PsiClassType[] implementationTypes = implementationList.getReferencedTypes();
       for (PsiClassType implementationType : implementationTypes) {
-        if (!Objects.equals(implementerClass, implementationType.resolve())) continue;
+        if (!implementerClass.equals(implementationType.resolve())) continue;
         PsiClass interfaceClass = interfaceType.resolve();
         if (!InheritanceUtil.isInheritorOrSelf(resultClass, interfaceClass, true)) continue;
         String interfaceClassName = interfaceClass.getQualifiedName();

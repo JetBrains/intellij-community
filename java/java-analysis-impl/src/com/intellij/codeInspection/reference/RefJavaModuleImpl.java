@@ -143,7 +143,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
               final PsiElement implementationClass = implementationReference.resolve();
               if (implementationClass instanceof PsiClass psiClass) {
                 RefElement refTargetElement = null;
-                PsiElement targetElement = JavaServiceUtil.findProvider(psiClass);
+                PsiElement targetElement = JavaServiceUtil.findServiceProviderMethod(psiClass);
 
                 if (targetElement == null) {
                   final RefElement refElement = getRefManager().getReference(psiClass);
