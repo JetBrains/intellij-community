@@ -40,12 +40,21 @@ class Groovyc25Test extends GroovycTestBase {
     'do test recompile one file that triggers chunk rebuild inside'(false)
   }
 
+  protected boolean isRebuildExpectedWhileCompilingDependentTrait() {
+    return true
+  }
+  
   void 'test dependent trait'() {
     def ca = myFixture.addFileToProject('A.groovy', 'class A implements B { }')
     myFixture.addFileToProject('B.groovy', 'trait B { A aaa }')
     assertEmpty make()
     touch(ca.virtualFile)
-    assert make().collect { it.message } == chunkRebuildMessage("Groovy stub generator")
+    if (isRebuildExpectedWhileCompilingDependentTrait()) {
+      assert make().collect { it.message } == chunkRebuildMessage("Groovy stub generator")
+    }
+    else {
+      assertEmpty(make())
+    }
   }
 
   @Ignore("The rebuild was caused by a bug in groovy compiler, which is fixed in 2.5.16")
