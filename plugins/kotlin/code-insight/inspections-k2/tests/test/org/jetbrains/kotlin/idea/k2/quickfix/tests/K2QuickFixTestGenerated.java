@@ -1078,6 +1078,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                     runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/constructorSuppressedOnFile.kt");
                 }
 
+                @TestMetadata("emptyClassSuppressOnClass.kt")
+                public void testEmptyClassSuppressOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/emptyClassSuppressOnClass.kt");
+                }
+
+                @TestMetadata("emptyClassSuppressOnFile.kt")
+                public void testEmptyClassSuppressOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/emptyClassSuppressOnFile.kt");
+                }
+
                 @TestMetadata("enumEntrySuppressedOnClass.kt")
                 public void testEnumEntrySuppressedOnClass() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/enumEntrySuppressedOnClass.kt");

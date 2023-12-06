@@ -6,6 +6,7 @@ import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
@@ -56,10 +57,15 @@ fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppre
                 }
             }
 
+            current is PsiWhiteSpace && current.prevSibling is KtClassLikeDeclaration -> {
+                current = current.prevSibling
+                continue
+            }
+
             current is KtFile -> {
                 val hostKind = AnnotationHostKind(KotlinBaseCodeInsightBundle.message("declaration.kind.file"), current.name, true)
                 actions.add(KotlinSuppressIntentionAction(current, suppressionKey, hostKind))
-                suppressAtStatementAllowed = false
+                break
             }
         }
 

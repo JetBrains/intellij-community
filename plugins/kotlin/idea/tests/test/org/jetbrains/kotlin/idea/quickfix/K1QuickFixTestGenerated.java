@@ -15041,6 +15041,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/suppress/inspections/codeStructure/constructorSuppressedOnFile.kt");
                 }
 
+                @TestMetadata("emptyClassSuppressOnClass.kt")
+                public void testEmptyClassSuppressOnClass() throws Exception {
+                    runTest("testData/quickfix/suppress/inspections/codeStructure/emptyClassSuppressOnClass.kt");
+                }
+
+                @TestMetadata("emptyClassSuppressOnFile.kt")
+                public void testEmptyClassSuppressOnFile() throws Exception {
+                    runTest("testData/quickfix/suppress/inspections/codeStructure/emptyClassSuppressOnFile.kt");
+                }
+
                 @TestMetadata("enumEntrySuppressedOnClass.kt")
                 public void testEnumEntrySuppressedOnClass() throws Exception {
                     runTest("testData/quickfix/suppress/inspections/codeStructure/enumEntrySuppressedOnClass.kt");
