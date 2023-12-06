@@ -450,7 +450,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     if (helper is DecoratedHelper) {
       val wasCustomFrameHeaderVisible = helper.customFrameTitlePane.getComponent().isVisible
       val isCustomFrameHeaderVisible = !fullScreen
-                                       || isToolbarInHeader()
+                                       || !SystemInfoRt.isMac && isToolbarInHeader()
                                        || (SystemInfoRt.isMac && !isCompactHeader { computeMainActionGroups(CustomActionsSchema.getInstance()) })
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
 
