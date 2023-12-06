@@ -698,7 +698,7 @@ public class HighlightInfo implements Segment {
     private final @Nls String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
-    private TextRange myProblemRange;
+    private TextRange myFixRange;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<? extends IntentionAction> options,
@@ -883,12 +883,16 @@ public class HighlightInfo implements Segment {
       return myKey != null ? myKey.getID() : null;
     }
 
-    public TextRange getProblemRange() {
-      return myProblemRange;
+    /**
+     * {@link HighlightInfo#fixRange} of original {@link HighlightInfo}
+     * Used to check intention's availability at given offset
+     */
+    public TextRange getFixRange() {
+      return myFixRange;
     }
 
-    void setProblemRange(@NotNull TextRange problemRange) {
-      myProblemRange = problemRange;
+    void setFixRange(@NotNull TextRange fixRange) {
+      myFixRange = fixRange;
     }
   }
 

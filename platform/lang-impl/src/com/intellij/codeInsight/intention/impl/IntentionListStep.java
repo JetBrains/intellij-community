@@ -140,7 +140,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                                        @NotNull PsiFile file,
                                        @NotNull Project project,
                                        @Nullable Editor editor) {
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(), cachedAction.getProblemOffset());
+    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(), cachedAction.getFixOffset());
   }
 
   @NotNull

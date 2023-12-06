@@ -325,7 +325,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         boolean added = false;
         for (HighlightInfo.IntentionActionDescriptor fix : additionalFixes) {
           if (!ContainerUtil.exists(fixes, descriptor -> descriptor.getAction().getText().equals(fix.getAction().getText()))) {
-            fix.setProblemRange(info.getFixTextRange());
+            fix.setFixRange(info.getFixTextRange());
             fixes.add(fix);
             added = true;
           }

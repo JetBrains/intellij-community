@@ -39,7 +39,7 @@ class IntentionPreviewComputable(private val project: Project,
                                  private val action: IntentionAction,
                                  private val originalFile: PsiFile,
                                  private val originalEditor: Editor,
-                                 private val problemOffset: Int) : Callable<IntentionPreviewInfo> {
+                                 private val fixOffset: Int) : Callable<IntentionPreviewInfo> {
   override fun call(): IntentionPreviewInfo {
     val diffContent = tryCreateDiffContent()
     if (diffContent != null) {
@@ -110,8 +110,8 @@ class IntentionPreviewComputable(private val project: Project,
       psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
     }
-    if (problemOffset >= 0) {
-      editorCopy.caretModel.moveToOffset(problemOffset)
+    if (fixOffset >= 0) {
+      editorCopy.caretModel.moveToOffset(fixOffset)
     }
     ProgressManager.checkCanceled()
     // force settings initialization, as it may spawn EDT action which is not allowed inside generatePreview()
@@ -162,7 +162,7 @@ class IntentionPreviewComputable(private val project: Project,
     val unwrapped = action.asModCommandAction() ?: return IntentionPreviewInfo.EMPTY
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
     SideEffectGuard.computeWithoutSideEffects {
-      val context = ActionContext.from(origEditor, origFile).applyIf(problemOffset >= 0) { withOffset(problemOffset) }
+      val context = ActionContext.from(origEditor, origFile).applyIf(fixOffset >= 0) { withOffset(fixOffset) }
       IntentionPreviewUtils.previewSession(origEditor) {
         info = unwrapped.generatePreview(context)
       }

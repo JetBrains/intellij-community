@@ -783,7 +783,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     IntentionActionWithTextCaching action = findCachingAction(hint);
     if (action == null) return null;
     IntentionPreviewInfo info =
-      new IntentionPreviewComputable(getProject(), action.getAction(), getFile(), getEditor(), action.getProblemOffset()).generatePreview();
+      new IntentionPreviewComputable(getProject(), action.getAction(), getFile(), getEditor(), action.getFixOffset()).generatePreview();
     return info == null ? null : ((IntentionPreviewDiffResult)info).getNewText();
   }
 
@@ -791,7 +791,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void launchAction(@NotNull String hint) {
     IntentionActionWithTextCaching action = findCachingAction(hint);
     if (action == null) throw new IllegalArgumentException();
-    ShowIntentionActionsHandler.chooseActionAndInvoke(getHostFile(), getHostEditor(), action.getAction(), action.getText(), action.getProblemOffset());
+    ShowIntentionActionsHandler.chooseActionAndInvoke(getHostFile(), getHostEditor(), action.getAction(), action.getText(), action.getFixOffset());
   }
 
   @Nullable

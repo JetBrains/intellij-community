@@ -111,7 +111,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     component.startLoading()
 
     ReadAction.nonBlocking(
-      IntentionPreviewComputable(project, action.action, originalFile, originalEditor, action.problemOffset))
+      IntentionPreviewComputable(project, action.action, originalFile, originalEditor, action.fixOffset))
       .expireWith(popup)
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it) }

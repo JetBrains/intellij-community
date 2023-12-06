@@ -44,7 +44,7 @@ public final class IntentionActionWithTextCaching
   private final Icon myIcon;
   @Nullable
   private final String myToolId;
-  private final @Nullable TextRange myProblemRange;
+  private final @Nullable TextRange myFixRange;
 
   public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
     this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, null, (actWithText, act) -> {
@@ -55,7 +55,7 @@ public final class IntentionActionWithTextCaching
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
                                  @Nullable String toolId,
-                                 @Nullable TextRange problemRange,
+                                 @Nullable TextRange fixRange,
                                  @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myToolId = toolId;
     myIcon = icon;
@@ -64,7 +64,7 @@ public final class IntentionActionWithTextCaching
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
-    myProblemRange = problemRange;
+    myFixRange = fixRange;
   }
 
   public @NotNull @IntentionName String getText() {
@@ -184,16 +184,16 @@ public final class IntentionActionWithTextCaching
     return myToolId;
   }
 
-  public int getProblemOffset() {
-    return myProblemRange == null ? -1 : myProblemRange.getStartOffset();
+  public int getFixOffset() {
+    return myFixRange == null ? -1 : myFixRange.getStartOffset();
   }
 
   /**
    * @return <code>null</code> if the action belong to the problem at the caret offset
    */
   @Nullable
-  public TextRange getProblemRange() {
-    return myProblemRange;
+  public TextRange getFixRange() {
+    return myFixRange;
   }
 
   private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
