@@ -280,7 +280,7 @@ public class Patch {
         forEach(actionsToApply, UpdaterUI.message("backing.up.files"), ui, action -> action.backup(toDir, _backupDir));
       }
       else {
-        //noinspection SSBasedInspection
+        @SuppressWarnings({"SSBasedInspection", "RedundantSuppression"})
         List<PatchAction> specialActions = actionsToApply.stream().filter(PatchAction::mandatoryBackup).collect(Collectors.toList());
         if (!specialActions.isEmpty()) {
           backupDir = Utils.getTempFile("partial_backup");

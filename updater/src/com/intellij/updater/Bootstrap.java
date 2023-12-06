@@ -47,8 +47,9 @@ public final class Bootstrap {
 
     Locale.setDefault(Locale.ENGLISH);
 
-    //noinspection SSBasedInspection
-    Runner.main(runnerArgs.toArray(new String[0]));
+    @SuppressWarnings({"SSBasedInspection", "RedundantSuppression"})
+    var array = runnerArgs.toArray(new String[0]);
+    Runner.main(array);
   }
 
   private static boolean isMac() {

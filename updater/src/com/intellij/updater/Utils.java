@@ -288,11 +288,11 @@ public final class Utils {
     return new BufferedInputStream(zipFile.getInputStream(entry));
   }
 
-  // always collect files and folders - to avoid cases such as IDEA-152249
+  // always collect files and folders to avoid cases such as IDEA-152249
   public static LinkedHashSet<String> collectRelativePaths(Path root) throws IOException {
     LinkedHashSet<String> result = new LinkedHashSet<>();
 
-    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(root, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         if (dir != root) {

@@ -41,8 +41,9 @@ public final class Runner {
           effectiveArgs.add(arg);
         }
       }
-      //noinspection SSBasedInspection
-      _main(effectiveArgs.toArray(new String[0]));
+      @SuppressWarnings({"SSBasedInspection", "RedundantSuppression"})
+      var array = effectiveArgs.toArray(new String[0]);
+      _main(array);
     }
     catch (Throwable t) {
       LOG.log(Level.SEVERE, "internal error", t);

@@ -148,7 +148,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  @SuppressWarnings("SSBasedInspection")
+  @SuppressWarnings({"SSBasedInspection", "RedundantSuppression"})
   public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     boolean canProceed = validationResults.stream().noneMatch(r -> r.options.contains(ValidationResult.Option.NONE));
     Map<String, ValidationResult.Option> result = new HashMap<>();
