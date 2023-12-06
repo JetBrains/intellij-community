@@ -40,6 +40,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -134,7 +135,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private static final double ZOOM_COMMON_RATIO = 1.2;
   private static final double LOG_ZOOM = Math.log(ZOOM_COMMON_RATIO);
 
-  static volatile @Nullable JBCefBrowserBase focusedBrowser;
+  static @Nullable WeakReference<JBCefBrowserBase> focusedBrowser;
 
   protected final @NotNull JBCefClient myCefClient;
   protected final @NotNull CefBrowser myCefBrowser;
@@ -372,7 +373,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * It is possible that at a certain moment, the browser can be focused natively but can not yet have Java focus.
    */
   public static @Nullable JBCefBrowserBase getFocusedBrowser() {
-    return focusedBrowser;
+    if (focusedBrowser != null) {
+      return focusedBrowser.get();
+    }
+    return null;
   }
 
   /**

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -206,7 +207,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public void onGotFocus(CefBrowser browser) {
         super.onGotFocus(browser);
         //noinspection AssignmentToStaticFieldFromInstanceMethod
-        focusedBrowser = JBCefBrowser.this;
+        focusedBrowser = new WeakReference<>(JBCefBrowser.this);
       }
 
       @Override
