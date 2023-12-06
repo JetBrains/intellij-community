@@ -37,6 +37,7 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -537,6 +538,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (editor == null) return false;
     if (caret != -1) {
       editor.getCaretModel().moveToOffset(caret);
+      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     if (selectionStart != -1 && selectionEnd != -1) {
       editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
