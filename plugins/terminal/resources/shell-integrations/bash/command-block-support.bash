@@ -30,13 +30,13 @@ __jetbrains_intellij_encode_slow() {
     builtin printf -v hexch "%02X" "'$value[i]"
     out+="$hexch"
   done
-  builtin printf "$out"
+  builtin printf "%s" "$out"
 }
 
 __jetbrains_intellij_encode() {
   builtin local value="$1"
   if builtin command -v od > /dev/null && builtin command -v tr > /dev/null; then
-    builtin printf "$value" | od -An -tx1 -v | tr -d "[:space:]"
+    builtin printf "%s" "$value" | od -An -tx1 -v | tr -d "[:space:]"
   else
     __jetbrains_intellij_encode_slow "$value"
   fi
@@ -79,7 +79,7 @@ __jetbrains_intellij_configure_prompt() {
 
 __jetbrains_intellij_debug_log() {
   if [ -n "${JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL-}" ]; then
-    builtin printf "$1\n"
+    builtin printf "%s\n" "$1"
   fi
 }
 
