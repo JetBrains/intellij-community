@@ -20,6 +20,15 @@ public interface ModTemplateBuilder {
   @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull Expression expression);
 
   /**
+   * Add a new expression field
+   * 
+   * @param element element to replace with an expression
+   * @param expression expression to use
+   * @return this builder
+   */
+  @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull String varName, @NotNull Expression expression);
+
+  /**
    * Add a new simple text field
    *
    * @param element element to replace with a constant text

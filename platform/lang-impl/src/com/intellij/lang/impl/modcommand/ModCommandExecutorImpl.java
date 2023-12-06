@@ -338,7 +338,11 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       TemplateBuilderImpl builder = new TemplateBuilderImpl(psiFile);
       for (ModStartTemplate.TemplateField field : template.fields()) {
         if (field instanceof ModStartTemplate.ExpressionField expr) {
-          builder.replaceElement(psiFile, expr.range(), expr.expression());
+          if (expr.varName() != null) {
+            builder.replaceElement(psiFile, expr.range(), expr.varName(), expr.expression(), true);
+          } else {
+            builder.replaceElement(psiFile, expr.range(), expr.expression());
+          }
         }
         else if (field instanceof ModStartTemplate.DependantVariableField variableField) {
           builder.replaceElement(psiFile, variableField.range(), variableField.varName(),
