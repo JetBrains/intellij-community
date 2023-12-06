@@ -407,6 +407,18 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         assertNull(findTargetElement())
     }
 
+    fun testDeconstructionEntry() {
+        myFixture.configureByText("dummy.kt", """
+            fun main(args: Array<String>) {
+
+    val result = mapOf<String, Int>("A" to 1, "B" to 2, "C" to 3)
+
+    result.forEach { (k<caret>ey, value) ->
+    }
+}""")
+        assertNull(findTargetElement())
+    }
+
     fun testPositionOnNameForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(val <caret>a: String)")
     fun testPositionOnValForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(v<caret>al a: String)")
     fun testPositionOnVarForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(v<caret>ar a: String)")

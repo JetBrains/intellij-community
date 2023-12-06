@@ -66,6 +66,8 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
         if (elementParent is KtProperty && elementParent.valOrVarKeyword === element) return elementParent
         if (elementParent is KtConstructor<*> && elementParent.getConstructorKeyword() === element) return elementParent
 
+        element.parentOfType<KtDestructuringDeclaration>()?.let { return null }
+
         element.parentOfType<KtParameterList>()?.let { parameterList ->
             return PsiTreeUtil.getParentOfType(parameterList, KtFunction::class.java, KtProperty::class.java, KtClass::class.java)
         }
