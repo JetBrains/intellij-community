@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -73,11 +74,15 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    List<Module> modules = getModulesByFile(file);
+    var modules = new HashSet<>(getModulesByFile(file));
     if (modules.isEmpty() && file.getFileSystem() instanceof ArchiveFileSystem) {
       VirtualFile archiveFile = ((ArchiveFileSystem)file.getFileSystem()).getLocalByEntry(file);
-      if (archiveFile != null) modules = getModulesByFile(archiveFile);
+      if (archiveFile != null) modules = new HashSet<>(getModulesByFile(archiveFile));
     }
+    // It's possible that the file is located under some module which doesn't belong to this group,
+    // but its content root is located under one of the modules that do belong to this group.
+    // So we also need to check the modules that the file's modules' content roots belong to.
+    addParentContentRootModules(modules);
     List<String> thisGroupPath = getValue().getGroupPathList();
     ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
     for (Module module : modules) {
@@ -86,6 +91,28 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
       }
     }
     return false;
+  }
+
+  private void addParentContentRootModules(HashSet<Module> modules) {
+    var parentContentRootModules = new HashSet<Module>();
+    for (Module module : modules) {
+      for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+        var parentContentRoot = contentRoot.getParent();
+        if (parentContentRoot == null) {
+          continue;
+        }
+        parentContentRootModules.addAll(getModulesByFile(parentContentRoot));
+      }
+    }
+    // Account for a crazy case where a module's content root is under another content root of the same module,
+    // or another module that's already collected. Otherwise, we may end up recursing infinitely here.
+    parentContentRootModules.removeAll(modules);
+    if (parentContentRootModules.isEmpty()) {
+      return;
+    }
+    modules.addAll(parentContentRootModules);
+    // Now add parents' parents.
+    addParentContentRootModules(parentContentRootModules);
   }
 
   @Override
