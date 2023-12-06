@@ -4,6 +4,9 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +31,12 @@ public interface CodeFenceLanguageProvider {
    */
   @Nullable
   Language getLanguageByInfoString(@NotNull String infoString);
+
+  @Experimental
+  @Internal
+  default @Nullable String getInfoStringForLanguage(@NotNull Language language, @Nullable PsiElement context) {
+    return null;
+  }
 
   /**
    * Implement this method to provide custom completion variants for info strings in the all fences.
