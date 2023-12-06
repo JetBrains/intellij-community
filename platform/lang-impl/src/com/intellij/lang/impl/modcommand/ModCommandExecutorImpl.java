@@ -65,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,10 +112,12 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
     }
     if (command instanceof ModCreateFile create) {
-      return executeCreate(project, create) ? Result.SUCCESS : Result.ABORT;
+      String message = executeCreate(project, create);
+      return message == null ? Result.SUCCESS : new Error(message);
     }
     if (command instanceof ModDeleteFile deleteFile) {
-      return executeDelete(project, deleteFile) ? Result.SUCCESS : Result.ABORT;
+      String message = executeDelete(deleteFile);
+      return message == null ? Result.SUCCESS : new Error(message);
     }
     if (command instanceof ModCompositeCommand cmp) {
       BatchExecutionResult result = Result.NOTHING;
@@ -196,16 +199,18 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeChooseMember(context, chooser, editor);
     }
     if (command instanceof ModDisplayMessage message) {
-      return executeMessage(project, message);
+      return executeMessage(project, message, editor);
     }
     if (command instanceof ModStartRename rename) {
       return executeRename(project, rename, editor);
     }
     if (command instanceof ModCreateFile create) {
-      return executeCreate(project, create);
+      String message = executeCreate(project, create);
+      return handleError(project, editor, message);
     }
     if (command instanceof ModDeleteFile deleteFile) {
-      return executeDelete(project, deleteFile);
+      String message = executeDelete(deleteFile);
+      return handleError(project, editor, message);
     }
     if (command instanceof ModShowConflicts showConflicts) {
       return executeShowConflicts(context, showConflicts, editor, tail);
@@ -217,6 +222,12 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeUpdateInspectionOptions(context, updateOptions);
     }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private static boolean handleError(@NotNull Project project, @Nullable Editor editor, @Nls String message) {
+    if (message == null) return true;
+    executeMessage(project, new ModDisplayMessage(message, ModDisplayMessage.MessageKind.ERROR), editor);
+    return false;
   }
 
   @Nullable
@@ -380,34 +391,32 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private boolean executeDelete(Project project, ModDeleteFile file) {
+  private @Nls String executeDelete(ModDeleteFile file) {
     try {
       WriteAction.run(() -> file.file().delete(this));
-      return true;
+      return null;
     }
     catch (IOException e) {
-      executeMessage(project, new ModDisplayMessage(e.getMessage(), ModDisplayMessage.MessageKind.ERROR));
-      return false;
+      return e.getLocalizedMessage();
     }
   }
 
-  private boolean executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
+  private @Nls String executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
     FutureVirtualFile file = create.file();
     VirtualFile parent = actualize(file.getParent());
     try {
       return WriteAction.compute(() -> {
         VirtualFile newFile = parent.createChildData(this, file.getName());
         PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
-        if (psiFile == null) return false;
+        if (psiFile == null) return LangBundle.message("unable.to.find.the.new.file", file.getName());
         Document document = psiFile.getViewProvider().getDocument();
         document.setText(create.text());
         PsiDocumentManager.getInstance(project).commitDocument(document);
-        return true;
+        return null;
       });
     }
     catch (IOException e) {
-      executeMessage(project, new ModDisplayMessage(e.getMessage(), ModDisplayMessage.MessageKind.ERROR));
-      return false;
+      return e.getLocalizedMessage();
     }
   }
 
@@ -453,9 +462,11 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     }
   }
 
-  private static boolean executeMessage(@NotNull Project project, @NotNull ModDisplayMessage message) {
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) return false;
+  private static boolean executeMessage(@NotNull Project project, @NotNull ModDisplayMessage message, @Nullable Editor editor) {
+    if (editor == null) {
+      editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor == null) return false;
+    }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
         throw new ErrorInTestException(message.messageText());
