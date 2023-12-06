@@ -1844,11 +1844,11 @@ private class PostInitActionRuntimeRegistrar(private val actionPostInitRegistrar
 
   override fun addToGroup(group: AnAction, action: AnAction, last: Constraints) {
     addToGroup(group = group as DefaultActionGroup,
-                                                      action = action,
-                                                      constraints = last,
-                                                      module = null,
-                                                      state = actionPostInitRegistrar.state,
-                                                      secondary = false)
+               action = action,
+               constraints = last,
+               module = null,
+               state = actionPostInitRegistrar.state,
+               secondary = false)
   }
 
   override fun replaceAction(actionId: String, newAction: AnAction) {
@@ -1958,11 +1958,12 @@ private fun addToGroup(group: AnAction,
       return
     }
 
+    val actionToId: (t: AnAction) -> String? = { if (it is ActionStub) it.id else state.actionToId.get(it) }
     actionGroup
-      .addAction(action, constraints) { if (it is ActionStub) it.id else state.actionToId.get(it) }
+      .addAction(action, constraints, actionToId)
       .setAsSecondary(secondary)
     if (actionId != null) {
-      state.actionToId.get(group)?.let { groupId ->
+      actionToId(group)?.let { groupId ->
         state.idToDescriptor.computeIfAbsent(actionId) { ActionManagerStateActionItemDescriptor() }.addGroupMapping(groupId)
       }
     }
