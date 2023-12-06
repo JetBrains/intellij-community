@@ -23,6 +23,7 @@ public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
   long append(@NotNull ByteBufferWriter writer,
               int recordSize) throws IOException;
 
+  /** Simplified version of {@link #append(ByteBufferWriter, int)} -- appends data from byte[] */
   default long append(byte @NotNull [] data) throws IOException {
     return append(buffer -> buffer.put(data), data.length);
   }
@@ -30,6 +31,11 @@ public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
   <T> T read(long recordId,
              @NotNull ByteBufferReader<T> reader) throws IOException;
 
+  /**
+   * @return true if supplied id looks like valid id of existing record in a log, false otherwise.
+   * returned false definitely means id is not valid -- but returned true means 'id _looks_ like a valid record id',
+   * because some implementations can't say for sure is id a valid record id or not.
+   */
   boolean isValidId(long id);
 
   /**
