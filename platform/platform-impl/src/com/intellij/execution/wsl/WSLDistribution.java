@@ -666,8 +666,11 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * Windows IP address. See class doc before using it, because this is probably not what you are looking for.
    *
+   * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
+   *
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
    */
+  @Deprecated
   public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
     final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
     if (hostIpOrException == null) {

@@ -41,13 +41,4 @@ class WslNetworkTest {
       assertEquals("127.0.0.1", wslRule.wsl.wslIpAddress.hostAddress, "Wrong WSL address")
     }
   }
-
-  @Test
-  fun testWslHostIp() {
-    for (alt in arrayOf(true, false)) {
-      Registry.get("wsl.obtain.windows.host.ip.alternatively").withValue(alt) {
-        MatcherAssert.assertThat("Wrong host IP: alternative: $alt", wslRule.wsl.hostIpAddress.address[0], isIn(wslIpPrefix))
-      }
-    }
-  }
 }
