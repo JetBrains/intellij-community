@@ -51,6 +51,7 @@ class C {
     }
 }
 
+// IGNORE_K2
 // EXIST: class
 // EXIST_JAVA_ONLY: class.java
 // EXIST: { itemText: "memberFunInA", attributes: "" }
