@@ -2,6 +2,7 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.components.RoamingType;
@@ -70,6 +71,16 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     ActionManagerEx actionManager = getActionManager();
     if (actionManager != null) {
       registerActions(actionManager.asActionRuntimeRegistrar());
+    }
+  }
+
+  /**
+   * @deprecated Use {@link #registerActions(ActionRuntimeRegistrar)}
+   */
+  @Deprecated
+  protected final void registerActions(@Nullable ActionManager actionManager) {
+    if (actionManager instanceof ActionManagerEx managerEx) {
+      registerActions(managerEx.asActionRuntimeRegistrar());
     }
   }
 

@@ -166,19 +166,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     DYNAMIC_EP_NAME.forEachExtensionSafe { customizer ->
-      if (customizer is LightCustomizeStrategy) {
-        coroutineScope.launch(Dispatchers.Unconfined) {
-          customizer.customize(mutator)
-        }
-      }
-      else {
-        customizer.registerActions(this)
-      }
+      callDynamicRegistration(customizer, mutator)
     }
 
     DYNAMIC_EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<DynamicActionConfigurationCustomizer> {
       override fun extensionAdded(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
-        extension.registerActions(this@ActionManagerImpl)
+        callDynamicRegistration(extension, actionPostInitRuntimeRegistrar)
       }
 
       override fun extensionRemoved(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
@@ -190,6 +183,17 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       for (action in actionPostInitRegistrar.actions) {
         updateHandlers(action)
       }
+    }
+  }
+
+  private fun callDynamicRegistration(customizer: DynamicActionConfigurationCustomizer, mutator: ActionRuntimeRegistrar) {
+    if (customizer is LightCustomizeStrategy) {
+      coroutineScope.launch(Dispatchers.Unconfined) {
+        customizer.customize(mutator)
+      }
+    }
+    else {
+      customizer.registerActions(this)
     }
   }
 

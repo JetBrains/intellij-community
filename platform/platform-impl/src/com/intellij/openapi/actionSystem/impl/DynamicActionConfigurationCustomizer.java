@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
  * @see ActionConfigurationCustomizer
  */
 public interface DynamicActionConfigurationCustomizer {
-
   /**
    * Called during {@link ActionManager} initialization and when this extension is added.
+   * {@link ActionConfigurationCustomizer.LightCustomizeStrategy} maybe implemented instead.
    */
-  void registerActions(@NotNull ActionManager actionManager);
+  default void registerActions(@SuppressWarnings("unused") @NotNull ActionManager actionManager) {
+  }
 
   /**
    * Called when this extension is removed.
