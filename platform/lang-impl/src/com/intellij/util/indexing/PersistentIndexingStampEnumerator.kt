@@ -84,11 +84,11 @@ class TimestampsKeyDescriptor : KeyDescriptor<TimestampsImmutable> {
 /** Descriptor for [com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator] */
 class TimestampsKeyDescriptorEx : KeyDescriptorEx<TimestampsImmutable> {
 
-  override fun areEqual(timestamp1: TimestampsImmutable, timestamp2: TimestampsImmutable): Boolean {
+  override fun isEqual(timestamp1: TimestampsImmutable, timestamp2: TimestampsImmutable): Boolean {
     return timestamp1 == timestamp2
   }
 
-  override fun hashCodeOf(timestamp: TimestampsImmutable): Int {
+  override fun getHashCode(timestamp: TimestampsImmutable): Int {
     return timestamp.hashCode()
   }
 

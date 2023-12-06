@@ -19,13 +19,13 @@ public class StringAsUTF8 implements KeyDescriptorEx<String> {
   }
 
   @Override
-  public int hashCodeOf(String value) {
+  public int getHashCode(String value) {
     return value.hashCode();
   }
 
   @Override
-  public boolean areEqual(String key1,
-                          String key2) {
+  public boolean isEqual(String key1,
+                         String key2) {
     return key1.equals(key2);
   }
 

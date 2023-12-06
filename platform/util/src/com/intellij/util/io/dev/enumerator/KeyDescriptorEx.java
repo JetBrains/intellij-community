@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.enumerator;
 
+import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
@@ -18,13 +19,14 @@ import java.nio.ByteBuffer;
  * {@link java.io.OutputStream}
  */
 @ApiStatus.Internal
-public interface KeyDescriptorEx<K> {
-  /** same semantics as {@link KeyDescriptor#getHashCode(Object)} */
-  int hashCodeOf(K value);
+public interface KeyDescriptorEx<K> extends EqualityPolicy<K> {
+  /** See {@link KeyDescriptor#getHashCode(Object)} docs */
+  @Override
+  int getHashCode(K value);
 
-  /** same semantics as {@link KeyDescriptor#isEqual(Object, Object)} */
-  boolean areEqual(K key1,
-                   K key2);
+  /** See {@link KeyDescriptor#isEqual(Object, Object)} docs */
+  @Override
+  boolean isEqual(K key1, K key2);
 
 
   K read(@NotNull ByteBuffer input) throws IOException;
@@ -62,10 +64,10 @@ public interface KeyDescriptorEx<K> {
   static <K> KeyDescriptorEx<K> adapt(KeyDescriptor<K> oldSchoolDescriptor) {
     return new KeyDescriptorEx<K>() {
       @Override
-      public int hashCodeOf(K value) { return oldSchoolDescriptor.getHashCode(value); }
+      public int getHashCode(K value) { return oldSchoolDescriptor.getHashCode(value); }
 
       @Override
-      public boolean areEqual(K key1, K key2) { return oldSchoolDescriptor.isEqual(key1, key2); }
+      public boolean isEqual(K key1, K key2) { return oldSchoolDescriptor.isEqual(key1, key2); }
 
 
       // Serialization/deserialization just bridges between ByteBuffer and ByteArrayInput/OutputStream
@@ -91,6 +93,11 @@ public interface KeyDescriptorEx<K> {
 
         long appendedRecordId = log.append(stream.toByteArray());
         return appendedRecordId;
+      }
+
+      @Override
+      public String toString() {
+        return "KeyDescriptorAdapter[adapted: " + oldSchoolDescriptor + "]";
       }
     };
   }

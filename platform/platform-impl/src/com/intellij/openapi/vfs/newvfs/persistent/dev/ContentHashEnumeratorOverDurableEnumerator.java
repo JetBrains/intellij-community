@@ -184,7 +184,7 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     }
 
     @Override
-    public int hashCodeOf(byte[] contentHash) {
+    public int getHashCode(byte[] contentHash) {
       int hashCode = 0; // take first 4 bytes, this should be good enough hash given we reference git revisions with 7-8 hex digits
       for (int i = 0; i < 4; i++) {
         hashCode = (hashCode << 8) + (contentHash[i] & 0xFF);
@@ -193,8 +193,8 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     }
 
     @Override
-    public boolean areEqual(byte[] hash1,
-                            byte[] hash2) {
+    public boolean isEqual(byte[] hash1,
+                           byte[] hash2) {
       return Arrays.equals(hash1, hash2);
     }
 
