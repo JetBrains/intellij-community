@@ -132,7 +132,7 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
                                                    @NotNull HighlightingSession session) {
     List<RangeHighlighterEx> toRemove = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range), existing -> {
-      if (existing.getGroup() == Pass.UPDATE_ALL && range == existing.getVisitingTextRange()) {
+      if (existing.getGroup() == Pass.UPDATE_ALL && TextRangeScalarUtil.startOffset(range) == existing.getVisitingTextRange().getStartOffset() && TextRangeScalarUtil.endOffset(range) == existing.getVisitingTextRange().getEndOffset()) {
         if (infos != null) {
           for (HighlightInfo created : infos) {
             if (existing.equalsByActualOffset(created)) return true;

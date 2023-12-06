@@ -114,7 +114,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         if (descriptorPsiElement != null) {
           createHighlightsForDescriptor(descriptor, descriptorPsiElement, holder.myToolWrapper, info -> {
-            holder.toolInfos.add(info);
+            synchronized (holder.toolInfos) {
+              holder.toolInfos.add(info);
+            }
             // do not apply incrementally outside visible range
             if (myPriorityRange.contains(info) && myHighlightingSession.addInfoIncrementally(info, myRestrictRange, getId())) {
               highlightInfoUpdater.infoAddedIncrementally(info, holder.getFile());
@@ -124,7 +126,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       };
       Consumer<InspectionRunner.InspectionContext> contextFinishedCallback = context -> {
         InspectionRunner.InspectionProblemHolder holder = context.holder();
-        Collection<HighlightInfo> infos = holder.toolInfos;
+        Collection<HighlightInfo> infos;
+        synchronized (holder.toolInfos) {
+          infos = new ArrayList<>(holder.toolInfos);
+        }
         if (LOG.isDebugEnabled()) {
           LOG.debug("contextFinishedCallback: " + context.tool() + "; toolId:" + context.tool().getShortName() + "; "+infos+"; "+context.elements().size()+" elements");
         }

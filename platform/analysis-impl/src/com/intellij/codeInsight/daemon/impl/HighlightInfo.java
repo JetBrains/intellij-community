@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -68,9 +69,8 @@ public class HighlightInfo implements Segment {
   /** true if this HighlightInfo was created as an error for some unresolved reference, so there likely will be some "Import" quickfixes after {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} being asked about em */
   private static final byte UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK = 0x20;
 
-  // this HighlightInfo was created during visiting PsiElement 'element' with element.getTextRange() = TextRange(startOffset+visitingRangeDeltaStartOffset, endOffset+visitingRangeDeltaEndOffset)
-  private int visitingRangeDeltaStartOffset;
-  private int visitingRangeDeltaEndOffset;
+  // this HighlightInfo was created during visiting PsiElement with this range
+  private RangeMarker visitingRange;
 
   @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK,
     UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
@@ -224,7 +224,7 @@ public class HighlightInfo implements Segment {
     setFlag(FROM_INJECTION_MASK, true);
   }
 
-  void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
+  void addFileLevelComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
     if (fileLevelComponentsStorage == null) {
       fileLevelComponentsStorage = new Pair<>(fileEditor, component);
     }
@@ -337,15 +337,18 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  void setVisitingTextRange(long range) {
-    visitingRangeDeltaStartOffset = TextRangeScalarUtil.startOffset(range) - getStartOffset();
-    visitingRangeDeltaEndOffset = TextRangeScalarUtil.endOffset(range) - getEndOffset();
+  void setVisitingTextRange(@NotNull Document document, long range) {
+    if (document instanceof DocumentWindow window) {
+      range = TextRangeScalarUtil.toScalarRange(window.injectedToHost(TextRangeScalarUtil.create(range)));
+      document = window.getDelegate();
+    }
+    visitingRange = document.createRangeMarker(TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range));
   }
 
-  long getVisitingTextRange() {
-    int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
-    int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
-    return TextRange.isProperRange(visitStart, visitEnd) ? TextRangeScalarUtil.toScalarRange(visitStart, visitEnd) : -1;
+  @NotNull
+  Segment getVisitingTextRange() {
+    RangeMarker visitingRange = this.visitingRange;
+    return visitingRange != null && visitingRange.isValid() ? visitingRange : this;
   }
 
   public @NotNull HighlightSeverity getSeverity() {

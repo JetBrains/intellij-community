@@ -3613,6 +3613,48 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
   }
 
+  public void testFileLevelWithEverChangingDescriptionMustUpdateOnTyping() {
+    class XXXIdentifierFileLevelInspection extends MyFegnaInspection {
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new JavaElementVisitor() {
+          @Override
+          public void visitIdentifier(@NotNull PsiIdentifier identifier) {
+            super.visitIdentifier(identifier);
+            if (identifier.getText().contains("xxx")) {
+              holder.registerProblem(identifier.getContainingFile(),"xxx: "+identifier.getText(), ProblemHighlightType.WARNING);
+            }
+          }
+        };
+      }
+    }
+
+    registerInspection(new XXXIdentifierFileLevelInspection());
+    @Language("JAVA")
+    String text = """
+      class X {
+        void foo() {
+          int xxx<caret>;
+        }
+      }""";
+    configureByText(JavaFileType.INSTANCE, text);
+
+    assertEmpty(highlightErrors());
+    HighlightInfo info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+    assertEquals("xxx: xxx", info.getDescription());
+
+    type('2');
+    assertEmpty(highlightErrors());
+    info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+    assertEquals("xxx: xxx2", info.getDescription());
+
+    type('y');
+    assertEmpty(highlightErrors());
+    info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+    assertEquals("xxx: xxx2y", info.getDescription());
+  }
+
   public void testInspectionMustRemoveItsObsoleteHighlightsImmediatelyAfterFinished() {
     @Language("JAVA")
     String text = """
