@@ -8,10 +8,7 @@ import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.RectanglePainter2D;
@@ -681,6 +678,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private class MyMouseListener extends MouseAdapter {
+    private @Nullable TreePath treePathUnderMouse = null;
 
     private MyMouseListener() {
       autoScrollUnblockTimer.setRepeats(false);
@@ -688,6 +686,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     @Override
     public void mousePressed(MouseEvent event) {
+      treePathUnderMouse = getPathForLocation(event.getX(), event.getY());
+
       if (!hasFocus()) {
         blockAutoScrollFromSource();
       }
@@ -720,6 +720,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     @Override
     public void mouseReleased(MouseEvent event) {
+      TreePath treePathUnderMouseAfterEvent = getPathForLocation(event.getX(), event.getY());
+      if (!Comparing.equal(treePathUnderMouse, treePathUnderMouseAfterEvent)) {
+        event.consume(); // IDEA-338787: BasicTreeUI.checkForClickInExpandControl does not consume the event
+      }
+      treePathUnderMouse = null;
+
       setPressed(event, false);
       if (event.getButton() == MouseEvent.BUTTON1 &&
           event.getClickCount() == 2 &&
