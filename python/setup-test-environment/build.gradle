@@ -43,7 +43,7 @@ envs {
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.0"
-  String python312version = "3.12.0rc3"
+  String python312version = "3.12.0"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
