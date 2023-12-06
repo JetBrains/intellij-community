@@ -118,6 +118,7 @@ internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           val prefix = if (projects.size == 1) "" else "${project.name}_"
           Window.getWindows().forEach {
+            LOG.info("Capturing screenshot of ${it.javaClass}")
             captureComponent(it, File(screenshotPath, prefix + it.name + ".png"))
           }
         }
