@@ -146,6 +146,9 @@ public class ModCommandServiceImpl implements ModCommandService {
           return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
             AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment(), IntentionPreviewInfo.InfoKind.ERROR);
         }
+        else if (navigateInfo == IntentionPreviewInfo.EMPTY) {
+          navigateInfo = new IntentionPreviewInfo.Html(message.messageText());
+        }
       }
       else if (command instanceof ModCopyToClipboard copy) {
         navigateInfo = new IntentionPreviewInfo.Html(HtmlChunk.text(
