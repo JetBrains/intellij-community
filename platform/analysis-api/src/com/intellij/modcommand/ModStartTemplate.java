@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -22,6 +23,11 @@ import java.util.function.Function;
 public record ModStartTemplate(@NotNull VirtualFile file, @NotNull List<@NotNull TemplateField> fields,
                                @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> templateFinishFunction) 
   implements ModCommand {
+
+  @Override
+  public @NotNull Set<@NotNull VirtualFile> modifiedFiles() {
+    return Set.of(file);
+  }
 
   /**
    * Template field
