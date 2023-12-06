@@ -344,7 +344,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
   private fun wrapAnAction(action: AnAction, presentation: Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
     val groupMapping = model.getGroupMapping(action)
-    groupMapping?.updateBeforeShow(myModel.updateSession)
+    groupMapping?.updateBeforeShow(model.updateSession)
     return ActionWrapper(action, groupMapping, matchMode, model, presentation)
   }
 
