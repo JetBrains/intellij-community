@@ -39,7 +39,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.ProjectType
@@ -80,7 +79,6 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -1306,7 +1304,6 @@ private const val KEY_ATTR_NAME = "key"
 private const val SEPARATOR_ELEMENT_NAME = "separator"
 private const val REFERENCE_ELEMENT_NAME = "reference"
 private const val GROUP_ID_ATTR_NAME = "group-id"
-private const val KEYMAP_ATTR_NAME = "keymap"
 private const val REF_ATTR_NAME = "ref"
 private const val USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of"
 private const val PROJECT_TYPE = "project-type"
@@ -1465,37 +1462,6 @@ private fun parseAnchor(anchorStr: String?, actionName: String?, module: IdeaPlu
   }
 }
 
-private fun processMouseShortcutNode(element: XmlElement,
-                                     actionId: String,
-                                     module: IdeaPluginDescriptor,
-                                     keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
-  val keystrokeString = element.attributes.get("keystroke")
-  if (keystrokeString.isNullOrBlank()) {
-    reportActionError(module, "\"keystroke\" attribute must be specified for action with id=$actionId")
-    return
-  }
-
-  val shortcut = try {
-    KeymapUtil.parseMouseShortcut(keystrokeString)
-  }
-  catch (_: Exception) {
-    reportActionError(module, "\"keystroke\" attribute has invalid value for action with id=$actionId")
-    return
-  }
-
-  val keymapName = element.attributes.get(KEYMAP_ATTR_NAME)
-  if (keymapName.isNullOrEmpty()) {
-    reportActionError(module, "attribute \"keymap\" should be defined")
-    return
-  }
-
-  processRemoveAndReplace(element = element,
-                          actionId = actionId,
-                          keymap = keymapName,
-                          shortcut = shortcut,
-                          keymapToOperations = keymapToOperations)
-}
-
 private fun reportActionError(module: PluginDescriptor, message: String, cause: Throwable? = null) {
   LOG.error(PluginException("$message (module=$module)", cause, module.pluginId))
 }
@@ -1571,70 +1537,6 @@ private fun createSeparator(bundle: ResourceBundle?, key: String): Separator {
   val text = if (bundle == null) null else AbstractBundle.messageOrNull(bundle, key)
   return if (text == null) Separator.getInstance() else Separator(text)
 }
-
-private fun processKeyboardShortcutNode(element: XmlElement,
-                                        actionId: String,
-                                        module: PluginDescriptor,
-                                        keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
-  val firstStrokeString = element.attributes.get("first-keystroke")
-  if (firstStrokeString == null) {
-    reportActionError(module, "\"first-keystroke\" attribute must be specified for action with id=$actionId")
-    return
-  }
-
-  val firstKeyStroke = ActionManagerEx.getKeyStroke(firstStrokeString)
-  if (firstKeyStroke == null) {
-    reportActionError(module = module, message = "\"first-keystroke\" attribute has invalid value for action with id=$actionId")
-    return
-  }
-
-  var secondKeyStroke: KeyStroke? = null
-  val secondStrokeString = element.attributes.get("second-keystroke")
-  if (secondStrokeString != null) {
-    secondKeyStroke = ActionManagerEx.getKeyStroke(secondStrokeString)
-    if (secondKeyStroke == null) {
-      reportActionError(module = module, message = "\"second-keystroke\" attribute has invalid value for action with id=$actionId")
-      return
-    }
-  }
-
-  val keymapName = element.attributes.get(KEYMAP_ATTR_NAME)
-  if (keymapName.isNullOrBlank()) {
-    reportActionError(module = module, message = "attribute \"keymap\" should be defined")
-    return
-  }
-
-  processRemoveAndReplace(element = element,
-                          actionId = actionId,
-                          keymap = keymapName,
-                          shortcut = KeyboardShortcut(firstKeyStroke, secondKeyStroke),
-                          keymapToOperations = keymapToOperations)
-}
-
-private fun processRemoveAndReplace(element: XmlElement,
-                                    actionId: String,
-                                    keymap: String,
-                                    shortcut: Shortcut,
-                                    keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
-  val operations = keymapToOperations.computeIfAbsent(keymap) { ArrayList() }
-  val remove = element.attributes.get("remove").toBoolean()
-  if (remove) {
-    operations.add(RemoveShortcutOperation(actionId, shortcut))
-  }
-
-  val replace = element.attributes.get("replace-all").toBoolean()
-  if (replace) {
-    operations.add(RemoveAllShortcutsOperation(actionId))
-  }
-  if (!remove) {
-    operations.add(AddShortcutOperation(actionId, shortcut))
-  }
-}
-
-internal sealed interface KeymapShortcutOperation
-internal class RemoveShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
-internal class RemoveAllShortcutsOperation(@JvmField val actionId: String) : KeymapShortcutOperation
-internal class AddShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
 
 private fun getReferenceActionId(element: XmlElement): String? {
   // support old style references by id
