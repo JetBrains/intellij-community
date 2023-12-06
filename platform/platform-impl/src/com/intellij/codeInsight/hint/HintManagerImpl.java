@@ -385,6 +385,17 @@ public class HintManagerImpl extends HintManager {
    */
   public static Point getHintPosition(@NotNull LightweightHint hint,
                                       @NotNull Editor editor,
+                                      @NotNull RelativePoint point,
+                                      @PositionFlags short constraint) {
+    Point p = point.getPoint(editor.getContentComponent());
+    return getHintPosition(hint, editor, p, p, constraint, Registry.is("editor.balloonHints"));
+  }
+
+  /**
+   * @return position of hint in layered pane coordinate system
+   */
+  public static Point getHintPosition(@NotNull LightweightHint hint,
+                                      @NotNull Editor editor,
                                       @NotNull LogicalPosition pos,
                                       @PositionFlags short constraint) {
     VisualPosition visualPos = editor.logicalToVisualPosition(pos);
@@ -401,7 +412,7 @@ public class HintManagerImpl extends HintManager {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
-  static Point getHintPosition(@NotNull LightweightHint hint,
+  private static Point getHintPosition(@NotNull LightweightHint hint,
                                        @NotNull Editor editor,
                                        @NotNull VisualPosition pos1,
                                        @NotNull VisualPosition pos2,
@@ -409,19 +420,28 @@ public class HintManagerImpl extends HintManager {
     return getHintPosition(hint, editor, pos1, pos2, constraint, Registry.is("editor.balloonHints"));
   }
 
-  static Point getHintPosition(@NotNull LightweightHint hint,
+  private static Point getHintPosition(@NotNull LightweightHint hint,
                                        @NotNull Editor editor,
                                        @NotNull VisualPosition pos1,
                                        @NotNull VisualPosition pos2,
                                        @PositionFlags short constraint,
                                        boolean showByBalloon) {
+    return getHintPosition(hint, editor, editor.visualPositionToXY(pos1), editor.visualPositionToXY(pos2), constraint, showByBalloon);
+  }
+
+  private static Point getHintPosition(@NotNull LightweightHint hint,
+                                       @NotNull Editor editor,
+                                       @NotNull Point point1,
+                                       @NotNull Point point2,
+                                       @PositionFlags short constraint,
+                                       boolean showByBalloon) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return new Point();
-    Point p = _getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
+    Point p = _getHintPosition(hint, editor, point1, point2, constraint, showByBalloon);
     JComponent externalComponent = getExternalComponent(editor);
     Dimension hintSize = hint.getComponent().getPreferredSize();
     if (constraint == ABOVE) {
       if (p.y < 0) {
-        Point p1 = _getHintPosition(hint, editor, pos1, pos2, UNDER, showByBalloon);
+        Point p1 = _getHintPosition(hint, editor, point1, point2, UNDER, showByBalloon);
         if (p1.y + hintSize.height <= externalComponent.getSize().height) {
           return p1;
         }
@@ -429,7 +449,7 @@ public class HintManagerImpl extends HintManager {
     }
     else if (constraint == UNDER) {
       if (p.y + hintSize.height > externalComponent.getSize().height) {
-        Point p1 = _getHintPosition(hint, editor, pos1, pos2, ABOVE, showByBalloon);
+        Point p1 = _getHintPosition(hint, editor, point1, point2, ABOVE, showByBalloon);
         if (p1.y >= 0) {
           return p1;
         }
@@ -449,8 +469,8 @@ public class HintManagerImpl extends HintManager {
 
   private static Point _getHintPosition(@NotNull LightweightHint hint,
                                         @NotNull Editor editor,
-                                        @NotNull VisualPosition pos1,
-                                        @NotNull VisualPosition pos2,
+                                        @NotNull Point point1,
+                                        @NotNull Point point2,
                                         @PositionFlags short constraint,
                                         boolean showByBalloon) {
     Dimension hintSize = hint.getComponent().getPreferredSize();
@@ -459,14 +479,14 @@ public class HintManagerImpl extends HintManager {
     JComponent externalComponent = getExternalComponent(editor);
     JComponent internalComponent = editor.getContentComponent();
     if (constraint == RIGHT_UNDER) {
-      Point p = editor.visualPositionToXY(pos2);
+      Point p = new Point(point2);
       if (!showByBalloon) {
         p.y += editor.getLineHeight();
       }
       location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
     else {
-      Point p = editor.visualPositionToXY(pos1);
+      Point p = new Point(point1);
       if (constraint == UNDER) {
         p.y += editor.getLineHeight();
       }

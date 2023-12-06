@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.hints.presentation.InputHandler
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -10,6 +13,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.LightweightHint
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.BitUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.GraphicsUtil
@@ -38,6 +43,8 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
   // EditorCustomElementRenderer's methods have inlay as parameter,
   // but InputHandler's methods do not have it.
   lateinit var inlay: Inlay<InlineBreakpointInlayRenderer>
+
+  var tooltipHint: LightweightHint? = null
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     val colorsScheme = inlay.editor.colorsScheme
@@ -89,10 +96,12 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
   private fun invokePopupIfNeeded(event: MouseEvent) {
     if (event.isPopupTrigger) {
       if (breakpoint != null) {
-        val bounds = inlay.bounds ?: return
-        val center = Point(bounds.centerX.toInt(), bounds.centerY.toInt())
+        val center = centerPosition() ?: return
+        val component = inlay.editor.contentComponent
         DebuggerUIUtil.showXBreakpointEditorBalloon(
-          breakpoint.project, center, inlay.editor.contentComponent, false, breakpoint)
+          breakpoint.project,
+          center.getPoint(component), component,
+          false, breakpoint)
       }
       else {
         // FIXME[inline-bp]: show context like in gutter (XDebugger.Hover.Breakpoint.Context.Menu),
@@ -161,12 +170,54 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+    showTooltip(event)
   }
 
   override fun mouseExited() {
     setCursor(null)
+    hideTooltip()
   }
 
   private fun setCursor(cursor: Cursor?) =
     (inlay.editor as? EditorEx)?.setCustomCursor(InlineBreakpointInlayRenderer::class.java, cursor)
+
+  private fun showTooltip(event: MouseEvent) {
+    if (tooltipHint?.isVisible == true) return
+    if (!inlay.editor.contentComponent.isShowing) return
+
+    // FIXME[inline-bp]: use some better texts here
+    val text =
+      if (breakpoint != null) {
+        breakpoint.description
+      } else {
+        variant!!.text
+      }
+    val hint = LightweightHint(HintUtil.createInformationLabel(text))
+
+    // Location policy: mimic gutter tooltip by pointing it to the center of an icon, but show it above the line.
+    val constraint = HintManager.ABOVE
+    val point = centerPosition() ?: return
+
+    val hintPoint = HintManagerImpl.getHintPosition(hint, inlay.editor, point, constraint)
+
+    val hintHint = HintManagerImpl.createHintHint(inlay.editor, hintPoint, hint, constraint)
+      .setContentActive(false)
+      .setPositionChangeShift(0, 0) // this tooltip points to the center of the icon, so no need to shift anything
+
+    val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or HintManager.HIDE_BY_SCROLLING
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, inlay.editor, hintPoint, flags, 0, false, hintHint)
+
+    tooltipHint = hint
+  }
+
+  private fun hideTooltip() {
+    tooltipHint?.hide()
+    tooltipHint = null
+  }
+
+  private fun centerPosition(): RelativePoint? {
+    val bounds = inlay.bounds ?: return null
+    return RelativePoint(inlay.editor.contentComponent, Point(bounds.centerX.toInt(), bounds.centerY.toInt()))
+  }
+
 }
