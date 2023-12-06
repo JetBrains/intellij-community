@@ -1035,9 +1035,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
    */
   fun getBaseAction(overridingAction: OverridingAction): AnAction? = actionPostInitRegistrar.getBaseAction(overridingAction)
 
-  fun getParentGroupIds(actionId: String): Collection<String?> {
-    return actionPostInitRegistrar.state.getParentGroupIds(actionId)
-  }
+  fun getParentGroupIds(actionId: String): Collection<String> = actionPostInitRegistrar.state.getParentGroupIds(actionId)
 
   @Suppress("removal", "OVERRIDE_DEPRECATION")
   override fun addAnActionListener(listener: AnActionListener) {

@@ -19,11 +19,11 @@ private const val KEYMAP_ATTR_NAME = "keymap"
 
 internal sealed interface KeymapShortcutOperation
 
-internal class AddShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
+internal data class AddShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
 
-internal class RemoveAllShortcutsOperation(@JvmField val actionId: String) : KeymapShortcutOperation
+internal data class RemoveAllShortcutsOperation(@JvmField val actionId: String) : KeymapShortcutOperation
 
-internal class RemoveShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
+internal data class RemoveShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
 
 internal fun processMouseShortcutNode(element: XmlElement,
                                       actionId: String,

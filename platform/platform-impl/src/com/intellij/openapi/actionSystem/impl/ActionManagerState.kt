@@ -21,7 +21,11 @@ internal class ActionManagerState {
 
   @JvmField val lock: Any = Any()
 
-  fun getParentGroupIds(id: String): List<String> = idToDescriptor.get(id)?.groupIds ?: java.util.List.of()
+  fun getParentGroupIds(id: String): List<String> {
+    synchronized(lock) {
+      return idToDescriptor.get(id)?.groupIds ?: java.util.List.of()
+    }
+  }
 
   fun getPluginActions(pluginId: PluginId): List<String> {
     synchronized(lock) {
@@ -63,18 +67,13 @@ internal data class ActionManagerStateActionItemDescriptor(
       return
     }
 
-    when {
-      groupIds.size <= 1 -> {
-        this.groupIds = java.util.List.of()
-      }
-      groupIds is ArrayList -> {
-        groupIds.removeAt(index)
-      }
-      else -> {
-        val list = ArrayList(groupIds)
-        list.removeAt(index)
-        this.groupIds = list
-      }
+    if (groupIds.size <= 1) {
+      this.groupIds = java.util.List.of()
+    }
+    else {
+      val list = ArrayList(groupIds)
+      list.removeAt(index)
+      this.groupIds = list
     }
   }
 }

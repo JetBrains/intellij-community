@@ -220,8 +220,17 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
     val boundShortcuts = actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
       var result = list ?: boundShortcuts ?: getParentShortcuts(id, actionBinding)
-      if (!result.contains(shortcut)) {
-        result = result + shortcut
+      if (result.isEmpty()) {
+        result = java.util.List.of(shortcut)
+      }
+      else if (!result.contains(shortcut)) {
+        result = when (result.size) {
+          1 -> java.util.List.of(result.get(0), shortcut)
+          2 -> java.util.List.of(result.get(0), result.get(1), shortcut)
+          3 -> java.util.List.of(result.get(0), result.get(1), result.get(2), shortcut)
+          4 -> java.util.List.of(result.get(0), result.get(1), result.get(2), result.get(3), shortcut)
+          else -> result + shortcut
+        }
       }
       if (result.areShortcutsEqualToParent(id, actionBinding)) null else result
     }

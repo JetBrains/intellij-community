@@ -119,12 +119,10 @@ public abstract class KeymapsTestCaseBase {
     return result;
   }
 
-
   @BeforeEach
   public void setUp() {
     ExecutorRegistry.getInstance();
   }
-
 
   @TestFactory
   public List<DynamicTest> testUnknownActionIds() {
@@ -226,7 +224,7 @@ public abstract class KeymapsTestCaseBase {
       Map<String, List<String>> duplicates = knownDuplicates.get(keymap);
       for (String shortcut : duplicates.keySet()) {
         Shortcut keyboardShortcut = parseShortcut(shortcut);
-        List<String> actions = duplicates.computeIfAbsent(shortcut, key -> new ArrayList<>());
+        List<String> actions = duplicates.computeIfAbsent(shortcut, __ -> new ArrayList<>());
         keyDuplicates.put(keyboardShortcut, actions);
       }
     }
@@ -259,7 +257,7 @@ public abstract class KeymapsTestCaseBase {
 
           if (shortcut instanceof KeyboardShortcut && ((KeyboardShortcut)shortcut).getSecondKeyStroke() != null) {
             KeyboardShortcut firstStroke = new KeyboardShortcut(((KeyboardShortcut)shortcut).getFirstKeyStroke(), null);
-            List<String> firstStrokeActionList = map.computeIfAbsent(firstStroke, key -> new ArrayList<>());
+            List<String> firstStrokeActionList = map.computeIfAbsent(firstStroke, __ -> new ArrayList<>());
             if (!firstStrokeActionList.contains(SECOND_STROKE)) {
               firstStrokeActionList.add(SECOND_STROKE);
             }
@@ -270,17 +268,17 @@ public abstract class KeymapsTestCaseBase {
 
     if (SystemInfo.isUnix && !SystemInfo.isMac) {
       // hack: add hardcoded shortcut from DefaultKeymapImpl to make keymaps identical under all OS
-      Map<Shortcut, List<String>> defaultKeymap = result.get(KeymapManager.DEFAULT_IDEA_KEYMAP);
-      List<String> actionList = defaultKeymap.computeIfAbsent(new MouseShortcut(MouseEvent.BUTTON2, 0, 1), key -> new ArrayList<>());
-      actionList.add(IdeActions.ACTION_GOTO_DECLARATION);
+      result.get(KeymapManager.DEFAULT_IDEA_KEYMAP)
+        .computeIfAbsent(new MouseShortcut(MouseEvent.BUTTON2, 0, 1), __ -> new ArrayList<>())
+        .add(IdeActions.ACTION_GOTO_DECLARATION);
     }
 
     // remove shortcuts, reused from parent keymap
+    List<Shortcut> reusedShortcuts = new ArrayList<>();
     for (Keymap keymap : keymaps) {
       Map<Shortcut, List<String>> map = result.get(keymap.getName());
 
-      List<Shortcut> reusedShortcuts = new ArrayList<>();
-
+      reusedShortcuts.clear();
       for (Shortcut key : map.keySet()) {
         Shortcut parentKey = convertShortcutForParent(key, keymap);
         Keymap parent = keymap.getParent();
@@ -307,18 +305,7 @@ public abstract class KeymapsTestCaseBase {
 
     // remove non-duplicated shortcuts
     for (Keymap keymap : keymaps) {
-      Map<Shortcut, List<String>> map = result.get(keymap.getName());
-
-      List<Shortcut> nonDuplicates = new ArrayList<>();
-      for (Map.Entry<Shortcut, List<String>> entry : map.entrySet()) {
-        if (entry.getValue().size() < 2) {
-          nonDuplicates.add(entry.getKey());
-        }
-      }
-
-      for (Shortcut key : nonDuplicates) {
-        map.remove(key);
-      }
+      result.get(keymap.getName()).values().removeIf(it -> it.size() < 2);
     }
 
     return result;
