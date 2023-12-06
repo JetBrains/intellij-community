@@ -4,6 +4,8 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegate<ActionGroup>, PerformWithDocumentsCommitted {
   private final ActionGroup myDelegate;
 
@@ -80,6 +82,12 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   @Override
   public boolean disableIfNoVisibleChildren() {
     return myDelegate.disableIfNoVisibleChildren();
+  }
+
+  @Override
+  public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
+                                                            @NotNull UpdateSession updateSession) {
+    return myDelegate.postProcessVisibleChildren(visibleChildren, updateSession);
   }
 }
 

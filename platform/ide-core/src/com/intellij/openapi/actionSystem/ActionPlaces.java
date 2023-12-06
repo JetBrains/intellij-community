@@ -56,6 +56,8 @@ public abstract class ActionPlaces {
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
 
+  public static final String REVEAL_IN_POPUP = "RevealInPopup";
+
   /** @deprecated replaced by {@link #BOOKMARKS_VIEW_POPUP} */
   @Deprecated(forRemoval = true)
   public static final String FAVORITES_VIEW_POPUP = "FavoritesPopup";
@@ -251,7 +253,8 @@ public abstract class ActionPlaces {
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
     PROJECT_WIDGET_POPUP,
-    JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP
+    JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP,
+    REVEAL_IN_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";

@@ -757,7 +757,7 @@
       <add-to-group group-id="RunContextPopupGroup" anchor="after" relative-to-action="OpenInRightSplit"/>
     </reference>
 
-    <group id="RevealGroup" popup="true">
+    <group id="RevealGroup" popup="true" class="com.intellij.ide.actions.RevealGroup">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
 

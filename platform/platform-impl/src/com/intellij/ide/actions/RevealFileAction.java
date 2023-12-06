@@ -11,10 +11,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -122,12 +119,22 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   public static @ActionText @NotNull String getActionName(@Nullable String place) {
-    var shortName = ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place);
+    var shortName = ActionPlaces.REVEAL_IN_POPUP.equals(place);
     return shortName ? getFileManagerName() : getActionName(false);
   }
 
   private static @ActionText String getActionName(boolean skipDetection) {
     return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName(skipDetection));
+  }
+
+  @Override
+  public void applyTextOverride(@NotNull String place, @NotNull Presentation presentation) {
+    if (ActionPlaces.REVEAL_IN_POPUP.equals(place)) {
+      presentation.setText(getActionName(place));
+    }
+    else {
+      super.applyTextOverride(place, presentation);
+    }
   }
 
   public static @NotNull @ActionText String getFileManagerName() {

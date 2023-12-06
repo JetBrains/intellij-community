@@ -24,10 +24,7 @@
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
             icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
-      <override-text place="EditorTabPopup"/>
-      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="RevealInPopup"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
     <action id="Terminal.CloseTab" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="CloseContent"/>
