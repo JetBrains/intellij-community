@@ -11,11 +11,6 @@ import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.pip.PypiPackageCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Files
-import java.nio.file.Path
-import java.time.Duration
-import java.time.Instant
-import kotlin.io.path.exists
 
 class PythonPackagesUpdater : ProjectActivity {
 
@@ -24,19 +19,8 @@ class PythonPackagesUpdater : ProjectActivity {
     withContext(Dispatchers.IO) {
       thisLogger().debug("Updating PyPI cache and ranking")
       service<PyPIPackageRanking>().reload()
-
-      service<PypiPackageCache>().apply {
-        if (filePath.exists() && !cacheExpired(filePath)) loadFromFile()
-        else refresh()
-      }
-
+      service<PypiPackageCache>().loadCache()
     }
   }
 
-  private fun cacheExpired(path: Path): Boolean {
-    val fileTime = Files.getLastModifiedTime(path)
-    val expirationTime = fileTime.toInstant().plus(Duration.ofDays(1))
-
-    return expirationTime.isBefore(Instant.now())
-  }
 }
