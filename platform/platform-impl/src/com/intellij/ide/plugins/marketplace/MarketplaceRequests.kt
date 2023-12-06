@@ -139,7 +139,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     @JvmStatic
     @JvmOverloads
     @Throws(IOException::class)
-    internal fun loadPluginDescriptor(
+    fun loadPluginDescriptor(
       xmlId: String,
       ideCompatibleUpdate: IdeCompatibleUpdate,
       indicator: ProgressIndicator? = null,
