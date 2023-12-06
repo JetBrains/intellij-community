@@ -71,7 +71,8 @@ interface AlignableChange {
       getStartLine(Side.RIGHT) == other.getStartLine(Side.RIGHT) && getEndLine(Side.RIGHT) == other.getEndLine(Side.RIGHT)
 
     fun getAlignedChangeColor(type: TextDiffType, editor: Editor): Color? {
-      return if (type === TextDiffType.MODIFIED) null else type.getColor(editor).let { ColorUtil.toAlpha(it, 200) }
+      if (type === TextDiffType.MODIFIED) return null
+      return ColorUtil.toAlpha(type.getColor(editor), 200)
     }
   }
 }
