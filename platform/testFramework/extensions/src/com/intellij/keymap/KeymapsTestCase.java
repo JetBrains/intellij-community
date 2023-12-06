@@ -3,7 +3,6 @@ package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -596,7 +595,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Tree-selectFirst"
   );
 
-  private static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS = List.of(
+  private static final Set<String> DEFAULT_CONFLICT_SAFE_GROUPS = Set.of(
     "Log.KeymapGroup",
     "UsageGroupingActionGroup",
     "UsageFilteringActionGroup",
@@ -625,7 +624,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   }
 
   @Override
-  protected Collection<String> getConflictSafeGroups() {
+  protected Set<String> getConflictSafeGroups() {
     return DEFAULT_CONFLICT_SAFE_GROUPS;
   }
 

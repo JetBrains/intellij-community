@@ -48,7 +48,7 @@ public abstract class KeymapsTestCaseBase {
 
   protected abstract @NotNull Set<String> getBoundActions();
 
-  protected abstract Collection<String> getConflictSafeGroups();
+  protected abstract Set<String> getConflictSafeGroups();
 
   protected abstract String getGroupForUnknownAction(@NotNull String actionId);
 
@@ -237,7 +237,8 @@ public abstract class KeymapsTestCaseBase {
     Map<String, Map<Shortcut, List<String>>> result = new HashMap<>();
 
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-    Set<String> boundActions = ActionManagerEx.getInstanceEx().getBoundActions();
+    ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
+    Set<String> boundActions = actionManager.getBoundActions();
     Keymap[] keymaps = keymapManager.getAllKeymaps();
 
     // fill shortcuts
@@ -246,12 +247,15 @@ public abstract class KeymapsTestCaseBase {
       result.put(keymap.getName(), map);
 
       for (String actionId : keymap.getActionIds()) {
-        if (boundActions.contains(actionId)) continue;
-        if (isConflictSafeAction(actionId)) continue;
+        if (boundActions.contains(actionId)) {
+          continue;
+        }
+        if (isConflictSafeAction(actionId, actionManager)) {
+          continue;
+        }
 
         for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
-          List<String> actionList = map.computeIfAbsent(shortcut, key -> new ArrayList<>());
-          actionList.add(actionId);
+          map.computeIfAbsent(shortcut, __ -> new ArrayList<>()).add(actionId);
 
           if (shortcut instanceof KeyboardShortcut && ((KeyboardShortcut)shortcut).getSecondKeyStroke() != null) {
             KeyboardShortcut firstStroke = new KeyboardShortcut(((KeyboardShortcut)shortcut).getFirstKeyStroke(), null);
@@ -307,7 +311,9 @@ public abstract class KeymapsTestCaseBase {
 
       List<Shortcut> nonDuplicates = new ArrayList<>();
       for (Map.Entry<Shortcut, List<String>> entry : map.entrySet()) {
-        if (entry.getValue().size() < 2) nonDuplicates.add(entry.getKey());
+        if (entry.getValue().size() < 2) {
+          nonDuplicates.add(entry.getKey());
+        }
       }
 
       for (Shortcut key : nonDuplicates) {
@@ -318,16 +324,18 @@ public abstract class KeymapsTestCaseBase {
     return result;
   }
 
-  private boolean isConflictSafeAction(@NotNull String actionId) {
-    Collection<String> ids = ((ActionManagerImpl)ActionManager.getInstance()).getParentGroupIds(actionId);
+  private boolean isConflictSafeAction(@NotNull String actionId, @NotNull ActionManagerImpl actionManager) {
+    Collection<String> ids = actionManager.getParentGroupIds(actionId);
+    Set<String> conflictSafeGroups = getConflictSafeGroups();
     for (String groupId : ids) {
-      if (getConflictSafeGroups().contains(groupId) || isConflictSafeAction(groupId)) {
+      if (conflictSafeGroups.contains(groupId) || isConflictSafeAction(groupId, actionManager)) {
         return true;
       }
     }
+
     if (ids.isEmpty()) {
       String group = getGroupForUnknownAction(actionId);
-      if (group != null && getConflictSafeGroups().contains(group)) {
+      if (group != null && conflictSafeGroups.contains(group)) {
         return true;
       }
     }

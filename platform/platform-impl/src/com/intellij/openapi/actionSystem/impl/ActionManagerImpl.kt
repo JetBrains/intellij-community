@@ -113,7 +113,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val idToAction = HashMap<String, AnAction>(5_000, 0.5f)
     val boundShortcuts = HashMap<String, String>(512, 0.5f)
     val state = ActionManagerState()
-    val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction, boundShortcuts, state)
+    val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction = idToAction, boundShortcuts = boundShortcuts, state = state)
     val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
     doRegisterActions(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                       keymapToOperations = keymapToOperations,
