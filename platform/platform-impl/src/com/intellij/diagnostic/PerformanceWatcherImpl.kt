@@ -436,12 +436,7 @@ private fun postProcessReportFolder(durationMs: Long, task: SamplingTask, dir: P
   }
 
   val message = "UI was frozen for ${durationMs}ms, details saved to $reportDir"
-  if (PluginManagerCore.isRunningFromSources()) {
-    LOG.info(message)
-  }
-  else {
-    LOG.warn(message)
-  }
+  LOG.error(message)
   return reportDir
 }
 
