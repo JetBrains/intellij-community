@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclaration;
@@ -38,8 +38,8 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
 
   @Override
   public void accept(@NotNull RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitJavaModule(this));
+    if (visitor instanceof RefJavaVisitor javaVisitor) {
+      ApplicationManager.getApplication().runReadAction(() -> javaVisitor.visitJavaModule(this));
     }
     else {
       super.accept(visitor);
@@ -93,7 +93,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
     return AllIcons.Nodes.JavaModule;
   }
 
-  private void buildRequiresReferences(PsiJavaModule javaModule) {
+  private void buildRequiresReferences(@NotNull PsiJavaModule javaModule) {
     for (PsiRequiresStatement statement : javaModule.getRequires()) {
       PsiElement element = addReference(statement.getModuleReference());
       if (element instanceof PsiJavaModule requiredModule) {
@@ -104,30 +104,30 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
     }
   }
 
-  private void buildExportsReferences(PsiJavaModule javaModule) {
+  private void buildExportsReferences(@NotNull PsiJavaModule javaModule) {
     List<String> emptyList = Collections.emptyList();
     for (PsiPackageAccessibilityStatement statement : javaModule.getExports()) {
       PsiElement element = addReference(statement.getPackageReference());
       String packageName = null;
-      if (element instanceof PsiPackage) {
-        packageName = ((PsiPackage)element).getQualifiedName();
+      if (element instanceof PsiPackage psiPackage) {
+        packageName = psiPackage.getQualifiedName();
         if (myExportedPackageNames == null) myExportedPackageNames = new HashMap<>(1);
         myExportedPackageNames.put(packageName, emptyList);
       }
       for (PsiJavaModuleReferenceElement referenceElement : statement.getModuleReferences()) {
         if (referenceElement != null) {
           PsiElement moduleElement = addReference(referenceElement.getReference());
-          if (packageName != null && moduleElement instanceof PsiJavaModule) {
+          if (packageName != null && moduleElement instanceof PsiJavaModule psiJavaModule) {
             List<String> toModuleNames = myExportedPackageNames.get(packageName);
             if (toModuleNames == emptyList) myExportedPackageNames.put(packageName, toModuleNames = new ArrayList<>(1));
-            toModuleNames.add(((PsiJavaModule)moduleElement).getName());
+            toModuleNames.add(psiJavaModule.getName());
           }
         }
       }
     }
   }
 
-  private void buildProvidesReferences(PsiJavaModule javaModule) {
+  private void buildProvidesReferences(@NotNull PsiJavaModule javaModule) {
     for (PsiProvidesStatement statement : javaModule.getProvides()) {
       final PsiJavaCodeReferenceElement interfaceReference = statement.getInterfaceReference();
       final PsiReferenceList implementationList = statement.getImplementationList();
@@ -141,18 +141,18 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
 
             for (PsiJavaCodeReferenceElement implementationReference : implementationList.getReferenceElements()) {
               final PsiElement implementationClass = implementationReference.resolve();
-              if (implementationClass instanceof PsiClass) {
+              if (implementationClass instanceof PsiClass psiClass) {
                 RefElement refTargetElement = null;
-                PsiElement targetElement = getProviderMethod((PsiClass)implementationClass);
+                PsiElement targetElement = JavaServiceUtil.findProvider(psiClass);
 
                 if (targetElement == null) {
-                  final RefElement refClass = getRefManager().getReference(implementationClass);
-                  if (refClass instanceof RefClassImpl) {
+                  final RefElement refElement = getRefManager().getReference(psiClass);
+                  if (refElement instanceof RefClassImpl refClass) {
                     refClass.initializeIfNeeded();
                     if (myServiceImplementations == null) myServiceImplementations = new HashSet<>();
-                    myServiceImplementations.add((RefClass)refClass);
+                    myServiceImplementations.add(refClass);
 
-                    final RefMethod refConstructor = ((RefClassImpl)refClass).getDefaultConstructor();
+                    final RefMethod refConstructor = refClass.getDefaultConstructor();
                     if (refConstructor != null) {
                       final PsiElement constructorElement = refConstructor.getPsiElement();
                       if (constructorElement instanceof PsiModifierListOwner && ((PsiModifierListOwner)constructorElement).hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -163,14 +163,16 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
                   }
                 }
                 if (targetElement == null) {
-                  targetElement = implementationClass;
+                  targetElement = psiClass;
                 }
                 if (refTargetElement == null) {
                   refTargetElement = getRefManager().getReference(targetElement);
                 }
                 if (refTargetElement != null) {
-                  ((RefClassImpl)refInterface)
-                    .addReference(refTargetElement, targetElement, UastContextKt.toUElement(providerInterface, UDeclaration.class), false, true, null);
+                  final UDeclaration element = UastContextKt.toUElement(providerInterface, UDeclaration.class);
+                  if (element != null) {
+                    ((RefClassImpl)refInterface).addReference(refTargetElement, targetElement, element, false, true, null);
+                  }
                 }
               }
             }
@@ -180,7 +182,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
     }
   }
 
-  private void buildUsesReferences(PsiJavaModule javaModule) {
+  private void buildUsesReferences(@NotNull PsiJavaModule javaModule) {
     for (PsiUsesStatement statement : javaModule.getUses()) {
       final PsiJavaCodeReferenceElement reference = statement.getClassReference();
       if (reference != null) {
@@ -212,19 +214,19 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
   /**
    * For building references between modules
    */
-  private PsiElement addReference(PsiPolyVariantReference reference) {
+  @Nullable
+  private PsiElement addReference(@Nullable PsiPolyVariantReference reference) {
+    if (reference == null) return null;
     List<PsiElement> resolvedElements = new ArrayList<>();
-    if (reference != null) {
-      ResolveResult[] resolveResults = reference.multiResolve(false);
-      for (ResolveResult resolveResult : resolveResults) {
-        PsiElement element = resolveResult.getElement();
-        if (element != null) {
-          resolvedElements.add(element);
-          RefElement refElement = getRefManager().getReference(element);
-          if (refElement != null) {
-            addOutReference(refElement);
-            ((WritableRefElement)refElement).addInReference(this);
-          }
+    ResolveResult[] resolveResults = reference.multiResolve(false);
+    for (ResolveResult resolveResult : resolveResults) {
+      PsiElement element = resolveResult.getElement();
+      if (element != null) {
+        resolvedElements.add(element);
+        RefElement refElement = getRefManager().getReference(element);
+        if (refElement != null) {
+          addOutReference(refElement);
+          ((WritableRefElement)refElement).addInReference(this);
         }
       }
     }
@@ -248,13 +250,5 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
       }
     }
     return !exportedPackages.isEmpty() ? exportedPackages : Collections.emptyMap();
-  }
-
-  @Nullable
-  private static PsiMethod getProviderMethod(@NotNull PsiClass psiClass) {
-    final PsiMethod[] methods = psiClass.findMethodsByName("provider", false);
-    return ContainerUtil.find(methods, m -> m.hasModifierProperty(PsiModifier.PUBLIC) &&
-                                            m.hasModifierProperty(PsiModifier.STATIC) &&
-                                            m.getParameterList().isEmpty());
   }
 }

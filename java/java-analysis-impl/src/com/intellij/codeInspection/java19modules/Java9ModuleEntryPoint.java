@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
+import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
@@ -52,15 +54,15 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
       return isServiceOrExported(psiClass);
     }
     return psiElement instanceof PsiMethod method &&
-           (isDefaultConstructor(method) || isProviderMethod(method)) &&
+           (isDefaultConstructor(method) || JavaServiceUtil.isServiceProviderMethod(method)) &&
            isServiceOrExported(method.getContainingClass());
   }
 
   @Override
   public int getMinVisibilityLevel(PsiMember member) {
-    if (member instanceof PsiClass) {
-      PsiJavaModule javaModule = getJavaModule(member);
-      if (javaModule != null && !isServiceClass((PsiClass)member, javaModule) && isInExportedPackage((PsiClass)member, javaModule)) {
+    if (member instanceof PsiClass psiClass) {
+      PsiJavaModule javaModule = getJavaModule(psiClass);
+      if (javaModule != null && !isServiceClass(psiClass, javaModule) && isInExportedPackage(psiClass, javaModule)) {
         return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
       }
     }
@@ -83,9 +85,9 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   private static boolean isInExportedPackage(@Nullable RefClass refClass, @NotNull RefJavaModule refJavaModule) {
     RefEntity refOwner = refClass;
-    while (refOwner instanceof RefClass) {
-      String modifier = ((RefClass)refOwner).getAccessModifier();
-      refOwner = PsiModifier.PUBLIC.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ? refOwner.getOwner() : null;
+    final List<String> accessModifiers = List.of(PsiModifier.PUBLIC, PsiModifier.PROTECTED);
+    while (refOwner instanceof RefClass clazz) {
+      refOwner = accessModifiers.contains(clazz.getAccessModifier()) ? clazz.getOwner() : null;
     }
     if (refOwner instanceof RefPackage) {
       Map<String, List<String>> exportedPackageNames = refJavaModule.getExportedPackageNames();
@@ -108,20 +110,13 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
            method.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
-  private static boolean isProviderMethod(@NotNull PsiMethod method) {
-    return "provider".equals(method.getName()) &&
-           method.getParameterList().isEmpty() &&
-           method.hasModifierProperty(PsiModifier.PUBLIC) &&
-           method.hasModifierProperty(PsiModifier.STATIC);
-  }
-
   private static boolean isServiceOrExported(@Nullable PsiClass psiClass) {
     PsiJavaModule javaModule = getJavaModule(psiClass);
     return javaModule != null && (isServiceClass(psiClass, javaModule) || isInExportedPackage(psiClass, javaModule));
   }
 
   private static @Nullable PsiJavaModule getJavaModule(@Nullable PsiElement element) {
-    return element != null && PsiUtil.isLanguageLevel9OrHigher(element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
+    return element != null && HighlightingFeature.MODULES.isAvailable(element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
   }
 
   private static boolean isInExportedPackage(@NotNull PsiClass psiClass, @NotNull PsiJavaModule javaModule) {
@@ -137,11 +132,11 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   private static @Nullable String getPublicApiPackageName(@NotNull PsiClass psiClass) {
     if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) || psiClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       PsiElement parent = psiClass.getParent();
-      if (parent instanceof PsiClass) {
-        return getPublicApiPackageName((PsiClass)parent);
+      if (parent instanceof PsiClass clazz) {
+        return getPublicApiPackageName(clazz);
       }
-      if (parent instanceof PsiJavaFile) {
-        return ((PsiJavaFile)parent).getPackageName();
+      if (parent instanceof PsiJavaFile file) {
+        return file.getPackageName();
       }
     }
     return null;

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -387,9 +388,7 @@ final class ModuleHighlightUtil {
           errorSink.accept(info);
         }
 
-        PsiMethod provider = ContainerUtil.find(
-          implClass.findMethodsByName("provider", false),
-          m -> m.hasModifierProperty(PsiModifier.PUBLIC) && m.hasModifierProperty(PsiModifier.STATIC) && m.getParameterList().isEmpty());
+        PsiMethod provider = JavaServiceUtil.findProvider(implClass);
         if (provider != null) {
           PsiType type = provider.getReturnType();
           PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
