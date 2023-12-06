@@ -31,29 +31,29 @@ import java.lang.reflect.Method
 class GradleDaemonServices {
   private static final Logger LOG = Logger.getInstance(GradleDaemonServices.class)
 
-  static void stopDaemons() {
-    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+  static void stopDaemons(Set<String> knownGradleUserHomes = findKnownGradleUserHomes()) {
+    forEachConnection(knownGradleUserHomes) { ConsumerConnection connection, String gradleUserHome ->
       runAction(gradleUserHome, connection, DaemonStopAction, null)
     }
   }
 
-  static void stopDaemons(List<DaemonState> daemons) {
+  static void stopDaemons(Set<String> knownGradleUserHomes = findKnownGradleUserHomes(), List<DaemonState> daemons) {
     List<byte[]> tokens = new ArrayList<>()
     daemons.each { if (it.token) tokens.add(it.token) }
-    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+    forEachConnection(knownGradleUserHomes) { ConsumerConnection connection, String gradleUserHome ->
       runAction(gradleUserHome, connection, DaemonStopAction, tokens)
     }
   }
 
-  static void gracefulStopDaemons() {
-    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+  static void gracefulStopDaemons(Set<String> knownGradleUserHomes = findKnownGradleUserHomes()) {
+    forEachConnection(knownGradleUserHomes) { ConsumerConnection connection, String gradleUserHome ->
       runAction(gradleUserHome, connection, DaemonStopWhenIdleAction, null)
     }
   }
 
-  static List<DaemonState> getDaemonsStatus() {
+  static List<DaemonState> getDaemonsStatus(Set<String> knownGradleUserHomes = findKnownGradleUserHomes()) {
     List<DaemonState> result = new ArrayList<>()
-    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+    forEachConnection(knownGradleUserHomes) { ConsumerConnection connection, String gradleUserHome ->
       List<DaemonState> daemonStates = runAction(gradleUserHome, connection, DaemonStatusAction, null) as List<DaemonState>
       if (daemonStates) {
         result.addAll(daemonStates)
@@ -65,7 +65,6 @@ class GradleDaemonServices {
 
   private static Object runAction(String gradleUserHome,
                                   Object daemonClientFactory,
-                                  ConsumerConnection connection,
                                   Class actionClass,
                                   Object arg) {
     def daemonClientClassLoader = UrlClassLoader.build()
@@ -171,7 +170,7 @@ class GradleDaemonServices {
   private static Object runAction(String gradleUserHome, ConsumerConnection connection, Class actionClass, Object arg) {
     try {
       def daemonClientFactory = connection.delegate.delegate.connection.daemonClientFactory
-      runAction(gradleUserHome, daemonClientFactory, connection, actionClass, arg)
+      runAction(gradleUserHome, daemonClientFactory, actionClass, arg)
     }
     catch (Throwable t) {
       LOG.warn("Unable to send daemon message for " + connection.getDisplayName())
@@ -184,21 +183,23 @@ class GradleDaemonServices {
     }
   }
 
-  private static void forEachConnection(Closure closure) {
-    Set<String> gradleUserHomes = getGradleUserHomes()
+  private static void forEachConnection(Set<String> knownGradleUserHomes, Closure closure) {
     Map<ClassPath, ConsumerConnection> connections = getConnections()
     for (conn in connections.values()) {
-      for (String gradleUserHome in gradleUserHomes) {
+      for (String gradleUserHome in knownGradleUserHomes) {
         closure.call(conn, StringUtil.nullize(gradleUserHome))
       }
     }
   }
 
-  private static Set<String> getGradleUserHomes() {
+  private static Set<String> findKnownGradleUserHomes() {
     def projectManager = ProjectManager.getInstanceIfCreated()
     if (projectManager == null) return Set.of("")
     Set<String> gradleUserHomes = new HashSet()
-    for (project in projectManager.openProjects) {
+    // always search for Gradle connections in the default gradle user home
+    gradleUserHomes.add("")
+    def openProjects = projectManager.openProjects.findAll { !it.isDisposed() }
+    for (project in openProjects) {
       def gradleUserHome = GradleSettings.getInstance(project).getServiceDirectoryPath()
       gradleUserHomes.add(StringUtil.notNullize(gradleUserHome))
     }
