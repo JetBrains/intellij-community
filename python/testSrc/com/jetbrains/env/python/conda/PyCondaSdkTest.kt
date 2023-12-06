@@ -6,9 +6,11 @@ import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.openapi.projectRoots.impl.SdkBridge
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
@@ -135,12 +137,16 @@ internal class PyCondaSdkTest {
     val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(env.envIdentity, emptyList(), projectRule.project)
     val pythonPath = condaSdk.homePath
 
-    val legacyPythonSdk = ProjectJdkImpl("my conda", PythonSdkType.getInstance()).apply {
-      homePath = pythonPath
+    val legacyPythonSdk = ProjectJdkTable.getInstance().createSdk("my conda", PythonSdkType.getInstance())
+    legacyPythonSdk.sdkModificator.let {
+      it.homePath = pythonPath
+      writeAction {
+        it.commitChanges()
+      }
     }
     val element = Element("root")
-    legacyPythonSdk.writeExternal(element)
-    legacyPythonSdk.readExternal(element)
+    (legacyPythonSdk as? SdkBridge)?.writeExternal(element)
+    (legacyPythonSdk as? SdkBridge)?.readExternal(element)
     val fixedAdditionalData = legacyPythonSdk.getOrCreateAdditionalData()
     Assert.assertEquals("Wrong flavor", CondaEnvSdkFlavor.getInstance(), fixedAdditionalData.flavor) // Ensure correct identity created
     ((fixedAdditionalData.flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.UnnamedEnv)
