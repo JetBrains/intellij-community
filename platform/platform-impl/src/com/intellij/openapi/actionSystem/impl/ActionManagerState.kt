@@ -21,7 +21,7 @@ internal class ActionManagerState {
 
   @JvmField val lock: Any = Any()
 
-  fun getGroupIdListById(groupId: String): List<String> = idToDescriptor.get(groupId)?.groupIds ?: java.util.List.of()
+  fun getParentGroupIds(id: String): List<String> = idToDescriptor.get(id)?.groupIds ?: java.util.List.of()
 
   fun getPluginActions(pluginId: PluginId): List<String> {
     synchronized(lock) {
@@ -30,6 +30,10 @@ internal class ActionManagerState {
         .map { it.key }
         .toList()
     }
+  }
+
+  fun removeGroupMapping(actionId: String, groupId: String) {
+    idToDescriptor.get(actionId)?.removeGroupMapping(groupId)
   }
 }
 
@@ -40,14 +44,37 @@ internal data class ActionManagerStateActionItemDescriptor(
   @JvmField var groupIds: List<String> = java.util.List.of()
 
   fun addGroupMapping(groupId: String) {
-    groupIds = when {
-      groupIds.isEmpty() -> java.util.List.of(groupId)
-      groupIds.size == 1 -> java.util.List.of(groupIds.get(0), groupId)
+    val groupIds = groupIds
+    val size = groupIds.size
+    this.groupIds = when (size) {
+      0 -> java.util.List.of(groupId)
+      1 -> java.util.List.of(groupIds.get(0), groupId)
+      2 -> java.util.List.of(groupIds.get(0), groupIds.get(1), groupId)
+      3 -> java.util.List.of(groupIds.get(0), groupIds.get(1), groupIds.get(2), groupId)
+      4 -> java.util.List.of(groupIds.get(0), groupIds.get(1), groupIds.get(2), groupIds.get(3), groupId)
       else -> groupIds + groupId
     }
   }
 
   fun removeGroupMapping(groupId: String) {
-    groupIds -= groupId
+    val groupIds = groupIds
+    val index = groupIds.indexOf(groupId)
+    if (index < 0) {
+      return
+    }
+
+    when {
+      groupIds.size <= 1 -> {
+        this.groupIds = java.util.List.of()
+      }
+      groupIds is ArrayList -> {
+        groupIds.removeAt(index)
+      }
+      else -> {
+        val list = ArrayList(groupIds)
+        list.removeAt(index)
+        this.groupIds = list
+      }
+    }
   }
 }

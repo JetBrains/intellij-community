@@ -630,11 +630,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                 classLoader = classLoader)
               if (action != null) {
                 addToGroup(group = group,
-                                                                  action = action,
-                                                                  constraints = Constraints.LAST,
-                                                                  module = module,
-                                                                  state = actionRegistrar.state,
-                                                                  secondary = isSecondary(child))
+                           action = action,
+                           constraints = Constraints.LAST,
+                           module = module,
+                           state = actionRegistrar.state,
+                           secondary = isSecondary(child))
               }
             }
           }
@@ -901,8 +901,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                              module = module,
                                              actionRegistrar = actionPostInitRegistrar) ?: return
             parentGroup.remove(action)
-            if (groupId != null) {
-              actionPostInitRegistrar.state.idToDescriptor.get(actionId)?.removeGroupMapping(groupId)
+            if (groupId != null && actionId != null) {
+              actionPostInitRegistrar.state.removeGroupMapping(actionId, groupId)
             }
           }
         }
@@ -1038,7 +1038,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   fun getBaseAction(overridingAction: OverridingAction): AnAction? = actionPostInitRegistrar.getBaseAction(overridingAction)
 
   fun getParentGroupIds(actionId: String): Collection<String?> {
-    return actionPostInitRegistrar.state.getGroupIdListById(actionId)
+    return actionPostInitRegistrar.state.getParentGroupIds(actionId)
   }
 
   @Suppress("removal", "OVERRIDE_DEPRECATION")
@@ -2170,11 +2170,10 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
 
   val state = actionRegistrar.state
   state.actionToId.remove(actionToRemove)
-  state.idToDescriptor.remove(actionId)
-
-  if (removeFromGroups) {
+  val parentGroupIds = state.idToDescriptor.remove(actionId)?.groupIds
+  if (removeFromGroups && !parentGroupIds.isNullOrEmpty()) {
     val customActionSchema = serviceIfCreated<CustomActionsSchema>()
-    for (groupId in state.getGroupIdListById(actionId)) {
+    for (groupId in parentGroupIds) {
       customActionSchema?.invalidateCustomizedActionGroup(groupId)
       val group = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
       if (group == null) {
@@ -2183,21 +2182,22 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
       }
 
       group.remove(actionToRemove, actionId)
-      if (group !is ActionGroupStub) {
-        // group can be used as a stub in other actions
-        for (parentOfGroup in state.getGroupIdListById(groupId)) {
-          val parentOfGroupAction = getAction(id = parentOfGroup,
-                                              canReturnStub = true,
-                                              actionRegistrar = actionRegistrar) as DefaultActionGroup?
-          if (parentOfGroupAction == null) {
-            LOG.error("Trying to remove action $actionId from non-existing group $parentOfGroup")
-            continue
-          }
+      if (group is ActionGroupStub) {
+        continue
+      }
 
-          for (stub in parentOfGroupAction.childActionsOrStubs) {
-            if (stub is ActionGroupStub && groupId == stub.id) {
-              stub.remove(actionToRemove, actionId)
-            }
+      // group can be used as a stub in other actions
+      for (parentOfGroup in state.getParentGroupIds(groupId)) {
+        val parentOfGroupAction =
+          getAction(id = parentOfGroup, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
+        if (parentOfGroupAction == null) {
+          LOG.error("Trying to remove action $actionId from non-existing group $parentOfGroup")
+          continue
+        }
+
+        for (stub in parentOfGroupAction.childActionsOrStubs) {
+          if (stub is ActionGroupStub && groupId == stub.id) {
+            stub.remove(actionToRemove, actionId)
           }
         }
       }
@@ -2205,8 +2205,8 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
   }
 
   if (actionToRemove is ActionGroup) {
-    for (value in state.idToDescriptor.values) {
-      value.removeGroupMapping(actionId)
+    for (item in state.idToDescriptor.values) {
+      item.removeGroupMapping(actionId)
     }
   }
   updateHandlers(actionToRemove)
@@ -2224,8 +2224,10 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
   else {
     getAction(id = actionId, canReturnStub = true, actionRegistrar = actionRegistrar)
   }
+
+  val actionItemDescriptor = state.idToDescriptor.get(actionId)
   // valid indices >= 0
-  val oldIndex = state.idToDescriptor.get(actionId)?.index ?: -1
+  val oldIndex = actionItemDescriptor?.index ?: -1
   if (oldAction != null) {
     state.baseActions.put(actionId, oldAction)
     val isGroup = oldAction is ActionGroup
@@ -2233,10 +2235,12 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
       "cannot replace a group with an action and vice versa: $actionId"
     }
 
-    for (groupId in state.getGroupIdListById(actionId)) {
-      val group = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
-                  ?: throw IllegalStateException("Trying to replace action which has been added to a non-existing group $groupId")
-      group.replaceAction(oldAction, newAction)
+    if (actionItemDescriptor != null) {
+      for (groupId in actionItemDescriptor.groupIds) {
+        val group = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
+                    ?: throw IllegalStateException("Trying to replace action which has been added to a non-existing group $groupId")
+        group.replaceAction(oldAction, newAction)
+      }
     }
     unregisterAction(actionId = actionId, removeFromGroups = false, actionRegistrar = actionRegistrar)
   }
