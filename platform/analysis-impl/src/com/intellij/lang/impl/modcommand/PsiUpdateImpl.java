@@ -78,7 +78,7 @@ final class PsiUpdateImpl {
     private final @Nullable PsiFile myInjectedFileCopy;
     private boolean myDeleted;
 
-    FileTracker(@NotNull PsiFile origFile) {
+    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles) {
       myProject = origFile.getProject();
       myCopyFile = copyFile(myProject, origFile);
       PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
@@ -88,7 +88,8 @@ final class PsiUpdateImpl {
       if (injected) {
         PsiLanguageInjectionHost host = Objects.requireNonNull(injectionManager.getInjectionHost(origFile));
         PsiFile hostFile = host.getContainingFile();
-        PsiFile hostFileCopy = (PsiFile)hostFile.copy();
+        FileTracker hostTracker = changedFiles.get(hostFile);
+        PsiFile hostFileCopy = hostTracker != null ? hostTracker.myTargetFile : (PsiFile)hostFile.copy();
         myInjectedFileCopy = getInjectedFileCopy(host, hostFileCopy, origFile.getLanguage());
         myHostCopy = injectionManager.getInjectionHost(myInjectedFileCopy);
         Disposable disposable = ApplicationManager.getApplication().getService(InjectionEditService.class)
@@ -271,7 +272,7 @@ final class PsiUpdateImpl {
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
       return myChangedFiles.computeIfAbsent(file, origFile -> {
-        var tracker = new FileTracker(origFile);
+        var tracker = new FileTracker(origFile, myChangedFiles);
         Disposer.register(this, tracker);
         return tracker;
       });
