@@ -18,9 +18,7 @@ object JpsGlobalEntitiesSerializers {
                                    createLibSerializer: Boolean): List<JpsFileEntitiesSerializer<WorkspaceEntity>> {
     val serializers = mutableListOf<JpsFileEntitiesSerializer<WorkspaceEntity>>()
     if (isSdkBridgeEnabled) {
-      val globalSdkFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(SDK_FILE_NAME).absolutePath)
-      val globalSdkEntitySource = JpsGlobalFileEntitySource(globalSdkFile)
-      serializers.add(JpsSdkEntitySerializer(globalSdkEntitySource, sortedRootTypes) as JpsFileEntitiesSerializer<WorkspaceEntity>)
+      serializers.add(createSdkSerializer(virtualFileUrlManager, sortedRootTypes) as JpsFileEntitiesSerializer<WorkspaceEntity>)
     }
 
     if (createLibSerializer) {
@@ -30,6 +28,12 @@ object JpsGlobalEntitiesSerializers {
     }
 
     return serializers
+  }
+
+  fun createSdkSerializer(virtualFileUrlManager: VirtualFileUrlManager, sortedRootTypes: List<String>): JpsSdkEntitySerializer {
+    val globalSdkFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(SDK_FILE_NAME).absolutePath)
+    val globalSdkEntitySource = JpsGlobalFileEntitySource(globalSdkFile)
+    return JpsSdkEntitySerializer(globalSdkEntitySource, sortedRootTypes)
   }
 }
 

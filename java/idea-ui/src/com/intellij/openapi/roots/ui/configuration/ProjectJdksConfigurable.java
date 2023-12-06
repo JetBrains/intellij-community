@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.SdkBridge;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -72,7 +72,7 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
     myRoot.removeAllChildren();
     final Map<Sdk, Sdk> sdks = myProjectJdksModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
-      if (!(sdk instanceof ProjectJdk)) continue;
+      if (!(sdk instanceof SdkBridge)) continue;
 
       final JdkConfigurable configurable = new JdkConfigurable(sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject);
       addNode(new MyNode(configurable), myRoot);

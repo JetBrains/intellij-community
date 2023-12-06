@@ -67,27 +67,29 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
   override fun loadEntities(reader: JpsFileContentReader, errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
     val sdkTag = reader.loadComponent(entitySource.file.url, SDK_TABLE_COMPONENT_NAME) ?: return LoadingResult(emptyMap(), null)
-    val sdkEntities = sdkTag.getChildren(ELEMENT_JDK).map { sdkElement ->
-      val sdkName = sdkElement.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE)
-      val sdkType = sdkElement.getChild(ELEMENT_TYPE).getAttributeValue(ATTRIBUTE_VALUE)
-
-      val versionValue = sdkElement.getAttributeValue(ELEMENT_VERSION)
-      if ("2" != versionValue) {
-        throw InvalidDataException("Too old version is not supported: $versionValue")
-      }
-      val sdkVersion = sdkElement.getChild(ELEMENT_VERSION)?.getAttributeValue(ATTRIBUTE_VALUE)
-      val homePath = sdkElement.getChild(ELEMENT_HOMEPATH).getAttributeValueStrict(ATTRIBUTE_VALUE)
-      val homePathVfu = virtualFileManager.fromUrl(homePath)
-
-      val roots = readRoots(sdkElement.getChildTagStrict(ELEMENT_ROOTS), virtualFileManager)
-
-      val additionalDataElement = sdkElement.getChild(ELEMENT_ADDITIONAL)
-      val additionalData = if (additionalDataElement != null) JDOMUtil.write(additionalDataElement) else ""
-      SdkEntity(sdkName, sdkType, homePathVfu, roots, additionalData, entitySource) {
-        this.version = sdkVersion
-      }
-    }
+    val sdkEntities = sdkTag.getChildren(ELEMENT_JDK).map { sdkElement -> loadSdkEntity(sdkElement, virtualFileManager) }
     return LoadingResult(mapOf(SdkEntity::class.java to sdkEntities))
+  }
+
+  fun loadSdkEntity(sdkElement: Element, virtualFileManager: VirtualFileUrlManager ): SdkEntity {
+    val sdkName = sdkElement.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE)
+    val sdkType = sdkElement.getChild(ELEMENT_TYPE).getAttributeValue(ATTRIBUTE_VALUE)
+
+    val versionValue = sdkElement.getAttributeValue(ELEMENT_VERSION)
+    if ("2" != versionValue) {
+      throw InvalidDataException("Too old version is not supported: $versionValue")
+    }
+    val sdkVersion = sdkElement.getChild(ELEMENT_VERSION)?.getAttributeValue(ATTRIBUTE_VALUE)
+    val homePath = sdkElement.getChild(ELEMENT_HOMEPATH).getAttributeValueStrict(ATTRIBUTE_VALUE)
+    val homePathVfu = virtualFileManager.fromUrl(homePath)
+
+    val roots = readRoots(sdkElement.getChildTagStrict(ELEMENT_ROOTS), virtualFileManager)
+
+    val additionalDataElement = sdkElement.getChild(ELEMENT_ADDITIONAL)
+    val additionalData = if (additionalDataElement != null) JDOMUtil.write(additionalDataElement) else ""
+    return SdkEntity(sdkName, sdkType, homePathVfu, roots, additionalData, entitySource) {
+      this.version = sdkVersion
+    }
   }
 
   /**
@@ -133,7 +135,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     writer.saveComponent(fileUrl.url, SDK_TABLE_COMPONENT_NAME, componentTag)
   }
 
-  private fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntity) {
+  fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntity) {
     sdkRootElement.setAttribute(ELEMENT_VERSION, "2")
 
     val name = Element(ELEMENT_NAME)

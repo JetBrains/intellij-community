@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.projectRoots.*
-import com.intellij.openapi.projectRoots.impl.ProjectJdk
+import com.intellij.openapi.projectRoots.impl.SdkBridge
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.RootProvider
@@ -15,16 +15,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
+import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
+import com.intellij.platform.workspace.jps.serialization.impl.JpsSdkEntitySerializer
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.workspaceModel.ide.getGlobalInstance
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
-class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataHolderBase(), ProjectJdk, RootProvider, Sdk {
+class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataHolderBase(), SdkBridge, RootProvider, Sdk {
 
   private var additionalData: SdkAdditionalData? = null
   private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
@@ -100,6 +104,23 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
       it.sdkAdditionalData = if (additionalDataElement != null) newType.loadAdditionalData(this, additionalDataElement) else null
       it.commitChanges()
     }
+  }
+
+  override fun readExternal(element: Element) {
+    val sdkSerializer = createSerializer()
+    val sdkEntity = sdkSerializer.loadSdkEntity(element, VirtualFileUrlManager.getGlobalInstance())
+
+    sdkEntityBuilder.applyChangesFrom(sdkEntity)
+    reloadAdditionalData()
+  }
+
+  override fun writeExternal(element: Element) {
+    createSerializer().saveSdkEntity(element, sdkEntityBuilder)
+  }
+
+  private fun createSerializer(): JpsSdkEntitySerializer {
+    val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
+    return JpsGlobalEntitiesSerializers.createSdkSerializer(VirtualFileUrlManager.getGlobalInstance(), sortedRootTypes)
   }
 
   internal fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData

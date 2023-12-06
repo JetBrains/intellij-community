@@ -102,7 +102,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   private fun loadSdkType(newSdkType: SdkType) {
     allJdks.forEach { sdk ->
       val sdkType = sdk.sdkType
-      if (sdkType is UnknownSdkType && sdkType.getName() == newSdkType.name && sdk is ProjectJdk) {
+      if (sdkType is UnknownSdkType && sdkType.getName() == newSdkType.name && sdk is SdkBridge) {
         runWriteAction {
           sdk.changeType(newSdkType, saveSdkAdditionalData(sdk))
         }
@@ -115,7 +115,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
     allJdks.forEach { sdk ->
       val sdkType = sdk.sdkType
       if (sdkType === extension) {
-        if (sdk is ProjectJdk) {
+        if (sdk is SdkBridge) {
           sdk.changeType(UnknownSdkType.getInstance(sdkType.getName()), saveSdkAdditionalData(sdk))
         }
         else {

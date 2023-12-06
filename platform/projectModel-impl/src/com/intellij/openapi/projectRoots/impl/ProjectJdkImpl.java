@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, SdkModificator, Disposable {
+public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, SdkModificator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectJdkImpl.class);
   private String myName;
   private String myVersionString;
@@ -149,6 +149,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, Sd
     return StandardFileSystems.local().findFileByPath(myHomePath);
   }
 
+  @Override
   public void readExternal(@NotNull Element element) {
     readExternal(element, ProjectJdkTable.getInstance()::getSdkTypeByName);
   }
@@ -198,6 +199,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, Sd
     return child;
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) {
     element.setAttribute(ELEMENT_VERSION, "2");
 

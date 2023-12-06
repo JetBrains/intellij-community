@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public interface ProjectJdk extends Sdk {
-   void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement);
+public interface SdkBridge extends Sdk {
+  void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement);
+  void readExternal(@NotNull Element element);
+  void writeExternal(@NotNull Element element);
 }
