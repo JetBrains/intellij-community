@@ -26,7 +26,6 @@ import com.intellij.ui.table.TableView
 import com.intellij.util.UriUtil
 import com.intellij.util.ui.*
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.GridBagConstraints
@@ -39,24 +38,27 @@ import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
-class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(), Disposable {
+class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 
-  private val myProjectMessage: @Nls String
-  private val myVcsManager: ProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(myProject)
-  private val myVcsConfiguration: VcsConfiguration = VcsConfiguration.getInstance(myProject)
-  private val myAllVcss: List<AbstractVcs> = myVcsManager.allSupportedVcss.asList()
-  private val myDirectoryMappingTable: TableView<MapInfo>
-  private val myVcsComboBox: ComboBox<AbstractVcs?>
+  private val isEditingDisabled = project.isDefault
 
-  private val myDirectoryRenderer: MyDirectoryRenderer
-  private val myModel: ListTableModel<MapInfo>
-  private val myIsDisabled = myProject.isDefault
-  private val myCheckers: MutableMap<String, VcsRootChecker>
-  private val myScopeFilterConfig: VcsUpdateInfoScopeFilterConfigurable
-  private var myLoadingPanel: JBLoadingPanel
+  private val vcsManager: ProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
+  private val vcsConfiguration: VcsConfiguration = VcsConfiguration.getInstance(project)
 
-  private var myRootDetectionIndicator: ProgressIndicator? = null
+  private val allSupportedVcss: List<AbstractVcs> = vcsManager.allSupportedVcss.asList()
+  private val vcsRootCheckers: MutableMap<String, VcsRootChecker> = mutableMapOf()
+
+  private val tableLoadingPanel: JBLoadingPanel
+  private val mappingTable: TableView<MapInfo>
+  private val mappingTableModel: ListTableModel<MapInfo>
+  private val directoryRenderer: MyDirectoryRenderer
+
+  private val vcsComboBox: ComboBox<AbstractVcs?>
+
+  private val scopeFilterConfigurable: VcsUpdateInfoScopeFilterConfigurable
+
+  private var rootDetectionIndicator: ProgressIndicator? = null
 
   private class MapInfo(var mapping: VcsDirectoryMapping, val type: Type) {
     companion object {
@@ -93,7 +95,7 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
     }
   }
 
-  private class MyDirectoryRenderer(private val myProject: Project) : ColoredTableCellRenderer() {
+  private class MyDirectoryRenderer(private val project: Project) : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
       if (value is MapInfo) {
         val textAttributes = getAttributes(value)
@@ -107,7 +109,7 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
           return
         }
 
-        val presentablePath = getPresentablePath(myProject, value.mapping)
+        val presentablePath = getPresentablePath(project, value.mapping)
         SpeedSearchUtil.appendFragmentsForSpeedSearch(table, presentablePath, textAttributes, selected, this)
       }
     }
@@ -157,167 +159,157 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
     }
   }
 
-  private class MyVcsRenderer(private val myInfo: MapInfo, private val myAllVcses: List<AbstractVcs>) : ColoredTableCellRenderer() {
+  private class MyVcsRenderer(private val info: MapInfo, private val allSupportedVcss: List<AbstractVcs>) : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable,
                                        value: Any?,
                                        selected: Boolean,
                                        hasFocus: Boolean,
                                        row: Int,
                                        column: Int) {
-      if (myInfo == MapInfo.SEPARATOR) {
+      if (info == MapInfo.SEPARATOR) {
         if (!selected) {
           background = UIUtil.getDecoratedRowColor()
         }
         return
       }
 
-      if (myInfo.type == MapInfo.Type.UNREGISTERED && !selected) {
+      if (info.type == MapInfo.Type.UNREGISTERED && !selected) {
         background = UIUtil.getDecoratedRowColor()
       }
 
-      val vcsName = myInfo.mapping.vcs
+      val vcsName = info.mapping.vcs
       val text: String
       if (vcsName.isEmpty()) {
         text = VcsBundle.message("none.vcs.presentation")
       }
       else {
-        val vcs = myAllVcses.find { vcsName == it.name }
+        val vcs = allSupportedVcss.find { vcsName == it.name }
         text = vcs?.displayName ?: VcsBundle.message("unknown.vcs.presentation", vcsName)
       }
-      append(text, MyDirectoryRenderer.getAttributes(myInfo))
+      append(text, MyDirectoryRenderer.getAttributes(info))
     }
   }
 
   init {
-    myProjectMessage = HtmlBuilder()
-      .append(VcsDirectoryMapping.PROJECT_CONSTANT.get())
-      .append(" - ")
-      .append(DefaultVcsRootPolicy.getInstance(myProject).projectConfigurationMessage.replace('\n', ' '))
-      .wrapWithHtmlBody().toString()
-
-    myDirectoryMappingTable = TableView()
-    myDirectoryMappingTable.setShowGrid(false)
-    myDirectoryMappingTable.intercellSpacing = JBUI.emptySize()
-    TableSpeedSearch.installOn(myDirectoryMappingTable) { info: Any? ->
-      if (info is MapInfo) MyDirectoryRenderer.getPresentablePath(myProject, info.mapping) else ""
+    mappingTable = TableView()
+    mappingTable.setShowGrid(false)
+    mappingTable.intercellSpacing = JBUI.emptySize()
+    TableSpeedSearch.installOn(mappingTable) { info: Any? ->
+      if (info is MapInfo) MyDirectoryRenderer.getPresentablePath(project, info.mapping) else ""
     }
 
-    myScopeFilterConfig = VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration)
+    scopeFilterConfigurable = VcsUpdateInfoScopeFilterConfigurable(project, vcsConfiguration)
 
-    myCheckers = HashMap()
     updateRootCheckers()
 
     // don't start loading automatically
-    myLoadingPanel = JBLoadingPanel(BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL * 2)
+    tableLoadingPanel = JBLoadingPanel(BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL * 2)
 
     layout = BorderLayout()
     add(createMainComponent())
 
-    myDirectoryRenderer = MyDirectoryRenderer(myProject)
+    directoryRenderer = MyDirectoryRenderer(project)
 
-    myModel = ListTableModel(MyDirectoryColumnInfo(), MyVcsColumnInfo())
-    myDirectoryMappingTable.setModelAndUpdateColumns(myModel)
+    mappingTableModel = ListTableModel(MyDirectoryColumnInfo(), MyVcsColumnInfo())
+    mappingTable.setModelAndUpdateColumns(mappingTableModel)
 
     initializeModel()
 
-    myVcsComboBox = buildVcsesComboBox(myAllVcss)
-    myVcsComboBox.addItemListener {
-      if (myDirectoryMappingTable.isEditing) {
-        myDirectoryMappingTable.stopEditing()
+    vcsComboBox = buildVcsesComboBox(allSupportedVcss)
+    vcsComboBox.addItemListener {
+      if (mappingTable.isEditing) {
+        mappingTable.stopEditing()
       }
     }
 
-    myDirectoryMappingTable.rowHeight = myVcsComboBox.preferredSize.height
-    if (myIsDisabled) {
-      myDirectoryMappingTable.isEnabled = false
+    mappingTable.rowHeight = vcsComboBox.preferredSize.height
+    if (isEditingDisabled) {
+      mappingTable.isEnabled = false
     }
   }
 
   override fun dispose() {
-    myRootDetectionIndicator?.cancel()
-    myScopeFilterConfig.disposeUIResources()
+    rootDetectionIndicator?.cancel()
+    scopeFilterConfigurable.disposeUIResources()
   }
 
   private fun updateRootCheckers() {
-    myCheckers.clear()
+    vcsRootCheckers.clear()
     for (checker in VcsRootChecker.EXTENSION_POINT_NAME.extensionList) {
       val key = checker.supportedVcs
-      val vcs = myVcsManager.findVcsByName(key.name)
-      if (vcs == null) {
-        continue
-      }
-      myCheckers[key.name] = checker
+      val vcs = vcsManager.findVcsByName(key.name) ?: continue
+      vcsRootCheckers[key.name] = checker
     }
   }
 
   private fun initializeModel() {
-    myScopeFilterConfig.reset()
+    scopeFilterConfigurable.reset()
 
     val mappings: MutableList<MapInfo> = mutableListOf()
-    for (mapping in ProjectLevelVcsManager.getInstance(myProject).directoryMappings) {
+    for (mapping in ProjectLevelVcsManager.getInstance(project).directoryMappings) {
       mappings.add(MapInfo.registered(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings),
                                       isMappingValid(mapping)))
     }
-    myModel.items = mappings
+    mappingTableModel.items = mappings
 
     scheduleUnregisteredRootsLoading()
   }
 
   private fun scheduleUnregisteredRootsLoading() {
-    if (myProject.isDefault || !myProject.isTrusted()) return
-    myRootDetectionIndicator?.cancel()
-    if (!VcsUtil.shouldDetectVcsMappingsFor(myProject)) return
+    if (project.isDefault || !project.isTrusted()) return
+    rootDetectionIndicator?.cancel()
+    if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
 
-    myRootDetectionIndicator = BackgroundTaskUtil.executeAndTryWait(
+    rootDetectionIndicator = BackgroundTaskUtil.executeAndTryWait(
       { indicator: ProgressIndicator ->
-        val unregisteredRoots = VcsRootErrorsFinder.getInstance(myProject).getOrFind()
+        val unregisteredRoots = VcsRootErrorsFinder.getInstance(project).getOrFind()
           .filter { error -> error.type == VcsRootError.Type.UNREGISTERED_ROOT }
           .map { error -> error.mapping }
           .toList()
         return@executeAndTryWait Runnable {
           if (indicator.isCanceled) return@Runnable
-          myLoadingPanel.stopLoading()
+          tableLoadingPanel.stopLoading()
           if (!unregisteredRoots.isEmpty()) {
-            myModel.addRow(MapInfo.SEPARATOR)
+            mappingTableModel.addRow(MapInfo.SEPARATOR)
             for (mapping in unregisteredRoots) {
-              myModel.addRow(MapInfo.unregistered(mapping))
+              mappingTableModel.addRow(MapInfo.unregistered(mapping))
             }
           }
         }
-      }, { myLoadingPanel.startLoading() }, POSTPONE_MAPPINGS_LOADING_PANEL.toLong(), false)
+      }, { tableLoadingPanel.startLoading() }, POSTPONE_MAPPINGS_LOADING_PANEL.toLong(), false)
   }
 
   private fun isMappingValid(mapping: VcsDirectoryMapping): Boolean {
     if (mapping.isDefaultMapping) return true
-    val checker = myCheckers[mapping.vcs] ?: return true
+    val checker = vcsRootCheckers[mapping.vcs] ?: return true
     val directory = LocalFileSystem.getInstance().findFileByPath(mapping.directory)
     return directory != null && checker.validateRoot(directory)
   }
 
   private fun addMapping() {
-    val dlg = VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.add.title"))
+    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.add.title"))
     if (dlg.showAndGet()) {
       addMapping(dlg.mapping)
     }
   }
 
   private fun addMapping(mapping: VcsDirectoryMapping) {
-    val items: MutableList<MapInfo> = myModel.items.toMutableList()
+    val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
     items.add(MapInfo.registered(VcsDirectoryMapping(mapping.directory, mapping.vcs, mapping.rootSettings),
                                  isMappingValid(mapping)))
     items.sortWith(MapInfo.COMPARATOR)
-    myModel.setItems(items)
+    mappingTableModel.setItems(items)
   }
 
 
   private fun addSelectedUnregisteredMappings(infos: List<MapInfo>) {
-    val items: MutableList<MapInfo> = myModel.items.toMutableList()
+    val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
     for (info in infos) {
       items.remove(info)
       items.add(MapInfo.registered(info.mapping, isMappingValid(info.mapping)))
     }
     sortAndAddSeparatorIfNeeded(items)
-    myModel.items = items
+    mappingTableModel.items = items
   }
 
   private fun sortAndAddSeparatorIfNeeded(items: MutableList<MapInfo>) {
@@ -341,9 +333,9 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
   }
 
   private fun editMapping() {
-    val dlg = VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.remove.title"))
-    val row = myDirectoryMappingTable.selectedRow
-    val mapping = myDirectoryMappingTable.getRow(row).mapping
+    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
+    val row = mappingTable.selectedRow
+    val mapping = mappingTable.getRow(row).mapping
     dlg.mapping = mapping
     if (dlg.showAndGet()) {
       setMapping(row, dlg.mapping)
@@ -351,30 +343,30 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
   }
 
   private fun setMapping(row: Int, mapping: VcsDirectoryMapping) {
-    val items: MutableList<MapInfo> = myModel.items.toMutableList()
+    val items: MutableList<MapInfo> = mappingTableModel.items.toMutableList()
     items[row] = MapInfo.registered(mapping, isMappingValid(mapping))
     items.sortWith(MapInfo.COMPARATOR)
-    myModel.setItems(items)
+    mappingTableModel.setItems(items)
   }
 
   private fun removeMapping() {
-    val mappings = myModel.items.toMutableList()
-    var index = myDirectoryMappingTable.selectionModel.minSelectionIndex
-    val selection = myDirectoryMappingTable.selection
+    val mappings = mappingTableModel.items.toMutableList()
+    var index = mappingTable.selectionModel.minSelectionIndex
+    val selection = mappingTable.selection
     mappings.removeAll(selection.toSet())
 
     val removedValidRoots: Collection<MapInfo> = selection.mapNotNull { info ->
-      if (info.type == MapInfo.Type.NORMAL && myCheckers[info.mapping.vcs] != null) MapInfo.unregistered(info.mapping) else null
+      if (info.type == MapInfo.Type.NORMAL && vcsRootCheckers[info.mapping.vcs] != null) MapInfo.unregistered(info.mapping) else null
     }
     mappings.addAll(removedValidRoots)
     sortAndAddSeparatorIfNeeded(mappings)
 
-    myModel.items = mappings
+    mappingTableModel.items = mappings
     if (mappings.size > 0) {
       if (index >= mappings.size) {
         index = mappings.size - 1
       }
-      myDirectoryMappingTable.selectionModel.setSelectionInterval(index, index)
+      mappingTable.selectionModel.setSelectionInterval(index, index)
     }
   }
 
@@ -385,26 +377,26 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
       .setDefaultWeightX(1.0)
       .setDefaultFill(GridBagConstraints.HORIZONTAL)
 
-    if (!myProject.isTrusted()) {
+    if (!project.isTrusted()) {
       val notificationPanel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
       notificationPanel.text = VcsBundle.message("configuration.project.not.trusted.label")
       panel.add(notificationPanel, gb.nextLine().next())
     }
 
     val mappingsTable = createMappingsTable()
-    myLoadingPanel.add(mappingsTable)
-    panel.add(myLoadingPanel, gb.nextLine().next().fillCell().weighty(1.0))
+    tableLoadingPanel.add(mappingsTable)
+    panel.add(tableLoadingPanel, gb.nextLine().next().fillCell().weighty(1.0))
 
     panel.add(createProjectMappingDescription(), gb.nextLine().next())
-    if (!AbstractCommonUpdateAction.showsCustomNotification(myVcsManager.allActiveVcss.asList())) {
-      panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next())
+    if (!AbstractCommonUpdateAction.showsCustomNotification(vcsManager.allActiveVcss.asList())) {
+      panel.add(scopeFilterConfigurable.createComponent(), gb.nextLine().next())
     }
     return panel
   }
 
   private fun createMappingsTable(): JComponent {
-    val panelForTable = ToolbarDecorator.createDecorator(myDirectoryMappingTable, null)
-      .setAddActionUpdater { !myIsDisabled && rootsOfOneKindInSelection() }
+    val panelForTable = ToolbarDecorator.createDecorator(mappingTable, null)
+      .setAddActionUpdater { !isEditingDisabled && rootsOfOneKindInSelection() }
       .setAddAction {
         val unregisteredRoots = getSelectedUnregisteredRoots()
         if (unregisteredRoots.isEmpty()) {
@@ -415,12 +407,12 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
         }
         updateRootCheckers()
       }
-      .setEditActionUpdater { !myIsDisabled && onlyRegisteredRootsInSelection() }
+      .setEditActionUpdater { !isEditingDisabled && onlyRegisteredRootsInSelection() }
       .setEditAction {
         editMapping()
         updateRootCheckers()
       }
-      .setRemoveActionUpdater { !myIsDisabled && onlyRegisteredRootsInSelection() }
+      .setRemoveActionUpdater { !isEditingDisabled && onlyRegisteredRootsInSelection() }
       .setRemoveAction {
         removeMapping()
         updateRootCheckers()
@@ -432,11 +424,11 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
   }
 
   private fun getSelectedUnregisteredRoots(): List<MapInfo> {
-    return myDirectoryMappingTable.selection.filter { info -> info.type == MapInfo.Type.UNREGISTERED }
+    return mappingTable.selection.filter { info -> info.type == MapInfo.Type.UNREGISTERED }
   }
 
   private fun rootsOfOneKindInSelection(): Boolean {
-    val selection = myDirectoryMappingTable.selection
+    val selection = mappingTable.selection
     if (selection.isEmpty()) {
       return true
     }
@@ -448,16 +440,22 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
   }
 
   private fun getSelectedRegisteredRoots(): List<MapInfo> {
-    val selection = myDirectoryMappingTable.selection
+    val selection = mappingTable.selection
     return selection.filter { info -> info.type == MapInfo.Type.NORMAL || info.type == MapInfo.Type.INVALID }
   }
 
   private fun onlyRegisteredRootsInSelection(): Boolean {
-    return getSelectedRegisteredRoots().size == myDirectoryMappingTable.selection.size
+    return getSelectedRegisteredRoots().size == mappingTable.selection.size
   }
 
   private fun createProjectMappingDescription(): JComponent {
-    val label = JBLabel(myProjectMessage)
+    val projectMessage = HtmlBuilder()
+      .append(VcsDirectoryMapping.PROJECT_CONSTANT.get())
+      .append(" - ")
+      .append(DefaultVcsRootPolicy.getInstance(project).projectConfigurationMessage.replace('\n', ' '))
+      .wrapWithHtmlBody().toString()
+
+    val label = JBLabel(projectMessage)
     label.componentStyle = UIUtil.ComponentStyle.SMALL
     label.fontColor = UIUtil.FontColor.BRIGHTER
     label.border = JBUI.Borders.empty(2, 5, 2, 0)
@@ -471,27 +469,27 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
   @Throws(ConfigurationException::class)
   fun apply() {
     adjustIgnoredRootsSettings()
-    myVcsManager.directoryMappings = getModelMappings()
-    myScopeFilterConfig.apply()
+    vcsManager.directoryMappings = getModelMappings()
+    scopeFilterConfigurable.apply()
     initializeModel()
   }
 
   private fun adjustIgnoredRootsSettings() {
     val newMappings = getModelMappings()
-    val previousMappings = myVcsManager.directoryMappings
-    myVcsConfiguration.addIgnoredUnregisteredRoots(previousMappings
-                                                     .filter { mapping -> !newMappings.contains(mapping) && !mapping.isDefaultMapping }
-                                                     .map { mapping -> mapping.directory })
-    myVcsConfiguration.removeFromIgnoredUnregisteredRoots(newMappings.map { obj: VcsDirectoryMapping -> obj.directory })
+    val previousMappings = vcsManager.directoryMappings
+    vcsConfiguration.addIgnoredUnregisteredRoots(previousMappings
+                                                   .filter { mapping -> !newMappings.contains(mapping) && !mapping.isDefaultMapping }
+                                                   .map { mapping -> mapping.directory })
+    vcsConfiguration.removeFromIgnoredUnregisteredRoots(newMappings.map { obj: VcsDirectoryMapping -> obj.directory })
   }
 
   fun isModified(): Boolean {
-    if (myScopeFilterConfig.isModified) return true
-    return getModelMappings() != myVcsManager.directoryMappings
+    if (scopeFilterConfigurable.isModified) return true
+    return getModelMappings() != vcsManager.directoryMappings
   }
 
   private fun getModelMappings(): List<VcsDirectoryMapping> {
-    return myModel.items.mapNotNull { info ->
+    return mappingTableModel.items.mapNotNull { info ->
       if (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED) null else info.mapping
     }
   }
@@ -502,7 +500,7 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
     }
 
     override fun getRenderer(vcsDirectoryMapping: MapInfo): TableCellRenderer {
-      return myDirectoryRenderer
+      return directoryRenderer
     }
   }
 
@@ -520,26 +518,26 @@ class VcsDirectoryConfigurationPanel(private val myProject: Project) : JPanel(),
     }
 
     override fun getRenderer(info: MapInfo): TableCellRenderer {
-      return MyVcsRenderer(info, myAllVcss)
+      return MyVcsRenderer(info, allSupportedVcss)
     }
 
     override fun getEditor(o: MapInfo): TableCellEditor {
       return object : AbstractTableCellEditor() {
         override fun getCellEditorValue(): Any {
-          val selectedVcs = myVcsComboBox.item
+          val selectedVcs = vcsComboBox.item
           return if (selectedVcs == null) "" else selectedVcs.name //NON-NLS handled by custom renderer
         }
 
         override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): Component {
-          myVcsComboBox.selectedItem = value
-          return myVcsComboBox
+          vcsComboBox.selectedItem = value
+          return vcsComboBox
         }
       }
     }
 
     override fun getMaxStringValue(): String? {
       var maxString: String? = null
-      for (vcs in myAllVcss) {
+      for (vcs in allSupportedVcss) {
         val name = vcs.displayName
         if (maxString == null || maxString.length < name.length) {
           maxString = name
