@@ -156,11 +156,10 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
         addKeyboardShortcut(actId, ActionShortcutRestrictions.getInstance().getForActionId(actId), keymap, this, confShortcut,
                             systemShortcuts, myQuickLists);
       });
-      final AnAction act = ActionManager.getInstance().getAction(actId);
-      final String actText = act == null ? actId : act.getTemplateText();
-      if (!empty)
-        links.append(", ");
-      links.appendLink(actId, actText);
+      AnAction action = ActionManager.getInstance().getAction(actId);
+      String actionText = action == null ? actId : action.getTemplatePresentation().getText();
+      if (!empty) links.append(", ");
+      links.appendLink(actId, actionText);
 
       empty = false;
       ++count;

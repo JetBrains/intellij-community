@@ -607,7 +607,7 @@ public final class ActionsTree {
       SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
 
       if (boundId != null) {
-        AnAction boundAction = ActionManager.getInstance().getAction(boundId);
+        AnAction boundAction = ActionManager.getInstance().getActionOrStub(boundId);
         if (boundAction != null) {
           append(" ");
           append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
