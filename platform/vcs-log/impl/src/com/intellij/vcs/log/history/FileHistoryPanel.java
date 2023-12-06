@@ -25,10 +25,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionIds;
-import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider;
@@ -71,7 +68,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private @Nullable FileHistoryEditorDiffPreview myEditorDiffPreview;
 
   public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
-                          @NotNull FilePath filePath, @NotNull VirtualFile root, @NotNull Disposable disposable) {
+                          @NotNull FilePath filePath, @NotNull VirtualFile root,
+                          @NotNull VcsLogColorManager colorManager,
+                          @NotNull Disposable disposable) {
     myProject = logData.getProject();
 
     myFilePath = filePath;
@@ -80,7 +79,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
 
-    myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
+    myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
                                         logUi::requestMore, disposable) {
       @Override
       protected void updateEmptyText() {

@@ -87,7 +87,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
                                                @NotNull MainVcsLogUiProperties uiProperties,
                                                @NotNull VcsLogFilterUiEx filterUi,
                                                boolean isEditorDiffPreview) {
-    return new MainFrame(logData, this, uiProperties, filterUi, isEditorDiffPreview, this);
+    return new MainFrame(logData, this, uiProperties, filterUi, myColorManager, isEditorDiffPreview, this);
   }
 
   protected @NotNull VcsLogFilterUiEx createFilterUi(@NotNull Consumer<VcsLogFilterCollection> filterConsumer,

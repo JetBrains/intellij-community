@@ -89,7 +89,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         addIfDiffers(metricEvents, properties, defaultProperties, getter(BEK_SORT_TYPE), SORT, SORT_TYPE_FIELD);
 
-        if (ui.getColorManager().hasMultiplePaths()) {
+        if (ui.getTable().getColorManager().hasMultiplePaths()) {
           addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ROOT_NAMES), ROOTS);
         }
 

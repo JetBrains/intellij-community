@@ -40,9 +40,6 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   VcsLogUiProperties getProperties();
 
   @NotNull
-  VcsLogColorManager getColorManager();
-
-  @NotNull
   VcsLogData getLogData();
 
   @Nullable

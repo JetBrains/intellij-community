@@ -97,6 +97,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull AbstractVcsLogUi logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLogFilterUiEx filterUi,
+                   @NotNull VcsLogColorManager colorManager,
                    boolean withEditorDiffPreview,
                    @NotNull Disposable disposable) {
     myLogData = logData;
@@ -104,7 +105,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myFilterUi = filterUi;
 
-    myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
+    myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
                                           () -> logUi.getRefresher().onRefresh(), logUi::requestMore, disposable);
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.getProject(), logData.getLogProviders().values());
     myGraphTable.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.table.accessible.name", vcsDisplayName));

@@ -101,7 +101,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     return myRefresher;
   }
 
-  @Override
   public @NotNull VcsLogColorManager getColorManager() {
     return myColorManager;
   }

@@ -50,7 +50,7 @@ class GitLogCommandUi(id: String, logData: VcsLogData, colorManager: VcsLogColor
                                uiProperties: MainVcsLogUiProperties,
                                filterUi: VcsLogFilterUiEx,
                                isEditorDiffPreview: Boolean): MainFrame {
-    return object : MainFrame(logData, this, uiProperties, filterUi, isEditorDiffPreview, this) {
+    return object : MainFrame(logData, this, uiProperties, filterUi, myColorManager, isEditorDiffPreview, this) {
       override fun createActionsToolbar(): JComponent {
         val actionManager = ActionManager.getInstance()
 
