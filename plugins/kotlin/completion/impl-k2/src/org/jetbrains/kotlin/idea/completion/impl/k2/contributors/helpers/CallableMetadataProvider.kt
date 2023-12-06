@@ -109,7 +109,7 @@ internal object CallableMetadataProvider {
     ): CallableMetadata? {
         val symbol = signature.symbol
 
-        val expectedReceiver = signature.symbol.originalContainingClassForOverride ?: return null
+        val expectedReceiver = getExpectedNonExtensionReceiver(signature.symbol) ?: return null
         val expectedReceiverType = buildClassType(expectedReceiver)
         val flattenedActualReceiverTypes = getFlattenedActualReceiverTypes(context)
 
@@ -158,6 +158,16 @@ internal object CallableMetadataProvider {
             expectedExtensionReceiverType,
         )
         return weightBasedOnExtensionReceiver
+    }
+
+    context(KtAnalysisSession)
+    private fun getExpectedNonExtensionReceiver(symbol: KtCallableSymbol): KtClassOrObjectSymbol? {
+        val containingClass = symbol.originalContainingClassForOverride
+        return if (symbol is KtConstructorSymbol && (containingClass as? KtNamedClassOrObjectSymbol)?.isInner == true) {
+            containingClass.getContainingSymbol() as? KtClassOrObjectSymbol
+        } else {
+            containingClass
+        }
     }
 
     context(KtAnalysisSession)
