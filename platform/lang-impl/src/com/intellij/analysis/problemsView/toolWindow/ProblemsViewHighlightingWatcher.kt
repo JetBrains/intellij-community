@@ -67,6 +67,13 @@ internal class ProblemsViewHighlightingWatcher(
     }
   }
 
+  override fun afterRemoved(highlighter: RangeHighlighterEx) {
+    when {
+      !isValid(highlighter) -> null
+      else -> problems.remove(highlighter)
+    }
+  }
+
   override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
     val problem = getProblem(highlighter)
     if (problem != null) {
