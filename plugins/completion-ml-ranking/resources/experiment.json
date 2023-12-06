@@ -137,6 +137,12 @@
       "shouldLogElementFeatures": false
     },
     {
+      "id": "rust",
+      "experimentBucketsCount": 2,
+      "includeGroups": [ 8, 12],
+      "shouldLogElementFeatures": true
+    },
+    {
       "id": "swift",
       "experimentBucketsCount": 4,
       "includeGroups": [ 7, 8, 12, 13],
