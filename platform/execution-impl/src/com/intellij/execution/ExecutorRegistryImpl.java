@@ -239,45 +239,48 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   synchronized void deinitExecutor(@NotNull Executor executor) {
     contextActionIdSet.remove(executor.getContextActionId());
 
-    unregisterAction(executor.getId(), RUNNERS_GROUP, idToAction);
+    ActionManager actionManager = ActionManager.getInstance();
+    unregisterAction(executor.getId(), RUNNERS_GROUP, idToAction, actionManager);
     if (isExecutorInMainGroup(executor)) {
-      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, contextActionIdToAction);
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, contextActionIdToAction, actionManager);
     }
     else {
-      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, contextActionIdToAction);
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, contextActionIdToAction, actionManager);
     }
-    unregisterAction(newConfigurationContextActionId(executor), RUN_CONTEXT_GROUP_MORE, contextActionIdToAction);
+    unregisterAction(newConfigurationContextActionId(executor), RUN_CONTEXT_GROUP_MORE, contextActionIdToAction, actionManager);
 
     RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
-      unregisterAction(process.getActionId(), RunToolbarProcess.RUN_WIDGET_GROUP, runWidgetIdToAction);
-      unregisterAction(process.getMainActionId(), RunToolbarProcess.RUN_WIDGET_MAIN_GROUP, runWidgetIdToAction);
+      unregisterAction(process.getActionId(), RunToolbarProcess.RUN_WIDGET_GROUP, runWidgetIdToAction, actionManager);
+      unregisterAction(process.getMainActionId(), RunToolbarProcess.RUN_WIDGET_MAIN_GROUP, runWidgetIdToAction, actionManager);
 
       if (executor instanceof ExecutorGroup) {
         unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionId(process), process.getMoreActionSubGroupName(),
-                         runWidgetIdToAction);
+                         runWidgetIdToAction, actionManager);
         unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process), process.getMoreActionSubGroupName(),
-                         runWidgetIdToAction);
+                         runWidgetIdToAction, actionManager);
       }
     });
   }
 
-  private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
-    ActionManager actionManager = ActionManager.getInstance();
+  private static void unregisterAction(@NotNull String actionId,
+                                       @NotNull String groupId,
+                                       @NotNull Map<String, AnAction> map,
+                                       @NotNull ActionManager actionManager) {
     DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(groupId);
     if (group == null) {
       return;
     }
 
     AnAction action = map.get(actionId);
-    if (action != null) {
-      actionManager.unregisterAction(actionId);
-      map.remove(actionId);
-    }
-    else {
-      action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) {
+      action = actionManager.getAction(actionId);
       if (action != null) {
         group.remove(action, actionManager);
       }
+    }
+    else {
+      actionManager.unregisterAction(actionId);
+      map.remove(actionId);
     }
   }
 
