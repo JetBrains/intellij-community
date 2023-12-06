@@ -54,13 +54,13 @@ envs {
   if (isWindows) {
     // On Windows you almost always want to use cache server except you are outside of JB
     def zipRepositoryURL = new URL(
-      System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", "https://repo.labs.intellij.net/pycharm/python-archives-windows/"))
+      System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", "https://packages.jetbrains.team/files/p/py/python-archives-windows/"))
     try {
       zipRepositoryURL.getContent()
     }
     catch (Exception ignored) {
       zipRepositoryURL = null
-      System.err.println("Cache server is only accessible from JB network. Will try to build python from scratch. Use cache if possible")
+      System.err.println("Cache server is unavailable. Will try to build python from scratch.")
     }
     if (zipRepositoryURL != null) {
       zipRepository = zipRepositoryURL
