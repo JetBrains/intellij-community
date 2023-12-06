@@ -876,6 +876,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/lambdas/destructuringParam.kt");
             }
 
+            @TestMetadata("evalInFilter.kt")
+            public void testEvalInFilter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/evalInFilter.kt");
+            }
+
             @TestMetadata("inlineFunctionalExpression.kt")
             public void testInlineFunctionalExpression() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineFunctionalExpression.kt");
@@ -1371,6 +1376,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
             }
 
+            @TestMetadata("inlineWithAnonymousObject.kt")
+            public void testInlineWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineWithAnonymousObject.kt");
+            }
+
             @TestMetadata("innerClass.kt")
             public void testInnerClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/innerClass.kt");
@@ -1601,6 +1611,16 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/properties.kt");
             }
 
+            @TestMetadata("protectedGetterFromJavaInsideClass.kt")
+            public void testProtectedGetterFromJavaInsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaInsideClass.kt");
+            }
+
+            @TestMetadata("protectedGetterFromJavaOutsideClass.kt")
+            public void testProtectedGetterFromJavaOutsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaOutsideClass.kt");
+            }
+
             @TestMetadata("protectedMember.kt")
             public void testProtectedMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
@@ -1694,6 +1714,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             @TestMetadata("whenEvaluation.kt")
             public void testWhenEvaluation() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
+            }
+
+            @TestMetadata("withSerializationPlugin.kt")
+            public void testWithSerializationPlugin() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
             }
 
             @TestMetadata(".kt.kt")
