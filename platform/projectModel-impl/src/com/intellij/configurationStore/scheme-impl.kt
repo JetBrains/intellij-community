@@ -67,11 +67,11 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
 
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
-  open fun isSchemeFile(name: CharSequence) = true
+  open fun isSchemeFile(name: CharSequence): Boolean = true
 
-  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: Long) = false
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: Long): Boolean = false
 
-  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME): Boolean = false
 }
 
 abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {

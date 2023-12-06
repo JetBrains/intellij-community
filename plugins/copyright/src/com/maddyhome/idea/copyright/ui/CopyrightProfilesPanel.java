@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.AbstractCopyrightManager;
 import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
+import com.intellij.copyright.IdeCopyrightManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -17,18 +16,17 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.MasterDetailsStateService;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
@@ -47,12 +45,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
   private final Project myProject;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
+  private final CopyrightManager myCopyrightManager;
+  private final IdeCopyrightManager myIdeCopyrightManager;
 
   private Runnable myUpdate;
 
   CopyrightProfilesPanel(Project project) {
     myProject = project;
     initTree();
+    myCopyrightManager = CopyrightManager.getInstance(myProject);
+    myIdeCopyrightManager = IdeCopyrightManager.getInstance();
   }
 
   @Override
@@ -65,7 +67,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
 
     StatusText emptyText = myTree.getEmptyText();
     emptyText.setText(CopyrightBundle.message("copyright.profiles.empty"));
-    emptyText.appendSecondaryText(CopyrightBundle.message("copyright.profiles.add.profile"), SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile());
+    emptyText.appendSecondaryText(CopyrightBundle.message("copyright.profiles.add.profile"), SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile(true));
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     if (!shortcutText.isEmpty()) {
       emptyText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
@@ -89,7 +91,11 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   @Override
   protected void processRemovedItems() {
     Map<String, CopyrightProfile> profiles = getAllProfiles();
-    CopyrightManager manager = CopyrightManager.getInstance(myProject);
+    processRemovedItemps(myCopyrightManager, profiles);
+    processRemovedItemps(myIdeCopyrightManager, profiles);
+  }
+
+  private static void processRemovedItemps(AbstractCopyrightManager manager, Map<String, CopyrightProfile> profiles) {
     for (CopyrightProfile profile : new ArrayList<>(manager.getCopyrights())) {
       if (!profiles.containsValue(profile)) {
         manager.removeCopyright(profile);
@@ -99,7 +105,8 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
 
   @Override
   protected boolean wasObjectStored(Object o) {
-    return CopyrightManager.getInstance(myProject).getCopyrights().contains((CopyrightProfile)o);
+    CopyrightProfile profile = (CopyrightProfile)o;
+    return myCopyrightManager.getCopyrights().contains(profile) || myIdeCopyrightManager.getCopyrights().contains(profile);
   }
 
   @Override
@@ -138,7 +145,11 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   Map<String, CopyrightProfile> getAllProfiles() {
     final Map<String, CopyrightProfile> profiles = new HashMap<>();
     if (!myInitialized.get()) {
-      for (CopyrightProfile profile : CopyrightManager.getInstance(myProject).getCopyrights()) {
+      for (CopyrightProfile profile : myCopyrightManager.getCopyrights()) {
+        profiles.put(profile.getName(), profile);
+      }
+
+      for (CopyrightProfile profile : myIdeCopyrightManager.getCopyrights()) {
         profiles.put(profile.getName(), profile);
       }
     }
@@ -158,28 +169,17 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
     myInitialized.set(false);
   }
 
-  private void doAddProfile() {
+  private void doAddProfile(boolean shareProfile) {
     String name = askForProfileName(CopyrightBundle.message("create.copyright.profile"), "");
     if (name != null) {
-      addProfileNode(new CopyrightProfile(name));
+      addProfileNode(new CopyrightProfile(name), shareProfile);
     }
   }
 
   @Override
   protected @NotNull ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.add"),
-                                   CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.add"),
-                                   IconUtil.getAddIcon()) {
-      {
-        registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent event) {
-        doAddProfile();
-      }
-    });
+    result.add(new MyAddActionGroup(fromPopup));
     result.add(new MyDeleteAction());
     result.add(new DumbAwareAction(
       CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.copy"),
@@ -197,9 +197,19 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
         }
 
         CopyrightProfile clone = new CopyrightProfile();
-        clone.copyFrom((CopyrightProfile)Objects.requireNonNull(getSelectedObject()));
+        @Nullable CopyrightProfile profile = null;
+        boolean sharedProfile = true;
+        final TreePath selectionPath = myTree.getSelectionPath();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node) {
+          final NamedConfigurable<?> configurable = node.getConfigurable();
+          LOG.assertTrue(configurable != null, "already disposed");
+          profile = (CopyrightProfile)configurable.getEditableObject();
+          sharedProfile = ((CopyrightConfigurable)configurable).isShareProfile();
+        }
+        CopyrightProfile copyrightProfile = Objects.requireNonNull(profile);
+        clone.copyFrom(copyrightProfile);
         clone.setName(profileName);
-        addProfileNode(clone);
+        addProfileNode(clone, sharedProfile);
       }
 
       @Override
@@ -259,7 +269,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
         final String profileName = askForProfileName(CopyrightBundle.message("import.copyright.profile"), copyrightProfile.getName());
         if (profileName == null) return;
         copyrightProfile.setName(profileName);
-        addProfileNode(copyrightProfile);
+        addProfileNode(copyrightProfile, true);
         Messages.showInfoMessage(myProject,
                                  CopyrightBundle.message("dialog.message.the.copyright.settings.imported"),
                                  CopyrightBundle.message("dialog.title.import.complete"));
@@ -268,13 +278,67 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
     return result;
   }
 
+  private final class MyAddActionGroup extends ActionGroup implements ActionGroupWithPreselection, DumbAware {
+
+    private AnAction[] myChildren;
+    private final boolean myFromPopup;
+
+    MyAddActionGroup(boolean fromPopup) {
+      super(CopyrightBundle.messagePointer("action.add.profile.text"), !fromPopup);
+      myFromPopup = fromPopup;
+      getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
+      registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      if (myChildren == null) {
+        myChildren = new AnAction[2];
+        myChildren[0] = new DumbAwareAction(CopyrightBundle.messagePointer("action.local.text"),
+                                            CopyrightBundle.messagePointer("action.stored.in.ide.description"), () -> null) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            doAddProfile(false);
+          }
+        };
+        myChildren[1] = new DumbAwareAction(CopyrightBundle.messagePointer("action.shared.text"),
+                                            CopyrightBundle.messagePointer("action.stored.in.project.description"), () -> null) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            doAddProfile(true);
+          }
+        };
+      }
+      if (myFromPopup) {
+        final AnAction action = myChildren[getDefaultIndex()];
+        action.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
+        return new AnAction[]{action};
+      }
+      return myChildren;
+    }
+
+    @Override
+    public ActionGroup getActionGroup() {
+      return this;
+    }
+
+    @Override
+    public int getDefaultIndex() {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null &&
+          ((MyNode)selectionPath.getLastPathComponent()).getConfigurable() instanceof CopyrightConfigurable c) {
+        return c.isShareProfile() ? 1 : 0;
+      }
+      return 1;
+    }
+  }
 
   @Nullable
   private String askForProfileName(@NlsContexts.DialogTitle String title, String initialName) {
     return Messages.showInputDialog(CopyrightBundle.message("dialog.message.new.copyright.profile.name"), title, Messages.getQuestionIcon(), initialName, new InputValidator() {
       @Override
       public boolean checkInput(String s) {
-        return !getAllProfiles().containsKey(s) && s.length() > 0;
+        return !getAllProfiles().containsKey(s) && !s.isEmpty();
       }
 
       @Override
@@ -284,13 +348,25 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
     });
   }
 
-  private void addProfileNode(@NotNull CopyrightProfile copyrightProfile) {
-    final CopyrightConfigurable copyrightConfigurable = new CopyrightConfigurable(myProject, copyrightProfile, TREE_UPDATER);
+  private void addProfileNode(@NotNull CopyrightProfile copyrightProfile, boolean shareProfile) {
+    final CopyrightConfigurable copyrightConfigurable = new CopyrightConfigurable(myProject, copyrightProfile, TREE_UPDATER, shareProfile);
     copyrightConfigurable.setModified(true);
-    final MyNode node = new MyNode(copyrightConfigurable);
+    final MyNode node = createCopyrightNode(copyrightConfigurable);
     addNode(node, myRoot);
     selectNodeInTree(node);
     reloadAvailableProfiles();
+  }
+
+  @NotNull
+  private static MyNode createCopyrightNode(CopyrightConfigurable copyrightConfigurable) {
+    return new MyNode(copyrightConfigurable) {
+      @Override
+      public String getLocationString() {
+        return ((CopyrightConfigurable)getConfigurable()).isShareProfile()
+               ? CopyrightBundle.message("copyright.shared.description")
+               : CopyrightBundle.message("copyright.local.description");
+      }
+    };
   }
 
   @Override
@@ -301,13 +377,17 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
 
   private void reloadTree() {
     myRoot.removeAllChildren();
-    Collection<CopyrightProfile> collection = CopyrightManager.getInstance(myProject).getCopyrights();
+    createTreeNodes(myCopyrightManager.getCopyrights(), true);
+    createTreeNodes(myIdeCopyrightManager.getCopyrights(), false);
+    myInitialized.set(true);
+  }
+
+  private void createTreeNodes(Collection<CopyrightProfile> collection, boolean shareProfile) {
     for (CopyrightProfile profile : collection) {
       CopyrightProfile clone = new CopyrightProfile();
       clone.copyFrom(profile);
-      addNode(new MyNode(new CopyrightConfigurable(myProject, clone, TREE_UPDATER)), myRoot);
+      addNode(createCopyrightNode(new CopyrightConfigurable(myProject, clone, TREE_UPDATER, shareProfile)), myRoot);
     }
-    myInitialized.set(true);
   }
 
   @Override

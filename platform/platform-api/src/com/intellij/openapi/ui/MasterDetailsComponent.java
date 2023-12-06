@@ -756,6 +756,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       SimpleTextAttributes attributes = node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES :
                                         SimpleTextAttributes.REGULAR_ATTRIBUTES;
       append(node.getDisplayName(), SimpleTextAttributes.merge(getAdditionalAttributes(node), attributes));
+      String locationString = node.getLocationString();
+      if (locationString != null) {
+        append(" ");
+        append(locationString, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
     }
 
     protected @NotNull SimpleTextAttributes getAdditionalAttributes(@NotNull MyNode node) {
@@ -836,6 +841,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (configurable != null) return configurable.getDisplayName();
       LOG.debug("Tree was already disposed"); // workaround for IDEA-206547
       return "DISPOSED";
+    }
+
+    public @Nullable @NlsContexts.PopupTitle String getLocationString() {
+      return null;
     }
 
     public NamedConfigurable getConfigurable() {
