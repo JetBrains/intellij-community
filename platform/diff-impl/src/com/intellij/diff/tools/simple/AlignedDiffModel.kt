@@ -24,7 +24,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.vcs.ex.end
+import com.intellij.openapi.vcs.ex.start
 import com.intellij.ui.ColorUtil
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -55,7 +59,8 @@ interface AlignedDiffModel : Disposable {
 
   companion object {
     fun createSimpleAlignModel(viewer: SimpleDiffViewer): AlignedDiffModel {
-      return SimpleAlignedDiffModel(viewer)
+      //return SimpleAlignedDiffModel(viewer)
+      return NewAlignedDiffModel(viewer, viewer.request, viewer.context)
     }
   }
 }
@@ -504,5 +509,350 @@ abstract class AlignedDiffModelBase(val diffRequest: DiffRequest,
     const val ALIGNED_CHANGE_INLAY_PRIORITY = 0
 
 
+  }
+}
+
+/**
+ * WIP:
+ *
+ * Benefits of the new model:
+ * * Alignment of one change never affects alignment of others (except foldings)
+ *
+ * Current problems:
+ * * Gutter's painting is broken for added/removed chunks
+ * * When changes follow one by one ("Highlight split changes"-mode), some inlays may be mixed up. The root of the problem is that
+ *   several inlays with the same priority added to the same offset
+ * * Mirror inlays positioning works not so good
+ */
+private class NewAlignedDiffModel(private val viewer: SimpleDiffViewer,
+                                  private val diffRequest: DiffRequest,
+                                  private val diffContext: DiffContext) : AlignedDiffModel {
+  private val queue = MergingUpdateQueue("SimpleAlignedDiffModel", 300, true, viewer.component, viewer)
+
+  private val editor1 get() = viewer.editor1
+  private val editor2 get() = viewer.editor2
+
+  private val textSettings get() = TextDiffViewerUtil.getTextSettings(diffContext)
+
+  // sorted by highlighter offset
+  private val changeInlays = mutableListOf<ChangeInlay>()
+  private val mirrorInlays1 = mutableListOf<MirrorInlay>()
+  private val mirrorInlays2 = mutableListOf<MirrorInlay>()
+
+  init {
+    val inlayListener = MyInlayModelListener()
+    editor1.inlayModel.addListener(inlayListener, viewer)
+    editor2.inlayModel.addListener(inlayListener, viewer)
+
+    val softWrapListener = MySoftWrapModelListener()
+    editor1.softWrapModel.addSoftWrapChangeListener(softWrapListener)
+    editor2.softWrapModel.addSoftWrapChangeListener(softWrapListener)
+  }
+
+  fun scheduleRealignChanges() {
+    if (!needAlignChanges()) return
+    queue.queue(Update.create("update") { realignChanges() })
+  }
+
+  override fun getDiffChanges(): List<AlignableChange> = viewer.myModel.allChanges
+
+  override fun needAlignChanges(): Boolean {
+    val forcedValue: Boolean? = diffRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF)
+    if (forcedValue != null) return forcedValue
+
+    return textSettings.isEnableAligningChangesMode
+  }
+
+  override fun realignChanges() {
+    if (!needAlignChanges()) return
+    if (viewer.editors.any { it.isDisposed || (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
+
+    RecursionManager.doPreventingRecursion(this, true) {
+      clear()
+
+      initInlays()
+      updateInlayHeights()
+    }
+  }
+
+  private fun calcPriority(isLastLine: Boolean, isTop: Boolean): Int {
+    return if (isLastLine) {
+             if (isTop) Int.MAX_VALUE else Int.MAX_VALUE - 1
+           }
+           else {
+             if (isTop) Int.MAX_VALUE - 1 else Int.MAX_VALUE
+           }
+  }
+
+  private fun initInlays() {
+    val map1 = TreeMap<Int, ChangeInlay>()
+    val map2 = TreeMap<Int, ChangeInlay>()
+
+    for (change in viewer.diffChanges) {
+      val range = change.range
+
+      val changeInlay = ChangeInlay(
+        change,
+        createAlignInlay(Side.LEFT, range.start1, true, change.diffType),
+        createAlignInlay(Side.RIGHT, range.start2, true, change.diffType),
+        createAlignInlay(Side.LEFT, range.end1, false, change.diffType),
+        createAlignInlay(Side.RIGHT, range.end2, false, change.diffType)
+      )
+      changeInlays += changeInlay
+      map1[range.start1] = changeInlay
+      map2[range.start2] = changeInlay
+    }
+
+    val inlays1 = editor1.inlayModel.getBlockElementsInRange(0, editor1.document.textLength)
+      .filter { it.renderer !is AlignDiffInlayRenderer }
+    for (sourceInlay in inlays1) {
+      val targetLine = getMirrorTargetLine(Side.LEFT, sourceInlay)
+      val changeBlock = getChangeBlockFor(Side.LEFT, map1, targetLine)
+      if (changeBlock != null) {
+        changeBlock.innerSourceInlay1 += sourceInlay
+      }
+      else {
+        mirrorInlays1 += MirrorInlay(
+          sourceInlay,
+          createMirrorInlay(Side.LEFT, sourceInlay, targetLine)
+        )
+      }
+    }
+
+    val inlays2 = editor2.inlayModel.getBlockElementsInRange(0, editor2.document.textLength)
+      .filter { it.renderer !is AlignDiffInlayRenderer }
+    for (sourceInlay in inlays2) {
+      val targetLine = getMirrorTargetLine(Side.RIGHT, sourceInlay)
+      val changeBlock = getChangeBlockFor(Side.RIGHT, map2, targetLine)
+      if (changeBlock != null) {
+        changeBlock.innerSourceInlay2 += sourceInlay
+      }
+      else {
+        mirrorInlays2 += MirrorInlay(
+          sourceInlay,
+          createMirrorInlay(Side.RIGHT, sourceInlay, targetLine)
+        )
+      }
+    }
+  }
+
+  private fun createAlignInlay(side: Side, line: Int, isTop: Boolean, diffType: TextDiffType): Inlay<AlignDiffInlayRenderer> {
+    val editor = viewer.getEditor(side)
+    val isLastLine = line == DiffUtil.getLineCount(editor.document)
+    val offset = DiffUtil.getOffset(editor.document, line, 0)
+
+    val properties = InlayProperties()
+      .showAbove(!isLastLine)
+      .priority(calcPriority(isLastLine, isTop))
+
+    val color = if (isTop) null else getAlignedChangeColor(diffType, editor)
+    val inlayPresentation = AlignDiffInlayRenderer(editor, color)
+
+    return editor.inlayModel.addBlockElement(offset, properties, inlayPresentation)!!
+  }
+
+  private fun createMirrorInlay(sourceSide: Side,
+                                sourceInlay: Inlay<*>,
+                                targetLine: Int): Inlay<AlignDiffInlayRenderer>? {
+    val side = sourceSide.other()
+    val editor = viewer.getEditor(side)
+    val offset = DiffUtil.getOffset(editor.document, targetLine, 0)
+
+    val inlayProperties = InlayProperties()
+      .showAbove(sourceInlay.properties.isShownAbove)
+      .priority(sourceInlay.properties.priority)
+
+    val inlayPresentation = AlignDiffInlayRenderer(editor, null)
+
+    return editor.inlayModel.addBlockElement(offset, inlayProperties, inlayPresentation)
+  }
+
+  private fun getMirrorTargetLine(sourceSide: Side, sourceInlay: Inlay<*>): Int {
+    val sourceEditor = viewer.getEditor(sourceSide)
+
+    val sourceLine = sourceEditor.offsetToLogicalPosition(sourceInlay.offset).line
+    return viewer.transferPosition(sourceSide, LineCol(sourceLine)).line
+  }
+
+  private fun getChangeBlockFor(sourceSide: Side, changeBlockMap: TreeMap<Int, ChangeInlay>, line: Int): ChangeInlay? {
+    val block = changeBlockMap.ceilingEntry(line)?.value ?: return null
+    val range = block.change.range
+    if (range.start(sourceSide) <= line && range.end(sourceSide) > line) {
+      return block
+    }
+    return null
+  }
+
+  private fun updateInlayHeights() {
+    var last1 = 0
+    var last2 = 0
+    for (changeInlay in changeInlays) {
+      val range = changeInlay.change.range
+
+      val prefixDelta = calcSoftWrapsHeight(editor2, last2, range.start2) - calcSoftWrapsHeight(editor1, last1, range.start1)
+
+      if (prefixDelta >= 0) {
+        changeInlay.setTop(prefixDelta, 0)
+      }
+      else {
+        changeInlay.setTop(0, -prefixDelta)
+      }
+
+      val bodyDelta = (range.end2 - range.start2) * editor2.lineHeight -
+                      (range.end1 - range.start1) * editor1.lineHeight +
+                      calcSoftWrapsHeight(editor2, range.start2, range.end2) -
+                      calcSoftWrapsHeight(editor1, range.start1, range.end1) +
+                      changeInlay.innerSourceInlay2.sumOf { it.heightInPixels } -
+                      changeInlay.innerSourceInlay1.sumOf { it.heightInPixels }
+      if (bodyDelta >= 0) {
+        changeInlay.setBottom(bodyDelta, 0)
+      }
+      else {
+        changeInlay.setBottom(0, -bodyDelta)
+      }
+
+      last1 = range.end1
+      last2 = range.end2
+    }
+
+    for (mirrorInlay in mirrorInlays1) {
+      val inlay = mirrorInlay.inlay ?: continue
+      inlay.renderer.height = mirrorInlay.sourceInlay.heightInPixels
+      inlay.update()
+    }
+    for (mirrorInlay in mirrorInlays2) {
+      val inlay = mirrorInlay.inlay ?: continue
+      inlay.renderer.height = mirrorInlay.sourceInlay.heightInPixels
+      inlay.update()
+    }
+  }
+
+  private fun calcSoftWrapsHeight(editor: Editor, line1: Int, line2: Int): Int {
+    val softWrapModel = editor.softWrapModel
+    var count = 0
+
+    val range = DiffUtil.getLinesRange(editor.document, line1, line2)
+    for (softWrap in softWrapModel.getSoftWrapsForRange(range.startOffset, range.endOffset)) {
+      if (softWrapModel.isVisible(softWrap)) {
+        count++
+      }
+    }
+    return editor.lineHeight * count
+  }
+  override fun dispose() {
+  }
+
+  override fun clear() {
+    disposeAndClear(changeInlays)
+    disposeAndClear(mirrorInlays1)
+    disposeAndClear(mirrorInlays2)
+  }
+
+  private fun disposeAndClear(disposables: MutableCollection<out Disposable>) {
+    for (item in disposables) {
+      Disposer.dispose(item)
+    }
+    disposables.clear()
+  }
+
+  private val SimpleDiffChange.range: Range
+    get() = Range(
+      getStartLine(Side.LEFT),
+      getEndLine(Side.LEFT),
+      getStartLine(Side.RIGHT),
+      getEndLine(Side.RIGHT)
+    )
+
+  private inner class MySoftWrapModelListener : SoftWrapChangeListener {
+    override fun softWrapsChanged() {
+      if (!textSettings.isUseSoftWraps) {
+        // this would also be called in case if editor font size changed and provide more clean view for aligning inlays
+        scheduleRealignChanges()
+      }
+    }
+
+    override fun recalculationEnds() {
+      scheduleRealignChanges()
+    }
+  }
+
+  private inner class MyInlayModelListener : InlayModel.Listener {
+    override fun onAdded(inlay: Inlay<*>) {
+      if (inlay.renderer is AlignDiffInlayRenderer) return
+      scheduleRealignChanges()
+    }
+
+    override fun onRemoved(inlay: Inlay<*>) {
+      if (inlay.renderer is AlignDiffInlayRenderer) return
+      scheduleRealignChanges()
+    }
+
+    override fun onUpdated(inlay: Inlay<*>, changeFlags: Int) {
+      if (inlay.renderer is AlignDiffInlayRenderer) return
+      if (changeFlags and InlayModel.ChangeFlags.HEIGHT_CHANGED != 0) {
+        scheduleRealignChanges()
+      }
+    }
+  }
+
+  private class AlignDiffInlayRenderer(
+    private val editor: EditorEx,
+    private val inlayColor: Color? = null
+  ) : EditorCustomElementRenderer {
+    var height: Int = 0
+
+    override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
+      val paintColor = inlayColor ?: return
+      g.color = paintColor
+      g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height)
+    }
+
+    override fun calcWidthInPixels(inlay: Inlay<*>): Int = max((editor as EditorImpl).preferredSize.width, editor.component.width)
+    override fun calcHeightInPixels(inlay: Inlay<*>): Int = height
+  }
+
+  private class ChangeInlay(
+    val change: SimpleDiffChange,
+
+    val topInlay1: Inlay<AlignDiffInlayRenderer>,
+    val topInlay2: Inlay<AlignDiffInlayRenderer>,
+
+    val bottomInlay1: Inlay<AlignDiffInlayRenderer>,
+    val bottomInlay2: Inlay<AlignDiffInlayRenderer>,
+  ) : Disposable {
+    val innerSourceInlay1 = mutableListOf<Inlay<*>>()
+    val innerSourceInlay2 = mutableListOf<Inlay<*>>()
+
+    fun setTop(height1: Int, height2: Int) {
+      topInlay1.renderer.height = height1
+      topInlay1.update()
+
+      topInlay2.renderer.height = height2
+      topInlay2.update()
+    }
+
+    fun setBottom(height1: Int, height2: Int) {
+      bottomInlay1.renderer.height = height1
+      bottomInlay1.update()
+
+      bottomInlay2.renderer.height = height2
+      bottomInlay2.update()
+    }
+
+    override fun dispose() {
+      Disposer.dispose(topInlay1)
+      Disposer.dispose(topInlay2)
+      Disposer.dispose(bottomInlay1)
+      Disposer.dispose(bottomInlay2)
+    }
+  }
+
+  private class MirrorInlay(
+    val sourceInlay: Inlay<*>,
+    val inlay: Inlay<AlignDiffInlayRenderer>?
+  ) : Disposable {
+    override fun dispose() {
+      if (inlay != null) Disposer.dispose(inlay)
+    }
   }
 }
