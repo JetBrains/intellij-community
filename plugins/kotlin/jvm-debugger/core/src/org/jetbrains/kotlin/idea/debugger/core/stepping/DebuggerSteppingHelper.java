@@ -49,7 +49,7 @@ public final class DebuggerSteppingHelper {
         };
     }
 
-    public static DebugProcessImpl.ResumeCommand createStepOverCommandForSuspendSwitch(SuspendContextImpl suspendContext) {
+    public static DebugProcessImpl.StepOverCommand createStepOverCommandForSuspendSwitch(SuspendContextImpl suspendContext) {
         DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
         return debugProcess.new StepOverCommand(suspendContext, false, null, StepRequest.STEP_MIN) {
             @NotNull

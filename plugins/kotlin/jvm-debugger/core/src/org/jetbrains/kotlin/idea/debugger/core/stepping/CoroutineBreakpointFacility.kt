@@ -17,11 +17,12 @@ object CoroutineBreakpointFacility : AbstractCoroutineBreakpointFacility() {
         val breakpoint = object : StepIntoMethodBreakpoint(location.declaringType().name(), method.name(), method.signature(), project) {
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
                 val result = super.processLocatableEvent(action, event)
-                if (result) {
-                    stepOverSuspendSwitch(action, debugProcess)
-                }
+                if (!result) return false
 
-                return result
+                stepOverSuspendSwitch(action, debugProcess)
+                // false return value will resume the execution in the `DebugProcessEvents` and
+                // the scheduled above steps will perform stepping through the coroutine switch until line location.
+                return false
             }
         }
         breakpoint.setSuspendPolicy(context)

@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.Breakpoint
+import com.intellij.openapi.diagnostic.thisLogger
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.request.EventRequest
@@ -27,7 +28,10 @@ abstract class AbstractCoroutineBreakpointFacility {
     protected fun Breakpoint<*>.stepOverSuspendSwitch(action: SuspendContextCommandImpl, debugProcess: DebugProcessImpl) {
         val suspendContext = action.suspendContext
         if (suspendContext != null) {
-            DebuggerSteppingHelper.createStepOverCommandForSuspendSwitch(suspendContext).contextAction(suspendContext)
+            DebuggerSteppingHelper.createStepOverCommandForSuspendSwitch(suspendContext).prepareSteppingRequestsAndHints(suspendContext)
+        }
+        else {
+            thisLogger().error("No suspend context found")
         }
         debugProcess.requestsManager.deleteRequest(this)
     }
