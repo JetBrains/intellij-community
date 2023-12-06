@@ -156,6 +156,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       //SOE protection
       scaledDelegateIcon.paintIcon(c, g, x, y)
     }
+    else {
+      logger<DeferredIconImpl<*>>().warn("Not painted, too many deferrals: $this")
+    }
     if (needScheduleEvaluation()) {
       scheduleEvaluation(c, x, y)
     }
