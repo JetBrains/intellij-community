@@ -811,11 +811,20 @@ internal class SoftwareBillOfMaterialsImpl(
       coroutineScope {
         documents.forEach {
           launch {
-            runProcess(
-              "docker", "run", "--rm",
-              "--volume=${it.parent}:${it.parent}:ro",
-              ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
-            )
+            try {
+              runProcess(
+                "docker", "run", "--rm",
+                "--volume=${it.parent}:${it.parent}:ro",
+                ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
+              )
+            }
+            catch (e: Exception) {
+              context.messages.error("""
+                 Generated SBOM $it is not NTIA-conformant. 
+                 Please search for 'Components missing an supplier' error message and specify all missing suppliers.
+                 You may use https://package-search.jetbrains.com/ to search for them.
+              """.trimIndent(), e)
+            }
           }
         }
       }
