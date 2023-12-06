@@ -52,6 +52,12 @@ interface AlignedDiffModel : Disposable {
   fun needAlignChanges(): Boolean
   fun realignChanges()
   fun clear()
+
+  companion object {
+    fun createSimpleAlignModel(viewer: SimpleDiffViewer): AlignedDiffModel {
+      return SimpleAlignedDiffModel(viewer)
+    }
+  }
 }
 
 interface AlignableChange {

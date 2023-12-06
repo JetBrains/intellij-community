@@ -71,7 +71,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
     this.aligningViewModeSupported = true;
     mySyncScrollable = new MySyncScrollable();
-    myAlignedDiffModel = new SimpleAlignedDiffModel(this);
+    myAlignedDiffModel = AlignedDiffModel.Companion.createSimpleAlignModel(this);
 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
