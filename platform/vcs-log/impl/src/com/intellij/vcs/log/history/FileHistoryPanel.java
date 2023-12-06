@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.navigation.History;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -36,6 +37,7 @@ import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import kotlin.Unit;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +54,8 @@ import java.util.Objects;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
+  private static final @NotNull @NonNls String HELP_ID = "reference.versionControl.toolwindow.history";
+
   private final @NotNull Project myProject;
   private final @NotNull FilePath myFilePath;
   private final @NotNull VirtualFile myRoot;
@@ -66,6 +70,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private final @NotNull JBSplitter myDetailsSplitter;
 
   private @Nullable FileHistoryEditorDiffPreview myEditorDiffPreview;
+
+  private final @NotNull History myHistory;
 
   public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
                           @NotNull FilePath filePath, @NotNull VirtualFile root,
@@ -141,6 +147,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.HISTORY_POPUP_ACTION_GROUP, ActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
+
+    myHistory = VcsLogUiUtil.installNavigationHistory(logUi, myGraphTable);
 
     Disposer.register(disposable, this);
   }
@@ -243,6 +251,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         FileHistoryModel modelSnapshot = myFileHistoryModel.createSnapshot();
         return (slowId) -> getSlowData(slowId, modelSnapshot, details);
       })
+      .ifEq(PlatformCoreDataKeys.HELP_ID).then(HELP_ID)
+      .ifEq(History.KEY).then(myHistory)
       .orNull();
   }
 

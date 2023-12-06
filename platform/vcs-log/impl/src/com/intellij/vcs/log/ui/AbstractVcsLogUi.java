@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +32,7 @@ import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
@@ -118,6 +121,24 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
   @Override
   public abstract @NotNull VcsLogGraphTable getTable();
+
+  /**
+   * @deprecated provide navigation history in the data context of the main component if needed
+   * @see History#KEY
+   */
+  @Deprecated
+  public @Nullable History getNavigationHistory() {
+    return null;
+  }
+
+  /**
+   * @deprecated provide help id in the data context of the main component if needed
+   * @see PlatformCoreDataKeys#HELP_ID
+   */
+  @Deprecated
+  public @Nullable String getHelpId() {
+    return null;
+  }
 
   public void requestMore(@NotNull Runnable onLoaded) {
     myRefresher.moreCommitsNeeded(onLoaded);

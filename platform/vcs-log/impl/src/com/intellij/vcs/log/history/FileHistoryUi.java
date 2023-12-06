@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.DataPack;
@@ -25,10 +24,8 @@ import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +38,6 @@ import java.util.function.Predicate;
 import static com.intellij.ui.JBColor.namedColor;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
-  private static final @NotNull @NonNls String HELP_ID = "reference.versionControl.toolwindow.history";
   private final @NotNull FilePath myPath;
   private final @Nullable Hash myRevision;
 
@@ -49,7 +45,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   private final @NotNull FileHistoryUiProperties myUiProperties;
   private final @NotNull FileHistoryFilterUi myFilterUi;
   private final @NotNull FileHistoryPanel myFileHistoryPanel;
-  private final @NotNull History myHistory;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull FileHistoryUiProperties uiProperties,
@@ -87,8 +82,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
 
     myUiProperties.addChangeListener(new MyPropertiesChangeListener(), this);
-
-    myHistory = VcsLogUiUtil.installNavigationHistory(this);
   }
 
   public static @NotNull String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
@@ -167,18 +160,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  public @Nullable String getHelpId() {
-    return HELP_ID;
-  }
-
-  @Override
   public @NotNull FileHistoryUiProperties getProperties() {
     return myUiProperties;
-  }
-
-  @Override
-  public @Nullable History getNavigationHistory() {
-    return myHistory;
   }
 
   @Override

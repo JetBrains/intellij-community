@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.navigation.History;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -72,6 +73,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final @NonNls String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
   private static final @NonNls String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
   private static final @NonNls String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
+  private static final @NonNls String HELP_ID = "reference.changesToolWindow.log";
 
   private final @NotNull VcsLogData myLogData;
   private final @NotNull MainVcsLogUiProperties myUiProperties;
@@ -87,6 +89,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private final @NotNull CommitDetailsListPanel myDetailsPanel;
   private final @NotNull Splitter myDetailsSplitter;
   private final @NotNull EditorNotificationPanel myNotificationLabel;
+
+  private final @NotNull History myHistory;
 
   private boolean myIsLoading;
   private @Nullable FilePath myPathToSelect = null;
@@ -177,7 +181,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     };
     add(myDiffPreview.getMainComponent());
 
+    myHistory = VcsLogUiUtil.installNavigationHistory(logUi, myGraphTable);
+
     Disposer.register(disposable, this);
+
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
@@ -298,6 +305,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         }
       };
     }
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
+    else if (History.KEY.is(dataId)) return myHistory;
     return null;
   }
 
