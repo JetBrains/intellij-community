@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
-
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
@@ -84,8 +83,8 @@ public final class LanguageLevelUtil {
     ourPresentableShortMessage.put(LanguageLevel.JDK_19, "20");
     ourPresentableShortMessage.put(LanguageLevel.JDK_20, "21");
     ourPresentableShortMessage.put(LanguageLevel.JDK_20_PREVIEW, "21");
-    //ourPresentableShortMessage.put(LanguageLevel.JDK_21, "22");
-    //ourPresentableShortMessage.put(LanguageLevel.JDK_21_PREVIEW, "22");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_21, "22");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_21_PREVIEW, "22");
   }
 
   @Nullable
