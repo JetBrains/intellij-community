@@ -365,7 +365,8 @@ class ProjectWindowCustomizerService : Disposable {
     } ?: 150f
 
     if (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull() == null
-        && ComponentUtil.findComponentsOfType(parent, IdeRootPane::class.java).firstOrNull()?.isToolbarInHeader() != true) return true
+        && !(ComponentUtil.findComponentsOfType(parent, IdeRootPane::class.java).firstOrNull()?.isToolbarInHeader()
+             ?: isToolbarInHeader(false))) return true
 
     //additional multiplication by color.alpha is done because alpha will be lost after using blendColorsInRgb (sometimes it's not equals to 255)
     val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85)
