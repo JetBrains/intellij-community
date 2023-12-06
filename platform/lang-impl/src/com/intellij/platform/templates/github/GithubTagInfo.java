@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -12,12 +15,22 @@ import org.jetbrains.annotations.Nullable;
 public final class GithubTagInfo {
   private final String myName;
   private final String myZipballUrl;
+  @JsonIgnore
   private Version myVersion;
+  @JsonIgnore
   private boolean myRecentTag = false;
+
 
   public GithubTagInfo(@NotNull String name, @NotNull String zipballUrl) {
     myName = name;
     myZipballUrl = zipballUrl;
+  }
+
+  @JsonCreator
+  public static GithubTagInfo createInstance(
+    @JsonProperty("name") String name,
+    @JsonProperty("zipball_url") String zipballUrl) {
+    return new GithubTagInfo(name, zipballUrl);
   }
 
   @NotNull

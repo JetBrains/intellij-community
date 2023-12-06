@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.platform.templates.github.GithubTagInfo
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
@@ -141,6 +142,20 @@ object GithubApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
+    }
+
+    object Tags : Entity("/tags") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String) =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubTagInfo>(url).withOperationName("get tags")
     }
 
     object Commits : Entity("/commits") {
