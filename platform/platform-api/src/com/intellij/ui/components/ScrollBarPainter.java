@@ -115,6 +115,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     = SystemInfoRt.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.Transparent.hoverThumbColor");
 
+  public static final ColorKey TABS_TRANSPARENT_THUMB_BACKGROUND = key(0x00ABABAB, 0x00434344, "Scrollbar.Tabs.TransparentThumbColor");
+  public static final ColorKey TABS_THUMB_BACKGROUND = key(0xFFABABAB, 0xFF434344, "Scrollbar.Tabs.ThumbColor");
   private static final List<ColorKey> CONTRAST_ELEMENTS_KEYS = Arrays.asList(
     THUMB_OPAQUE_FOREGROUND,
     THUMB_OPAQUE_BACKGROUND,
@@ -208,9 +210,10 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
   }
 
-  static class Thumb extends ScrollBarPainter {
-    private final MixedColorProducer fillProducer;
-    private final MixedColorProducer drawProducer;
+  @ApiStatus.Internal
+  public static class Thumb extends ScrollBarPainter {
+    protected MixedColorProducer fillProducer;
+    protected MixedColorProducer drawProducer;
 
     Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
       super(supplier);
@@ -254,7 +257,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
   }
 
-  static final class ThinScrollBarThumb extends Thumb {
+  @ApiStatus.Internal
+  public static class ThinScrollBarThumb extends Thumb {
     ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
       super(supplier, opaque);
     }
