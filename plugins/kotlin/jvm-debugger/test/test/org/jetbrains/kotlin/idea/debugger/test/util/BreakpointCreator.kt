@@ -187,7 +187,7 @@ internal class BreakpointCreator(
         condition: String?
     ) {
         val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
-        val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != -1) it - 1 else it }
+        val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != JavaLineBreakpointProperties.NO_LAMBDA) it - 1 else it }
 
         val javaBreakpoint = createBreakpointOfType(
             breakpointManager,

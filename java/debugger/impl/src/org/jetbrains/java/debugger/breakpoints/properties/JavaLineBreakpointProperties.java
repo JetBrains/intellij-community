@@ -17,12 +17,30 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
 
   private static final int COND_RET_CODE = -10;
 
+  /**
+   * Represents a position for breakpoint in the current method (not in lambda).
+   * @see #getLambdaOrdinal()
+   */
+  public static final int NO_LAMBDA = -1;
+
+  /**
+   * Encoded inline position for the case when we want to stop on the first statement on the line.
+   * @see #encodeInlinePosition
+   */
+  private static final int BASIC_LINE_POSITION = encodeInlinePosition(NO_LAMBDA, false);
+
+
   public static int encodeInlinePosition(int lambdaOrdinal, boolean conditionalReturn) {
     return !conditionalReturn
            ? lambdaOrdinal
            : COND_RET_CODE - lambdaOrdinal - 1;
   }
 
+  /**
+   * @return <code>null</code>, if it should suspend on all lambdas and basic line;<br>
+   * {@link #NO_LAMBDA}, if it should suspend only on the basic line;<br>
+   * positive value, if it should suspend inside the lambda with the ordinal
+   */
   @Transient
   public @Nullable Integer getLambdaOrdinal() {
     if (encodedInlinePosition == null) {
@@ -34,6 +52,18 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
 
   public boolean isConditionalReturn() {
     return encodedInlinePosition != null && encodedInlinePosition <= COND_RET_CODE;
+  }
+
+  /**
+   * @return true iff suspends on the basic line position (including 'all' variants)
+   */
+  public static boolean isLinePosition(Integer encodedInlinePosition) {
+    return encodedInlinePosition == null || encodedInlinePosition == BASIC_LINE_POSITION;
+  }
+
+  public boolean isInLambda() {
+    Integer lambdaOrdinal = getLambdaOrdinal();
+    return lambdaOrdinal != null && lambdaOrdinal != NO_LAMBDA;
   }
 
   @OptionTag("lambda-ordinal") // naming is a historic accident

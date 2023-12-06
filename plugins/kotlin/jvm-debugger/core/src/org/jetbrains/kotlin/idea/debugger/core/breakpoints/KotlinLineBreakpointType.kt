@@ -121,7 +121,7 @@ class KotlinLineBreakpointType :
             val isLambdaResult = bodyExpression is KtLambdaExpression && bodyExpression.functionLiteral in lambdas
 
             if (!isLambdaResult) {
-                result.add(LineKotlinBreakpointVariant(position, mainMethod, -1))
+                result.add(LineKotlinBreakpointVariant(position, mainMethod, JavaLineBreakpointProperties.NO_LAMBDA))
                 lineBreakpointAdded = true
             }
         }

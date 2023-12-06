@@ -141,7 +141,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     boolean mainMethodAdded = false;
     int lambdaCount = 0;
     if (!(startMethod instanceof PsiLambdaExpression)) {
-      res.add(new LineJavaBreakpointVariant(position, startMethod, -1));
+      res.add(new LineJavaBreakpointVariant(position, startMethod, JavaLineBreakpointProperties.NO_LAMBDA));
       mainMethodAdded = true;
     }
 
@@ -264,9 +264,10 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (position == null) return null;
 
     JavaBreakpointProperties properties = breakpoint.getProperties();
-    if (properties instanceof JavaLineBreakpointProperties && !(breakpoint instanceof RunToCursorBreakpoint)) {
-      Integer ordinal = ((JavaLineBreakpointProperties)properties).getLambdaOrdinal();
-      if (ordinal != null && ordinal != -1) {
+    if (properties instanceof JavaLineBreakpointProperties javaProperties && !(breakpoint instanceof RunToCursorBreakpoint)) {
+      if (javaProperties.isInLambda()) {
+        Integer ordinal = javaProperties.getLambdaOrdinal();
+        assert ordinal != null;
         List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(position, true);
         if (ordinal < lambdas.size()) {
           return lambdas.get(ordinal);
@@ -363,11 +364,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     @Override
     public TextRange getHighlightRange() {
-      if (myElement != null && myEncodedInlinePosition != -1) {
-        TextRange textRange = getTextRangeWithoutTrailingComments(myElement);
-        return DebuggerUtilsEx.getHighlightingRangeInsideLine(textRange, myElement.getContainingFile(), mySourcePosition.getLine());
+      if (myElement == null || JavaLineBreakpointProperties.isLinePosition(myEncodedInlinePosition)) {
+        return null;
       }
-      return null;
+      TextRange textRange = getTextRangeWithoutTrailingComments(myElement);
+      return DebuggerUtilsEx.getHighlightingRangeInsideLine(textRange, myElement.getContainingFile(), mySourcePosition.getLine());
     }
 
     @NotNull
@@ -450,8 +451,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (properties == null) return null;
 
     boolean condRet = properties.isConditionalReturn();
-    Integer lambdaOrdinal = properties.getLambdaOrdinal();
-    boolean isLambda = lambdaOrdinal != null && lambdaOrdinal != -1;
+    boolean isLambda = properties.isInLambda();
     if (!condRet && !isLambda) return null;
 
     return ReadAction.compute(() -> {
@@ -462,6 +462,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
           return XSourcePositionImpl.createByElement(theReturn);
         }
         else if (isLambda) {
+          Integer lambdaOrdinal = properties.getLambdaOrdinal();
+          assert lambdaOrdinal != null;
           return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, lambdaOrdinal));
         }
       }
