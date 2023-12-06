@@ -372,8 +372,20 @@ fun <T : CommandChain> T.createAllServicesAndExtensions(): T = apply {
   addCommand("${CMD_PREFIX}CreateAllServicesAndExtensions")
 }
 
-fun <T : CommandChain> T.runConfiguration(command: String): T = apply {
-  addCommand("${CMD_PREFIX}runConfiguration", command)
+fun <T : CommandChain> T.runConfiguration(configurationName: String,
+                                          mode: String = "TILL_TERMINATED",
+                                          failureExpected: Boolean = false,
+                                          debug: Boolean = false): T = apply {
+  val command = mutableListOf("${CMD_PREFIX}runConfiguration")
+  command.add("-configurationName=$configurationName")
+  command.add("-mode=$mode")
+  if (failureExpected) {
+    command.add("-failureExpected")
+  }
+  if (debug) {
+    command.add("-debug")
+  }
+  addCommandWithSeparator("|", *command.toTypedArray())
 }
 
 fun <T : CommandChain> T.openFileWithTerminate(relativePath: String, terminateIdeInSeconds: Long): T = apply {

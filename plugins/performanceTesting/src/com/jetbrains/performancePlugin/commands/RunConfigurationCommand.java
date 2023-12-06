@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.commands;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -18,17 +19,23 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.performancePlugin.Timer;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+
+import java.util.Arrays;
 
 /**
  * Command runs specified configuration.
  * If configuration is absent prints all available for the project.
  * There are two modes: TILL_STARTED and TILL_TERMINATED
+ * Set -failureExpected param f failure expected
+ * Set -debug param if you want to run configuration in debug mode
  * <p>
- * Syntax: %runConfiguration [mode] <configurationName>
- * Example: %runConfiguration TILL_STARTED IDEA
+ * Syntax: %runConfiguration [mode] <configurationName> [failureExpected] [debug]
+ * Example: %runConfiguration -mode=TILL_TERMINATED|-configurationName=My Run Configuration|-failureExpected|-debug
  */
 public final class RunConfigurationCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runConfiguration";
@@ -45,10 +52,10 @@ public final class RunConfigurationCommand extends AbstractCommand {
   @NotNull
   @Override
   protected Promise<Object> _execute(@NotNull final PlaybackContext context) {
-    //example: %runConfiguration TILL_TERMINATED My Run Configuration
-    String[] command = extractCommandArgument(PREFIX).split(" ", 2);
-    String mode = command[0];
-    String configurationNameToRun = command[1];
+    //example: %runConfiguration -mode=TILL_TERMINATED|-configurationName=My Run Configuration|-failureExpected|-debug
+    RunConfigurationOptions options = new RunConfigurationOptions();
+    Args.parse(options, Arrays.stream(extractCommandArgument(PREFIX).split("\\|"))
+      .flatMap(item -> Arrays.stream(item.split("="))).toArray(String[]::new));
 
     Timer timer = new Timer();
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
@@ -67,7 +74,7 @@ public final class RunConfigurationCommand extends AbstractCommand {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
         myExecutionEnvironment = env;
-        if (mode.equals(WAIT_FOR_PROCESS_STARTED)) {
+        if (options.mode.equals(WAIT_FOR_PROCESS_STARTED)) {
           timer.stop();
           long executionTime = timer.getTotalTime();
           context.message("processStarted in: " + env + ": " + executionTime, getLine());
@@ -80,12 +87,12 @@ public final class RunConfigurationCommand extends AbstractCommand {
                                     @NotNull ExecutionEnvironment env,
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
-        if (mode.equals(WAIT_FOR_PROCESS_TERMINATED)) {
+        if (options.mode.equals(WAIT_FOR_PROCESS_TERMINATED)) {
           timer.stop();
           long executionTime = timer.getTotalTime();
           context.message("processTerminated in: " + env + ": " + executionTime, getLine());
           if (env.equals(myExecutionEnvironment)) {
-            if (exitCode == 0) {
+            if ((exitCode == 0 && !options.failureExpected) || (exitCode != 0 && options.failureExpected)) {
               actionCallback.setDone();
             }
             else {
@@ -100,16 +107,16 @@ public final class RunConfigurationCommand extends AbstractCommand {
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (!mode.contains(WAIT_FOR_PROCESS_STARTED) && !mode.contains(WAIT_FOR_PROCESS_TERMINATED)) {
+      if (!options.mode.contains(WAIT_FOR_PROCESS_STARTED) && !options.mode.contains(WAIT_FOR_PROCESS_TERMINATED)) {
         actionCallback.reject("Specified mode is neither TILL_STARTED nor TILL_TERMINATED");
       }
 
-      Executor executor = new DefaultRunExecutor();
+      Executor executor = options.debug ? new DefaultDebugExecutor() : new DefaultRunExecutor();
       ExecutionTarget target = DefaultExecutionTarget.INSTANCE;
-      RunConfiguration configurationToRun = getConfigurationByName(runManager, configurationNameToRun);
+      RunConfiguration configurationToRun = getConfigurationByName(runManager, options.configurationName);
 
       if (configurationToRun == null) {
-        actionCallback.reject("Specified configuration is not found: " + configurationNameToRun);
+        actionCallback.reject("Specified configuration is not found: " + options.configurationName);
         printAllConfigurationsNames(runManager);
       }
       else {
@@ -132,5 +139,17 @@ public final class RunConfigurationCommand extends AbstractCommand {
     LOG.info("Available configurations are:");
     runManager.getAllConfigurationsList().stream().map(RunProfile::getName).forEach(LOG::info);
     LOG.info("*****************************");
+  }
+
+
+  private static class RunConfigurationOptions {
+    @Argument
+    String mode;
+    @Argument
+    String configurationName;
+    @Argument
+    boolean failureExpected;
+    @Argument
+    boolean debug;
   }
 }
