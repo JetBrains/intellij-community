@@ -4,11 +4,8 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -17,7 +14,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -511,10 +507,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       msm = MenuSelectionManager.defaultManager();
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
-    AnAction action = item.getAnAction();
-    if (ActionPlaces.MAIN_MENU.equals(item.place) && ApplicationManager.getApplication() != null) {
-      MainMenuCollector.getInstance().record(action);
-    }
     if (!item.isKeepMenuOpen()) {
       msm.clearSelectedPath();
     }

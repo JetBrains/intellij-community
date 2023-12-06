@@ -1280,11 +1280,6 @@
         <component>ToolbarClicksCollector</component>
       </components>
     </obsoleteStorage>
-    <obsoleteStorage file="statistics.main_menu.xml">
-      <components>
-        <component>MainMenuCollector</component>
-      </components>
-    </obsoleteStorage>
     <obsoleteStorage file="statistics.shortcuts.xml">
       <components>
         <component>ShortcutsCollector</component>
@@ -1304,7 +1299,6 @@
         <component>ToolWindowsCollector</component>
         <component>ShortcutsCollector</component>
         <component>ToolbarClicksCollector</component>
-        <component>MainMenuCollector</component>
         <component>IntentionsCollector</component>
         <component>ActionsCollector</component>
         <component>FUSApplicationUsageTrigger</component>

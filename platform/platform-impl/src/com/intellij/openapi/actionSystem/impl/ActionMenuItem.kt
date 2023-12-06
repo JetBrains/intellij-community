@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
@@ -13,7 +12,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isShowNoIcons
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.shouldConvertIconToDarkVariant
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.showDescriptionInStatusBar
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.keymap.KeymapUtil
@@ -95,10 +93,6 @@ class ActionMenuItem internal constructor(action: AnAction,
     get() = actionRef.getAction()
 
   public override fun fireActionPerformed(event: ActionEvent) {
-    val app = ApplicationManager.getApplication()
-    if (!app.isDisposed() && ActionPlaces.MAIN_MENU == place) {
-      MainMenuCollector.getInstance().record(actionRef.getAction())
-    }
     (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(
       Runnable { super.fireActionPerformed(event) })
   }
