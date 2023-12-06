@@ -217,6 +217,16 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
                            fromSettings: Boolean,
                            actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
                            actionBinding: (String) -> String?) {
+    doAddShortcut(actionBinding = actionBinding, actionId = actionId, actionIdToShortcuts = actionIdToShortcuts, shortcut = shortcut)
+
+    cleanShortcutsCache()
+    fireShortcutChanged(actionIds = java.util.List.of(actionId), fromSettings = fromSettings)
+  }
+
+  private fun doAddShortcut(actionBinding: (String) -> String?,
+                        actionId: String,
+                        actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
+                        shortcut: Shortcut) {
     val boundShortcuts = actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
       var result = list ?: boundShortcuts ?: getParentShortcuts(id, actionBinding)
@@ -234,9 +244,6 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
       }
       if (areShortcutsEqualToParent(result, id, actionBinding)) null else result
     }
-
-    cleanShortcutsCache()
-    fireShortcutChanged(actionId, fromSettings)
   }
 
   private fun cleanShortcutsCache() {
@@ -247,18 +254,22 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
   }
 
   final override fun removeAllActionShortcuts(actionId: String) {
-    return removeAllActionShortcuts(actionId, actionIdToShortcuts.value, ActionManagerEx.getInstanceEx()::getActionBinding)
+    removeAllActionShortcuts(actionId = actionId,
+                             actionIdToShortcuts = actionIdToShortcuts.value,
+                             actionBinding = ActionManagerEx.getInstanceEx()::getActionBinding)
+
+    cleanShortcutsCache()
+    fireShortcutChanged(actionIds = java.util.List.of(actionId), fromSettings = false)
   }
 
   private fun removeAllActionShortcuts(actionId: String,
                                        actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
                                        actionBinding: (String) -> String?) {
     for (shortcut in getShortcutList(actionId = actionId, actionIdToShortcuts = actionIdToShortcuts, actionBinding = actionBinding)) {
-      removeShortcut(actionId = actionId,
-                     toDelete = shortcut,
-                     fromSettings = false,
-                     actionBinding = actionBinding,
-                     actionIdToShortcuts = actionIdToShortcuts)
+      doRemoveShortcut(actionBinding = actionBinding,
+                       actionId = actionId,
+                       actionIdToShortcuts = actionIdToShortcuts,
+                       toDelete = shortcut)
     }
   }
 
@@ -277,26 +288,33 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
   private fun doInitShortcuts(operations: List<KeymapShortcutOperation>,
                               actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
                               actionBinding: (String) -> String?) {
+    val changedShortcuts = mutableListOf<String>()
     for (operation in operations) {
       when (operation) {
         is RemoveShortcutOperation -> {
-          removeShortcut(actionId = operation.actionId,
-                         toDelete = operation.shortcut,
-                         fromSettings = false,
-                         actionIdToShortcuts = actionIdToShortcuts,
-                         actionBinding = actionBinding)
+          doRemoveShortcut(actionId = operation.actionId,
+                           toDelete = operation.shortcut,
+                           actionIdToShortcuts = actionIdToShortcuts,
+                           actionBinding = actionBinding)
+          changedShortcuts.add(operation.actionId)
         }
         is RemoveAllShortcutsOperation -> {
           removeAllActionShortcuts(actionId = operation.actionId, actionIdToShortcuts = actionIdToShortcuts, actionBinding = actionBinding)
+          changedShortcuts.add(operation.actionId)
         }
         is AddShortcutOperation -> {
-          addShortcut(actionId = operation.actionId,
-                      shortcut = operation.shortcut,
-                      fromSettings = false,
-                      actionIdToShortcuts = actionIdToShortcuts,
-                      actionBinding = actionBinding)
+          doAddShortcut(actionId = operation.actionId,
+                        shortcut = operation.shortcut,
+                        actionIdToShortcuts = actionIdToShortcuts,
+                        actionBinding = actionBinding)
+          changedShortcuts.add(operation.actionId)
         }
       }
+    }
+
+    cleanShortcutsCache()
+    if (changedShortcuts.isNotEmpty()) {
+      fireShortcutChanged(actionIds = changedShortcuts, fromSettings = false)
     }
   }
 
@@ -313,11 +331,21 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
                              fromSettings: Boolean,
                              actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
                              actionBinding: (String) -> String?) {
+    doRemoveShortcut(actionBinding = actionBinding, actionId = actionId, actionIdToShortcuts = actionIdToShortcuts, toDelete = toDelete)
+
+    cleanShortcutsCache()
+    fireShortcutChanged(actionIds = java.util.List.of(actionId), fromSettings = fromSettings)
+  }
+
+  private fun doRemoveShortcut(actionBinding: (String) -> String?,
+                               actionId: String,
+                               actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
+                               toDelete: Shortcut) {
     val fromBinding = actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
       when {
         list == null -> {
-          val inherited = fromBinding ?: getParentShortcuts(id,  actionBinding)
+          val inherited = fromBinding ?: getParentShortcuts(id, actionBinding)
           if (inherited.contains(toDelete)) inherited - toDelete else null
         }
         !list.contains(toDelete) -> list
@@ -328,9 +356,6 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
         }
       }
     }
-
-    cleanShortcutsCache()
-    fireShortcutChanged(actionId = actionId, fromSettings = fromSettings)
   }
 
   private fun areShortcutsEqualToParent(shortcuts: List<Shortcut>, actionId: String, actionBinding: (String) -> String?): Boolean {
@@ -744,8 +769,9 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
 
   protected open fun convertShortcut(shortcut: Shortcut): Shortcut = shortcut
 
-  private fun fireShortcutChanged(actionId: String, fromSettings: Boolean) {
-    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).shortcutChanged(this, actionId, fromSettings)
+  private fun fireShortcutChanged(actionIds: List<String>, fromSettings: Boolean) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC)
+      .shortcutsChanged(this, actionIds, fromSettings)
   }
 
   override fun toString(): String = presentableName

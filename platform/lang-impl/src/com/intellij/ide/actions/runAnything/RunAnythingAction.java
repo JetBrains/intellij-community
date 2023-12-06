@@ -28,11 +28,13 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.JavaCoroutines;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -129,8 +131,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       @Override
-      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
-        if (RUN_ANYTHING_ACTION_ID.equals(actionId)) {
+      public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
+        if (actionIds.contains(RUN_ANYTHING_ACTION_ID)) {
           updateShortcut(KeymapManager.getInstance());
         }
       }

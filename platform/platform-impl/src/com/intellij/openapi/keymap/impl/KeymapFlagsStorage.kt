@@ -7,12 +7,20 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 
 private val LOG = logger<KeymapFlagsStorage>()
 
 private class KeymapFlagsStorageListener : KeymapManagerListener {
-  override fun shortcutChanged(keymap: Keymap, actionId: String, fromSettings: Boolean) {
-    service<KeymapFlagsStorage>().removeOutdatedFlags(keymap, actionId, fromSettings)
+  override fun shortcutsChanged(keymap: Keymap, actionIds: @NonNls MutableCollection<String>, fromSettings: Boolean) {
+    if (!fromSettings) {
+      return
+    }
+
+    val storage = service<KeymapFlagsStorage>()
+    for (actionId in actionIds) {
+      storage.removeOutdatedFlags(keymap, actionId, fromSettings)
+    }
   }
 
   override fun keymapRemoved(keymap: Keymap) {
@@ -63,9 +71,7 @@ internal class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsSt
   }
 
   internal fun removeOutdatedFlags(keymap: Keymap, actionId: String, fromSettings: Boolean) {
-    if (!fromSettings) {
-      return
-    }
+    assert(fromSettings)
 
     val currentShortcuts = keymap.getShortcuts(actionId).map { it.toString() }
 

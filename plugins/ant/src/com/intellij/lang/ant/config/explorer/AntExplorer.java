@@ -180,7 +180,7 @@ public final class AntExplorer extends SimpleToolWindowPanel implements DataProv
       }
 
       @Override
-      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+      public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
         treeModel.invalidateAsync();
       }
     });
