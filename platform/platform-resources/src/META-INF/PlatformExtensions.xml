@@ -198,6 +198,10 @@
 
     <applicationService serviceImplementation="com.intellij.configurationStore.DefaultProjectExportableAndSaveTrigger"/>
 
+    <projectService serviceInterface="com.intellij.configurationStore.ProjectIdManager"
+                    serviceImplementation="com.intellij.configurationStore.ProjectIdManagerImpl"
+                    testServiceImplementation="com.intellij.configurationStore.MockProjectIdManager"/>
+
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
 

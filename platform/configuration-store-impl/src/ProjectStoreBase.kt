@@ -178,16 +178,16 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       loadProjectFromTemplate(template)
     }
 
-    if (isUnitTestMode) {
-      return
-    }
-
     val projectIdManager = ProjectIdManager.getInstance(project)
     var projectWorkspaceId = projectIdManager.id
     if (projectWorkspaceId == null) {
       // do not use the project name as part of id, to ensure a project dir rename does not cause data loss
       projectWorkspaceId = Ksuid.generate()
       projectIdManager.id = projectWorkspaceId
+    }
+
+    if (isUnitTestMode) {
+      return
     }
 
     val productWorkspaceFile = PathManager.getConfigDir()
