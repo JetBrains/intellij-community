@@ -3,7 +3,9 @@ package com.intellij.diff.tools.simple
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.simple.AlignedDiffModel.ChangeIntersection.*
+import com.intellij.diff.tools.simple.AlignableChange.Companion.getAlignedChangeColor
+import com.intellij.diff.tools.simple.AlignableChange.Companion.isSame
+import com.intellij.diff.tools.simple.AlignedDiffModelBase.ChangeIntersection.*
 import com.intellij.diff.tools.util.SyncScrollSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
@@ -31,7 +33,7 @@ import kotlin.math.abs
 import kotlin.math.max
 
 class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer)
-  : AlignedDiffModel(viewer.request, viewer.context, viewer.editor1, viewer.editor2, viewer.syncScrollable) {
+  : AlignedDiffModelBase(viewer.request, viewer.context, viewer.editor1, viewer.editor2, viewer.syncScrollable) {
   init {
     textSettings.addListener(object : TextDiffSettingsHolder.TextDiffSettings.Listener {
       override fun alignModeChanged() {
@@ -45,11 +47,34 @@ class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer)
   }
 }
 
-abstract class AlignedDiffModel(val diffRequest: DiffRequest,
-                                val diffContext: DiffContext,
-                                val editor1: EditorEx,
-                                val editor2: EditorEx,
-                                val syncScrollable: SyncScrollSupport.SyncScrollable) : Disposable {
+interface AlignedDiffModel : Disposable {
+  fun getDiffChanges(): List<AlignableChange>
+  fun needAlignChanges(): Boolean
+  fun realignChanges()
+  fun clear()
+}
+
+interface AlignableChange {
+  val diffType: TextDiffType
+  fun getStartLine(side: Side): Int
+  fun getEndLine(side: Side): Int
+
+  companion object {
+    fun AlignableChange.isSame(other: AlignableChange) =
+      getStartLine(Side.LEFT) == other.getStartLine(Side.LEFT) && getEndLine(Side.LEFT) == other.getEndLine(Side.LEFT) &&
+      getStartLine(Side.RIGHT) == other.getStartLine(Side.RIGHT) && getEndLine(Side.RIGHT) == other.getEndLine(Side.RIGHT)
+
+    fun getAlignedChangeColor(type: TextDiffType, editor: Editor): Color? {
+      return if (type === TextDiffType.MODIFIED) null else type.getColor(editor).let { ColorUtil.toAlpha(it, 200) }
+    }
+  }
+}
+
+abstract class AlignedDiffModelBase(val diffRequest: DiffRequest,
+                                    val diffContext: DiffContext,
+                                    val editor1: EditorEx,
+                                    val editor2: EditorEx,
+                                    val syncScrollable: SyncScrollSupport.SyncScrollable) : AlignedDiffModel {
   /**
    * Changes mapped to corresponding change aligning inlays (INSERTED, DELETED, MODIFIED changes).
    */
@@ -75,9 +100,7 @@ abstract class AlignedDiffModel(val diffRequest: DiffRequest,
   override fun dispose() {
   }
 
-  abstract fun getDiffChanges(): List<AlignableChange>
-
-  fun needAlignChanges(): Boolean {
+  override fun needAlignChanges(): Boolean {
     val forcedValue: Boolean? = diffRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF)
     if (forcedValue != null) return forcedValue
 
@@ -177,7 +200,7 @@ abstract class AlignedDiffModel(val diffRequest: DiffRequest,
     return height
   }
 
-  fun realignChanges() {
+  override fun realignChanges() {
     if (listOf(editor1, editor2).any { it.isDisposed || (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
 
     RecursionManager.doPreventingRecursion(this, true) {
@@ -186,7 +209,7 @@ abstract class AlignedDiffModel(val diffRequest: DiffRequest,
     }
   }
 
-  fun clear() {
+  override fun clear() {
     alignedInlays.values.forEach(Disposer::dispose)
     alignedInlays.clear()
     for ((side, highlighters) in inlayHighlighters) {
@@ -470,21 +493,9 @@ abstract class AlignedDiffModel(val diffRequest: DiffRequest,
     return getLineStartOffset(line)
   }
 
-  interface AlignableChange {
-    val diffType: TextDiffType
-    fun getStartLine(side: Side): Int
-    fun getEndLine(side: Side): Int
-  }
-
   companion object {
     const val ALIGNED_CHANGE_INLAY_PRIORITY = 0
 
-    private fun AlignableChange.isSame(other: AlignableChange) =
-      getStartLine(Side.LEFT) == other.getStartLine(Side.LEFT) && getEndLine(Side.LEFT) == other.getEndLine(Side.LEFT) &&
-      getStartLine(Side.RIGHT) == other.getStartLine(Side.RIGHT) && getEndLine(Side.RIGHT) == other.getEndLine(Side.RIGHT)
 
-    fun getAlignedChangeColor(type: TextDiffType, editor: Editor): Color? {
-      return if (type === TextDiffType.MODIFIED) null else type.getColor(editor).let { ColorUtil.toAlpha(it, 200) }
-    }
   }
 }

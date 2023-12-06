@@ -21,7 +21,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.diff.util.TextDiffType;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleDiffChange implements AlignedDiffModel.AlignableChange {
+public class SimpleDiffChange implements AlignableChange {
   private final int myIndex;
 
   private final @NotNull LineFragment myFragment;

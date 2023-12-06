@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util
 
-import com.intellij.diff.tools.simple.AlignedDiffModel.Companion.getAlignedChangeColor
+import com.intellij.diff.tools.simple.AlignableChange.Companion.getAlignedChangeColor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker

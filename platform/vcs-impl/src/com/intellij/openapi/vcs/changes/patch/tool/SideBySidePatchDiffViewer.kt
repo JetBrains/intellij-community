@@ -12,7 +12,9 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.tools.holders.EditorHolder
 import com.intellij.diff.tools.holders.TextEditorHolder
+import com.intellij.diff.tools.simple.AlignableChange
 import com.intellij.diff.tools.simple.AlignedDiffModel
+import com.intellij.diff.tools.simple.AlignedDiffModelBase
 import com.intellij.diff.tools.util.*
 import com.intellij.diff.tools.util.FocusTrackerSupport.Twoside
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport
@@ -60,7 +62,7 @@ internal class SideBySidePatchDiffViewer(
   private val editorSettingsAction: SetEditorSettingsAction
   private val syncScrollable: MySyncScrollable
   private val syncScrollSupport: TwosideSyncScrollSupport
-  private val alignedDiffModel: PatchAlignedDiffModel
+  private val alignedDiffModel: AlignedDiffModel
 
   private var patchChanges: List<PatchSideChange> = mutableListOf()
   private var separatorLines1: IntList = IntList.of()
@@ -323,7 +325,7 @@ internal class SideBySidePatchDiffViewer(
     }
   }
 
-  private inner class PatchAlignedDiffModel : AlignedDiffModel(diffRequest, diffContext, editor1, editor2, syncScrollable) {
+  private inner class PatchAlignedDiffModel : AlignedDiffModelBase(diffRequest, diffContext, editor1, editor2, syncScrollable) {
     override fun getDiffChanges(): List<AlignableChange> = patchChanges
   }
 
