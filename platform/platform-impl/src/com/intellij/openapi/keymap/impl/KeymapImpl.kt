@@ -111,7 +111,12 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
       private var cache: Map<T, MutableList<String>>? = null
 
       override fun getValue(thisRef: Any?, property: KProperty<*>): Map<T, MutableList<String>> {
-        return cache ?: mapShortcuts(mapper).also { cache = it }
+        var cache = cache
+        if (cache == null) {
+          cache = mapShortcuts(mapper)
+          this.cache = cache
+        }
+        return cache
       }
 
       override fun setValue(thisRef: Any?, property: KProperty<*>, value: Map<T, MutableList<String>>) {
