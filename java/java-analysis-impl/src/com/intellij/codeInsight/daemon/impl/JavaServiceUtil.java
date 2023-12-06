@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
@@ -25,15 +26,27 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-final class JavaServiceUtil {
-  static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall("java.util.ServiceLoader", "load", "loadInstalled");
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 
-  static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
-    return "provider".equals(method.getName()) &&
+final public class JavaServiceUtil {
+  public static final String PROVIDER = "provider";
+  public static final Set<String> JAVA_UTIL_SERVICE_LOADER_METHODS = Set.of("load", "loadInstalled");
+
+  static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall(JAVA_UTIL_SERVICE_LOADER,
+                                                                        ArrayUtil.toStringArray(JAVA_UTIL_SERVICE_LOADER_METHODS));
+
+  public static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
+    return PROVIDER.equals(method.getName()) &&
            method.getParameterList().isEmpty() &&
            method.hasModifierProperty(PsiModifier.PUBLIC) &&
            method.hasModifierProperty(PsiModifier.STATIC);
+  }
+
+  @Nullable
+  public static PsiMethod findProvider(@NotNull PsiClass psiClass) {
+    return ContainerUtil.find(psiClass.findMethodsByName("provider", false), JavaServiceUtil::isServiceProviderMethod);
   }
 
   @NotNull
@@ -45,6 +58,10 @@ final class JavaServiceUtil {
 
   @NotNull
   static List<LineMarkerInfo<PsiElement>> collectServiceImplementationClass(@NotNull PsiClass psiClass) {
+    if (findProvider(psiClass) != null) return Collections.emptyList();
+    for (PsiMethod constructor : psiClass.getConstructors()) {
+      if (!constructor.hasParameters()) return createJavaServiceLineMarkerInfo(constructor.getNameIdentifier(), psiClass, psiClass);
+    }
     return createJavaServiceLineMarkerInfo(psiClass.getNameIdentifier(), psiClass, psiClass);
   }
 

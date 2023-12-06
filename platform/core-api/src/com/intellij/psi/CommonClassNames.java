@@ -148,4 +148,6 @@ public interface CommonClassNames {
   String CLASS_FILE_EXTENSION = ".class";
 
   @NonNls String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
+
+  String JAVA_UTIL_SERVICE_LOADER = "java.util.ServiceLoader";
 }

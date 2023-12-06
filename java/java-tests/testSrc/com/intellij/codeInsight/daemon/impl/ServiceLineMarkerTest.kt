@@ -36,6 +36,25 @@ class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
           }""".trimIndent())
   }
 
+  fun testSingleConstructorGutter() {
+    doTestImplementer("""
+          public class MyServiceImpl implements MyService {
+              public <caret>MyServiceImpl() {}
+              @Override public void doWork() {}
+          }""".trimIndent())
+  }
+
+  fun testSingleProviderGutter() {
+    doTestImplementer("""
+          public class MyServiceImpl implements MyService {
+              public MyServiceImpl() {}
+              public static MyService <caret>provider() {
+                  return new MyServiceImpl();
+              }
+              @Override public void doWork() {}
+          }""".trimIndent())
+  }
+
   fun testLoadWithLiteral() {
     doTestLoader("""
           void foo() {
