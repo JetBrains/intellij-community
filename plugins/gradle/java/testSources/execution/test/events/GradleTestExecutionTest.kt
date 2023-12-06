@@ -662,7 +662,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
             server = "https://something.com"
         }
 
-        rootProject.name = 'gradle-test-demo-system-exit'
+        rootProject.name = '${project.name}'
         include('lib')
       """.trimIndent())
 
