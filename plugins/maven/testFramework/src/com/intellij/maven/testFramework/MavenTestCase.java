@@ -49,7 +49,7 @@ import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 
 import java.awt.*;
 import java.io.File;
@@ -140,9 +140,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
   public static void assumeTestCanBeReusedForPreimport(Class<?> aClass, String testName) {
     if (!preimportTestMode) return;
     try {
-      if (aClass.getDeclaredAnnotation(InstantImportCompatible.class) == null) {
+      InstantImportCompatible annotation = aClass.getDeclaredAnnotation(InstantImportCompatible.class);
+      if (annotation == null) {
         Method testMethod = aClass.getMethod(testName);
-        Assume.assumeNotNull(testMethod.getDeclaredAnnotation(InstantImportCompatible.class));
+        annotation = testMethod.getDeclaredAnnotation(InstantImportCompatible.class);
+        if (annotation == null) {
+          throw new AssumptionViolatedException("No InstantImportCompatible annotation present on class and method in pre-import testing mode, skipping test");
+        }
       }
     }
     catch (NoSuchMethodException ignore) {
