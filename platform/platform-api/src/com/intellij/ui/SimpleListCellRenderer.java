@@ -9,6 +9,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.swing.DefaultLookup;
 
 import javax.swing.*;
@@ -23,8 +24,8 @@ import java.awt.*;
  * @author gregsh
  */
 public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListCellRenderer<T> {
-  public static @NotNull <T> SimpleListCellRenderer<T> create(@NotNull @NlsContexts.Label String nullValue,
-                                                              @NotNull Function<? super T, @NlsContexts.Label String> getText) {
+  public static @NotNull <T> SimpleListCellRenderer<@Nullable T> create(@NotNull @NlsContexts.Label String nullValue,
+                                                                        @NotNull Function<? super T, @NlsContexts.Label String> getText) {
     return new SimpleListCellRenderer<>() {
       @Override
       public void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
