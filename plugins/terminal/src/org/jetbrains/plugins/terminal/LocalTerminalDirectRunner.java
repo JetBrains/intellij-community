@@ -272,7 +272,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
-  static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath) {
+  public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath) {
     List<String> shellCommand = ParametersListUtil.parse(shellPath, false, !SystemInfo.isWindows);
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellExe == null) return shellCommand;

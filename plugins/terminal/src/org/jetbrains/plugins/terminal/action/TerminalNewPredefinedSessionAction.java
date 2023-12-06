@@ -24,10 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory;
-import org.jetbrains.plugins.terminal.TerminalOptionsConfigurable;
-import org.jetbrains.plugins.terminal.TerminalTabState;
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
+import org.jetbrains.plugins.terminal.*;
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider;
 
 import javax.swing.*;
@@ -145,7 +142,9 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
   private static @Nullable OpenShellAction create(@NotNull String shellPath, @NotNull List<String> shellOptions, @NlsSafe String presentableName) {
     if (Files.exists(Path.of(shellPath))) {
-      return new OpenShellAction(() -> presentableName, ContainerUtil.concat(List.of(shellPath), shellOptions), null);
+      List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
+      List<String> otherOptions = shellOptions.stream().filter(opt -> !shellCommand.contains(opt)).toList();
+      return new OpenShellAction(() -> presentableName, ContainerUtil.concat(shellCommand, otherOptions), null);
     }
     return null;
   }
