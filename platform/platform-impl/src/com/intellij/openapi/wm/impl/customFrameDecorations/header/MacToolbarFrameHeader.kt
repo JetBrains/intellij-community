@@ -174,6 +174,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     } ?: return false
 
     view.init(customTitleBar)
+    updateBorders()
     return true
   }
 
